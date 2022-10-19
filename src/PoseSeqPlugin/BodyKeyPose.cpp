@@ -1,52 +1,27 @@
-/**
-   @file
-   @author Shin'ichiro NAKAOKA
-*/
-
-#include "Pose.h"
-#include <cnoid/EigenArchive>
+#include "BodyKeyPose.h"
+#include <cnoid/Body>
 #include <cnoid/Link>
+#include <cnoid/EigenArchive>
 
 using namespace std;
 using namespace cnoid;
 
 
-PoseUnit::PoseUnit()
-{
-    owner = 0;
-    seqLocalReferenceCounter = 0;
-}
-
-
-PoseUnit::PoseUnit(const PoseUnit& org)
-    : name_(org.name_)
-{
-    owner = 0;
-    seqLocalReferenceCounter = 0;
-}
-
-
-PoseUnit::~PoseUnit()
-{
-
-}
-
-
-Pose::Pose()
+BodyKeyPose::BodyKeyPose()
 {
     initializeMembers();
 }
     
 
-Pose::Pose(int numJoints)
+BodyKeyPose::BodyKeyPose(int numJoints)
     : jointInfos(numJoints)
 {
     initializeMembers();
 }
 
 
-Pose::Pose(const Pose& org)
-    : PoseUnit(org),
+BodyKeyPose::BodyKeyPose(const BodyKeyPose& org)
+    : AbstractPose(org),
       jointInfos(org.jointInfos),
       ikLinks(org.ikLinks)
 {
@@ -62,7 +37,7 @@ Pose::Pose(const Pose& org)
 }
 
 
-void Pose::initializeMembers()
+void BodyKeyPose::initializeMembers()
 {
     baseLinkIter = ikLinks.end();
     isZmpValid_ = false;
@@ -70,15 +45,61 @@ void Pose::initializeMembers()
 }
 
 
-Pose::~Pose()
+BodyKeyPose::~BodyKeyPose()
 {
 
 }
 
 
-bool Pose::hasSameParts(PoseUnitPtr unit)
+Referenced* BodyKeyPose::doClone(CloneMap*) const
 {
-    PosePtr pose = dynamic_pointer_cast<Pose>(unit);
+    return new BodyKeyPose(*this);
+}
+
+
+void BodyKeyPose::setNumJoints(int n)
+{
+    jointInfos.resize(n);
+}
+
+
+void BodyKeyPose::setJointDisplacement(int jointId, double q)
+{
+    if(jointId >= 0){
+        if(jointId >= (int)jointInfos.size()){
+            setNumJoints(jointId + 1);
+        }
+        JointInfo& info = jointInfos[jointId];
+        info.q = q;
+        info.isValid = true;
+    }
+}
+
+
+void BodyKeyPose::setJointStationaryPoint(int jointId, bool on)
+{
+    if(jointId >= (int)jointInfos.size()){
+        setNumJoints(jointId + 1);
+    }
+    jointInfos[jointId].isStationaryPoint = on;
+}
+
+
+bool BodyKeyPose::invalidateJoint(int jointId)
+{
+    if(jointId < (int)jointInfos.size()){
+        if(jointInfos[jointId].isValid){
+            jointInfos[jointId].isValid = false;
+            return true;
+        }
+    }
+    return false;
+}
+
+
+bool BodyKeyPose::hasSameParts(AbstractPose* unit) const
+{
+    auto pose = dynamic_cast<BodyKeyPose*>(unit);
     if(!pose){
         return false;
     }
@@ -95,7 +116,7 @@ bool Pose::hasSameParts(PoseUnitPtr unit)
 }
 
 
-bool Pose::empty()
+bool BodyKeyPose::empty() const
 {
     if(!ikLinks.empty()){
         return false;
@@ -112,7 +133,7 @@ bool Pose::empty()
 }
             
 
-void Pose::clear()
+void BodyKeyPose::clear()
 {
     jointInfos.clear();
     ikLinks.clear();
@@ -120,14 +141,14 @@ void Pose::clear()
 }
 
 
-void Pose::clearIkLinks()
+void BodyKeyPose::clearIkLinks()
 {
     ikLinks.clear();
     baseLinkIter = ikLinks.end();
 }
 
 
-bool Pose::removeIkLink(int linkIndex)
+bool BodyKeyPose::removeIkLink(int linkIndex)
 {
     LinkInfoMap::iterator p = ikLinks.find(linkIndex);
     if(p != ikLinks.end()){
@@ -141,12 +162,12 @@ bool Pose::removeIkLink(int linkIndex)
 }
 
 
-Pose::LinkInfo& Pose::setBaseLink(int linkIndex)
+BodyKeyPose::LinkInfo* BodyKeyPose::setBaseLink(int linkIndex)
 {
     if(baseLinkIter != ikLinks.end()){
         const int oldIndex = baseLinkIter->first;
         if(linkIndex == oldIndex){
-            return baseLinkIter->second;
+            return &baseLinkIter->second;
         }
         baseLinkIter->second.isBaseLink_ = false;
     }
@@ -154,17 +175,52 @@ Pose::LinkInfo& Pose::setBaseLink(int linkIndex)
     LinkInfo& info = baseLinkIter->second;
     info.isBaseLink_ = true;
 
+    return &info;
+}
+
+
+BodyKeyPose::LinkInfo* BodyKeyPose::setBaseLink(int linkIndex, const Isometry3& position)
+{
+    auto info = setBaseLink(linkIndex);
+    if(info){
+        info->setPosition(position);
+    }
     return info;
 }
 
 
-PoseUnit* Pose::duplicate()
+void BodyKeyPose::invalidateBaseLink()
 {
-    return new Pose(*this);
+    if(baseLinkIter != ikLinks.end()){
+        baseLinkIter->second.isBaseLink_ = false;
+        baseLinkIter = ikLinks.end();
+    }
 }
 
 
-bool Pose::restore(const Mapping& archive, const BodyPtr body)
+void BodyKeyPose::setZmp(const Vector3& p)
+{
+    isZmpValid_ = true;
+    zmp_ = p;
+}
+
+
+bool BodyKeyPose::invalidateZmp()
+{
+    bool ret = isZmpValid_;
+    isZmpValid_ = false;
+    return ret;
+}
+
+
+void BodyKeyPose::setZmpStationaryPoint(bool on)
+{
+    isZmpStationaryPoint_ = on;
+}
+
+
+
+bool BodyKeyPose::restore(const Mapping& archive, const Body* body)
 {
     clear();
     
@@ -174,7 +230,7 @@ bool Pose::restore(const Mapping& archive, const BodyPtr body)
         setNumJoints(maxIndex + 1);
         const Listing& qs = *archive["q"].toListing();
         for(int i=0; i < jointIndices.size(); ++i){
-            setJointPosition(jointIndices[i].toInt(), qs[i].toDouble());
+            setJointDisplacement(jointIndices[i].toInt(), qs[i].toDouble());
         }
     }
     const Listing& stationaryPoints = *archive.findListing("spJoints");
@@ -206,9 +262,9 @@ bool Pose::restore(const Mapping& archive, const BodyPtr body)
                 Vector3 p;
                 Matrix3 R;
                 if(read(ikLinkNode, "translation", p) && read(ikLinkNode, "rotation", R)){
-                    LinkInfo* info = addIkLink(index);
-                    info->p = p;
-                    info->R = R;
+                    LinkInfo* info = getOrCreateIkLink(index);
+                    info->setTranslation(p);
+                    info->setRotation(R);
                     info->setStationaryPoint(ikLinkNode.get("isStationaryPoint", false));
                     if(ikLinkNode.get("isBaseLink", false)){
                         setBaseLink(index);
@@ -241,10 +297,12 @@ bool Pose::restore(const Mapping& archive, const BodyPtr body)
 }
 
 
-void Pose::store(Mapping& archive, const BodyPtr body) const
+void BodyKeyPose::store(Mapping& archive, const Body* body) const
 {
     archive.write("type", "Pose");
-    archive.write("name", name(), DOUBLE_QUOTED);
+
+    // For keeping the compatibility of the pose seq file
+    archive.write("name", "", DOUBLE_QUOTED);
 
     ListingPtr jointIndices = new Listing();
     ListingPtr qs = new Listing();
@@ -290,8 +348,8 @@ void Pose::store(Mapping& archive, const BodyPtr body) const
                 ikLinkNode.write("isStationaryPoint", info.isStationaryPoint());
             }
             ikLinkNode.setFloatingNumberFormat("%.9g");
-            write(ikLinkNode, "translation", info.p);
-            write(ikLinkNode, "rotation", info.R);
+            write(ikLinkNode, "translation", Vector3(info.translation()));
+            write(ikLinkNode, "rotation", Matrix3(info.rotation()));
 
             if(info.isTouching()){
 
@@ -322,4 +380,36 @@ void Pose::store(Mapping& archive, const BodyPtr body) const
         write(archive, "zmp", zmp_);
         archive.write("isZmpStationaryPoint", isZmpStationaryPoint_);
     }
+}
+
+
+BodyKeyPose::LinkInfo::LinkInfo()
+    : isBaseLink_(false),
+      isStationaryPoint_(false),
+      isTouching_(false),
+      isSlave_(false)
+{
+
+}
+      
+
+void BodyKeyPose::LinkInfo::setTouching(const Vector3& partingDirection, const std::vector<Vector3>& contactPoints)
+{
+    isTouching_ = true;
+    partingDirection_ = partingDirection;
+    contactPoints_ = contactPoints;
+}
+
+
+void BodyKeyPose::LinkInfo::setTouching(bool on)
+{
+    isTouching_ = on;
+    partingDirection_ = Vector3::UnitZ();
+    contactPoints_.clear();
+}
+
+
+void BodyKeyPose::LinkInfo::clearTouching()
+{
+    setTouching(false);
 }

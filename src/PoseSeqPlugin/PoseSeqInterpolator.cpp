@@ -1,22 +1,18 @@
-/**
-   @file
-   @author Shin'ichiro NAKAOKA
-*/
-
 #if defined _MSC_VER && !defined(_USE_MATH_DEFINES)
 #define _USE_MATH_DEFINES
 #endif
 
 #include "PoseSeqInterpolator.h"
+#include "BodyKeyPose.h"
 #include "PronunSymbol.h"
 #include <cnoid/Link>
 #include <cnoid/JointPath>
 #include <cnoid/ValueTree>
 #include <cnoid/EigenUtil>
 #include <cnoid/Array2D>
+#include <cnoid/ConnectionSet>
 #include <list>
 #include <vector>
-#include <iostream>
 #include <algorithm>
 #include <unordered_map>
 
@@ -24,8 +20,6 @@ using namespace std;
 using namespace cnoid;
 
 namespace {
-
-const bool TRACE_FUNCTIONS = false;
 
 const double epsilon = 1.0e-6;
 
@@ -44,13 +38,14 @@ struct Coeff
 
 struct LinkSample
 {
-    LinkSample(PoseSeq::iterator p, const Pose::LinkInfo& info){
-        poseIter = p;
+    LinkSample(PoseSeq::iterator it, const BodyKeyPose::LinkInfo& info)
+    {
+        poseIter = it;
         segmentType = UNDETERMINED;
-        x = p->time();
+        x = it->time();
         isBaseLink = info.isBaseLink();
-        const Vector3& pos = info.p;
-        const Vector3 rpy = rpyFromRot(info.R);
+        auto pos = info.p();
+        auto rpy = rpyFromRot(info.R());
         for(int i=0; i < 3; ++i){
             c[i].y = pos[i];
             c[i].yp = 0.0;
@@ -64,10 +59,12 @@ struct LinkSample
         isAux = false;
     }
 
-    void invalidateSegment(){
+    void invalidateSegment()
+    {
         segmentType = INVALID;
         isEndPoint = true;
     }
+    
     SegmentType segmentType;
     PoseSeq::iterator poseIter;
     double x;
@@ -84,20 +81,24 @@ struct LinkSample
 
 struct LinkZSample
 {
-    LinkZSample(PoseSeq::iterator p, const Pose::LinkInfo& info){
-        poseIter = p;
+    LinkZSample(PoseSeq::iterator it, const BodyKeyPose::LinkInfo& info)
+    {
+        poseIter = it;
         segmentType = UNDETERMINED;
-        x = p->time();
-        c[0].y = info.p[2];
+        x = it->time();
+        c[0].y = info.p()[2];
         c[0].yp = 0.0;
         isTouching = info.isTouching();
         isEndPoint = info.isStationaryPoint() || isTouching;
         isDirty = true;
     }
-    void invalidateSegment(){
+
+    void invalidateSegment()
+    {
         segmentType = INVALID;
         isEndPoint = true;
     }
+    
     SegmentType segmentType;
     PoseSeq::iterator poseIter;
     double x;
@@ -114,7 +115,8 @@ struct LinkInfo
 {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     
-    LinkInfo(const BodyPtr& body, int linkIndex) {
+    LinkInfo(Body* body, int linkIndex)
+    {
         iter = samples.end();
         zIter = zSamples.end();
         Link* link = body->link(linkIndex);
@@ -126,6 +128,7 @@ struct LinkInfo
         jointSpaceBlendingRatio = 0.0;
         isFootLink = false;
     }
+    
     int jointId;
     bool isFootLink;
     LinkSample::Seq samples;
@@ -141,9 +144,9 @@ struct LinkInfo
 
 struct JointSample
 {
-    JointSample(PoseSeq::iterator p, int jointId, bool useLinearInterpolation) {
-        poseIter = p;
-        Pose* pose = static_cast<Pose*>(p->poseUnit().get());
+    JointSample(PoseSeq::iterator it, int jointId, bool useLinearInterpolation)
+    {
+        poseIter = it;
         if(useLinearInterpolation){
             segmentType = LINEAR;
             isDirty = false;
@@ -151,10 +154,15 @@ struct JointSample
             segmentType = UNDETERMINED;
             isDirty = true;
         }
-        x = p->time();
-        c[0].y = pose->jointPosition(jointId);
+        x = it->time();
+        if(auto pose = it->get<BodyKeyPose>()){
+            c[0].y = pose->jointDisplacement(jointId);
+            isEndPoint = pose->isJointStationaryPoint(jointId);
+        } else {
+            c[0].y = 0.0;
+            isEndPoint = false;
+        }
         c[0].yp = 0.0;
-        isEndPoint = pose->isJointStationaryPoint(jointId);
     }
 
     SegmentType segmentType;
@@ -169,16 +177,20 @@ struct JointSample
 
 struct JointInfo
 {
-    JointInfo(){
+    JointInfo()
+    {
         useLinearInterpolation = false;
         clear();
     }
-    void clear(){
+
+    void clear()
+    {
         samples.clear();
         iter = samples.begin();
         prevSegmentDirectionSign = 0.0;
         prev_q = 0.0;
     }
+    
     JointSample::Seq samples;
     JointSample::Seq::iterator iter;
     bool useLinearInterpolation;
@@ -192,22 +204,34 @@ struct JointInfo
 
 struct ZmpSample
 {
-    ZmpSample(PoseSeq::iterator p) {
-        poseIter = p;
-        Pose* pose = static_cast<Pose*>(p->poseUnit().get());
+    ZmpSample(PoseSeq::iterator it)
+    {
+        poseIter = it;
         segmentType = UNDETERMINED;
-        x = p->time();
-        const Vector3& zmp = pose->zmp();
-        for(int i=0; i < 3; ++i){
-            Coeff& ci = c[i];
-            ci.y = zmp[i];
-            ci.yp = 0.0;
+        x = it->time();
+
+        if(auto pose = it->get<BodyKeyPose>()){
+            const Vector3& zmp = pose->zmp();
+            for(int i=0; i < 3; ++i){
+                Coeff& ci = c[i];
+                ci.y = zmp[i];
+                ci.yp = 0.0;
+            }
+            isEndPoint = pose->isZmpStationaryPoint();
+        } else {
+            for(int i=0; i < 3; ++i){
+                Coeff& ci = c[i];
+                ci.y = 0.0;
+                ci.yp = 0.0;
+            }
+            isEndPoint = false;
         }
-        isEndPoint = pose->isZmpStationaryPoint();
+
         isDirty = true;
     }
 
-    ZmpSample(double time, const Vector3& p){
+    ZmpSample(double time, const Vector3& p)
+    {
         segmentType = UNDETERMINED;
         x = time;
         for(int i=0; i < 3; ++i){
@@ -251,11 +275,11 @@ template<class T> struct hash<std::pair<T, T>>
 
 namespace cnoid {
 
-class PSIImpl
+class PoseSeqInterpolator::Impl
 {
 public:
 
-    PSIImpl(PoseSeqInterpolator* self);
+    Impl(PoseSeqInterpolator* self);
 
     PoseSeqInterpolator* self;
     BodyPtr body;
@@ -338,7 +362,7 @@ public:
     void addFootLink(int linkIndex, const Vector3& soleCenter);
     void clearLipSyncShapes();
     void setLipSyncShapes(const Mapping& lipSyncShapeNode);
-    void setPoseSeq(PoseSeqPtr seq);
+    void setPoseSeq(PoseSeq* seq);
     void setStealthyStepParameters(
         double heightRatioThresh,
         double flatLiftingHeight, double flatLandingHeight,
@@ -349,7 +373,7 @@ public:
     void calcIkJointPositions();
     void calcIkJointPositionsSub(Link* link, Link* baseLink, LinkInfo* baseLinkInfo, bool doUpward, Link* prevLink);
     void appendPronun(PoseSeq::iterator poseIter);
-    void appendLinkSamples(PoseSeq::iterator poseIter, PosePtr& pose);
+    void appendLinkSamples(PoseSeq::iterator poseIter, BodyKeyPose* pose);
 
     inline bool checkZmp(const Vector3& zmp, const Vector3& centerZmp);
         
@@ -376,7 +400,7 @@ public:
     bool update();
     LinkInfo* getIkLinkInfo(int linkIndex);
     void onPoseInserted(PoseSeq::iterator it);
-    void onPoseRemoving(PoseSeq::iterator it, bool isMoving);
+    void onPoseAboutToBeRemoved(PoseSeq::iterator it, bool isMoving);
     void onPoseModified(PoseSeq::iterator it);
 };
 }
@@ -387,9 +411,6 @@ namespace {
 template <int dim, class SampleType>
 typename SampleType::Seq::iterator updateZeroLengthSegment(typename SampleType::Seq::iterator s)
 {
-    if(TRACE_FUNCTIONS){
-        cout << "updateZeroLengthSegment" << endl;
-    }
     const typename SampleType::Seq::iterator s0 = s;
     const typename SampleType::Seq::iterator s1 = ++s;
     s0->segmentType = ZERO_LENGTH;
@@ -403,9 +424,6 @@ typename SampleType::Seq::iterator updateZeroLengthSegment(typename SampleType::
 template <int dim, class SampleType>
 typename SampleType::Seq::iterator updateCubicConnectionSegment(typename SampleType::Seq::iterator s)
 {
-    if(TRACE_FUNCTIONS){
-        cout << "updateCubicConnectionSegment" << endl;
-    }
     const typename SampleType::Seq::iterator s0 = s;
     const typename SampleType::Seq::iterator s1 = ++s;
 
@@ -451,9 +469,6 @@ template <int dim, class SampleType>
 typename SampleType::Seq::iterator
 updateCubicSplineSegment(typename SampleType::Seq::iterator s, typename SampleType::Seq::iterator end)
 {
-    if(TRACE_FUNCTIONS){
-        cout << "updateCubicSplineSegment" << endl;
-    }
     typename SampleType::Seq::iterator s0 = s;
     typename SampleType::Seq::iterator s1 = ++s;
 
@@ -601,10 +616,6 @@ void usePredeterminedVelocities(typename SampleType::Seq& samples)
 template <int dim, class SampleType, bool useJerkMinModel>
 void initializeInterpolation(typename SampleType::Seq& samples)
 {
-    if(TRACE_FUNCTIONS){
-        cout << "initializeInterpolation" << endl;
-    }
-
     usePredeterminedVelocities<dim, SampleType>(samples);
         
     typename SampleType::Seq::iterator s = samples.begin();
@@ -786,11 +797,11 @@ void appendSample(typename SampleType::Seq& samples, const SampleType& sample)
 
 PoseSeqInterpolator::PoseSeqInterpolator()
 {
-    impl = new PSIImpl(this);
+    impl = new Impl(this);
 }
 
 
-PSIImpl::PSIImpl(PoseSeqInterpolator* self)
+PoseSeqInterpolator::Impl::Impl(PoseSeqInterpolator* self)
     : self(self)
 {
     timeScaleRatio = 1.0;
@@ -815,7 +826,7 @@ void PoseSeqInterpolator::setBody(Body* body)
 }
 
 
-void PSIImpl::setBody(Body* body0)
+void PoseSeqInterpolator::Impl::setBody(Body* body0)
 {
     jointInfos.clear();
     ikLinkInfos.clear();
@@ -850,7 +861,7 @@ void PoseSeqInterpolator::setLinearInterpolationJoint(int jointId)
 }
 
 
-void PSIImpl::setLinearInterpolationJoint(int jointId)
+void PoseSeqInterpolator::Impl::setLinearInterpolationJoint(int jointId)
 {
     if(jointId < (int)jointInfos.size()){
         jointInfos[jointId].useLinearInterpolation = true;
@@ -864,7 +875,7 @@ void PoseSeqInterpolator::addFootLink(int linkIndex, const Vector3& soleCenter)
 }
 
 
-void PSIImpl::addFootLink(int linkIndex, const Vector3& soleCenter)
+void PoseSeqInterpolator::Impl::addFootLink(int linkIndex, const Vector3& soleCenter)
 {
     footLinkIndices.push_back(linkIndex);
     soleCenters.push_back(soleCenter);
@@ -872,7 +883,7 @@ void PSIImpl::addFootLink(int linkIndex, const Vector3& soleCenter)
 }
 
 
-void PSIImpl::clearLipSyncShapes()
+void PoseSeqInterpolator::Impl::clearLipSyncShapes()
 {
     lipSyncJoints.clear();
     lipSyncLinkIndices.clear();
@@ -890,7 +901,7 @@ void PoseSeqInterpolator::setLipSyncShapes(const Mapping& info)
 /**
    \todo move this into LipSyncTranslator
 */
-void PSIImpl::setLipSyncShapes(const Mapping& info)
+void PoseSeqInterpolator::Impl::setLipSyncShapes(const Mapping& info)
 {
     needUpdate = true;
 
@@ -962,29 +973,40 @@ const std::vector<int>& PoseSeqInterpolator::lipSyncLinkIndices()
 }
 
 
-void PSIImpl::invalidateCurrentInterpolation()
+void PoseSeqInterpolator::Impl::invalidateCurrentInterpolation()
 {
     currentTime = std::numeric_limits<double>::max();
     currentBaseLinkInfoIter = ikLinkInfos.end();
 }
 
 
-void PoseSeqInterpolator::setPoseSeq(PoseSeqPtr seq)
+void PoseSeqInterpolator::setPoseSeq(PoseSeq* seq)
 {
     impl->setPoseSeq(seq);
 }
 
 
-void PSIImpl::setPoseSeq(PoseSeqPtr seq)
+void PoseSeqInterpolator::Impl::setPoseSeq(PoseSeq* seq)
 {
     poseSeqConnections.disconnect();
     poseSeq = seq;
 
     // for auto update mode (not implemented yet)
-    poseSeqConnections = seq->connectSignalSet(
-        [&](PoseSeq::iterator it, bool /* isMoving */){ onPoseInserted(it); },
-        [&](PoseSeq::iterator it, bool isMoving){ onPoseRemoving(it, isMoving); },
-        [&](PoseSeq::iterator it){ onPoseModified(it); });
+    poseSeqConnections.add(
+        seq->sigPoseInserted().connect(
+            [this](PoseSeq::iterator it, bool /* isMoving */){
+                onPoseInserted(it);
+            }));
+    poseSeqConnections.add(
+        seq->sigPoseAboutToBeRemoved().connect(
+            [this](PoseSeq::iterator it, bool isMoving){
+                onPoseAboutToBeRemoved(it, isMoving);
+            }));
+    poseSeqConnections.add(
+        seq->sigPoseModified().connect(
+            [this](PoseSeq::iterator it){
+                onPoseModified(it);
+            }));
     
     invalidateCurrentInterpolation();
     needUpdate = true;
@@ -1049,7 +1071,7 @@ void PoseSeqInterpolator::setStealthyStepParameters
 }
 
 
-void PSIImpl::setStealthyStepParameters
+void PoseSeqInterpolator::Impl::setStealthyStepParameters
 (double heightRatioThresh,
  double flatLiftingHeight, double flatLandingHeight,
  double impactReductionHeight, double impactReductionTime)
@@ -1117,7 +1139,7 @@ bool PoseSeqInterpolator::seek(double time, int waistLinkIndex, const Vector3& w
 /**
    \todo Skip interpolation when only waistTranslation changes
 */
-bool PSIImpl::interpolate(double time, int waistLinkIndex, const Vector3& waistTranslation)
+bool PoseSeqInterpolator::Impl::interpolate(double time, int waistLinkIndex, const Vector3& waistTranslation)
 {
     if(!body){
         return false;
@@ -1262,7 +1284,7 @@ bool PSIImpl::interpolate(double time, int waistLinkIndex, const Vector3& waistT
 }
 
 
-bool PSIImpl::mixLipSyncShape()
+bool PoseSeqInterpolator::Impl::mixLipSyncShape()
 {
     if(lipSyncSeq.empty()){
         return false;
@@ -1342,7 +1364,7 @@ mix:
 }
 
 
-void PSIImpl::calcIkJointPositions()
+void PoseSeqInterpolator::Impl::calcIkJointPositions()
 {
     Link* baseLink;
     LinkInfo* baseLinkInfo;
@@ -1352,17 +1374,18 @@ void PSIImpl::calcIkJointPositions()
         baseLinkInfo = &currentBaseLinkInfoIter->second;
     } else {
         baseLink = body->rootLink();
-        baseLinkInfo = 0;
+        baseLinkInfo = nullptr;
     }
 
-    calcIkJointPositionsSub(baseLink, baseLink, baseLinkInfo, true, 0);
+    calcIkJointPositionsSub(baseLink, baseLink, baseLinkInfo, true, nullptr);
 }
 
 
 /**
    \todo search an analytical IK path even if the base link of the path is not an ik link
 */
-void PSIImpl::calcIkJointPositionsSub(Link* link, Link* baseLink, LinkInfo* baseLinkInfo, bool doUpward, Link* prevLink)
+void PoseSeqInterpolator::Impl::calcIkJointPositionsSub
+(Link* link, Link* baseLink, LinkInfo* baseLinkInfo, bool doUpward, Link* prevLink)
 {
     if(link != baseLink && validIkLinkFlag[link->index()]){
         LinkInfo* endLinkInfo = getIkLinkInfo(link->index());
@@ -1408,7 +1431,7 @@ void PSIImpl::calcIkJointPositionsSub(Link* link, Link* baseLink, LinkInfo* base
                     double len = waistTranslation.norm();
                     double low = 0.0;
                     double hi = len * (1.0 - endLinkInfo->jointSpaceBlendingRatio);
-                    while(true){
+                    while((hi - low) > 1.0e-4){
                         double current = (low + hi) / 2.0;
                         Isometry3 T_end(endLinkInfo->T);
                         T_end.translation() += waistTranslation * (current / len);
@@ -1417,9 +1440,6 @@ void PSIImpl::calcIkJointPositionsSub(Link* link, Link* baseLink, LinkInfo* base
                             hi = current;
                         } else {
                             low = current;
-                        }
-                        if((hi - low) < 1.0e-4){
-                            break;
                         }
                     }
                 }
@@ -1511,7 +1531,7 @@ stdx::optional<Vector3> PoseSeqInterpolator::ZMP() const
 }
 
 
-bool PSIImpl::update()
+bool PoseSeqInterpolator::Impl::update()
 {
     if(!body || !poseSeq){
         return false;
@@ -1538,7 +1558,7 @@ bool PSIImpl::update()
     
     for(PoseSeq::iterator poseIter = poseSeq->begin(); poseIter != poseSeq->end(); ++poseIter){
 
-        PosePtr pose = poseIter->get<Pose>();
+        auto pose = poseIter->get<BodyKeyPose>();
 
         if(!pose){
             PronunSymbolPtr pronun = poseIter->get<PronunSymbol>();
@@ -1555,7 +1575,7 @@ bool PSIImpl::update()
                 if(pose->isJointValid(i)){
 
                     // make a flipping point stationary point
-                    double q = pose->jointPosition(i);
+                    double q = pose->jointDisplacement(i);
                     double sign = q - jointInfo.prev_q;
                     if(jointInfo.prevSegmentDirectionSign * sign <= 0.0){
                         if(!jointInfo.samples.empty()){
@@ -1585,16 +1605,13 @@ bool PSIImpl::update()
 
     for(size_t i=0; i < jointInfos.size(); ++i){
         JointInfo& info = jointInfos[i];
-        if(TRACE_FUNCTIONS){
-            cout << "PSIImpl::update: joint " << i << endl;
-        }
         if(!info.useLinearInterpolation){
             initializeInterpolation<1, JointSample, false>(info.samples);
         }
         info.iter = info.samples.begin();
     }
-    for(LinkInfoMap::iterator p = ikLinkInfos.begin(); p != ikLinkInfos.end(); ++p){
-        LinkInfo& info = p->second;
+    for(auto& kv : ikLinkInfos){
+        LinkInfo& info = kv.second;
         initializeInterpolation<6, LinkSample, false>(info.samples);
         info.iter = info.samples.begin();
         if(info.isFootLink){
@@ -1602,6 +1619,7 @@ bool PSIImpl::update()
             info.zIter = info.zSamples.begin();
         }
     }
+    
     initializeInterpolation<3, ZmpSample, false>(zmpSamples);
     zmpIter = zmpSamples.begin();
 
@@ -1616,13 +1634,13 @@ bool PSIImpl::update()
 }
 
 
-void PSIImpl::appendLinkSamples(PoseSeq::iterator poseIter, PosePtr& pose)
+void PoseSeqInterpolator::Impl::appendLinkSamples(PoseSeq::iterator poseIter, BodyKeyPose* pose)
 {
-    for(Pose::LinkInfoMap::iterator it = pose->ikLinkBegin(); it != pose->ikLinkEnd(); ++it){
+    for(auto it = pose->ikLinkBegin(); it != pose->ikLinkEnd(); ++it){
         const int linkIndex = it->first;
         LinkInfo* linkInfo = getIkLinkInfo(linkIndex);
         if(linkInfo){
-            const Pose::LinkInfo& ikLinkInfo = it->second;
+            const BodyKeyPose::LinkInfo& ikLinkInfo = it->second;
     
             LinkSample::Seq& samples = linkInfo->samples;
             applyMaxTransitionTime<LinkSample>(samples, poseIter);
@@ -1638,13 +1656,13 @@ void PSIImpl::appendLinkSamples(PoseSeq::iterator poseIter, PosePtr& pose)
 }
 
 
-inline bool PSIImpl::checkZmp(const Vector3& zmp, const Vector3& centerZmp)
+inline bool PoseSeqInterpolator::Impl::checkZmp(const Vector3& zmp, const Vector3& centerZmp)
 {
     return (zmp - centerZmp).squaredNorm() <= zmpMaxDistanceFromCenterSqr;
 }
 
 
-void PSIImpl::adjustZmpAndFootKeyPosesForLifting
+void PoseSeqInterpolator::Impl::adjustZmpAndFootKeyPosesForLifting
 (LinkSample::Seq& swingSamples, LinkSample::Seq::iterator pSwing0, LinkSample::Seq::iterator pSwing1,
  LinkZSample::Seq& swingZSamples, LinkZSample::Seq::iterator pSwingZ0, LinkZSample::Seq::iterator pSwingZ1,
  ZmpSample::Seq::iterator pZmp0,  const Vector3& zmpOnSupport, bool zmpCenteringDone)
@@ -1676,7 +1694,7 @@ void PSIImpl::adjustZmpAndFootKeyPosesForLifting
 }
 
 
-void PSIImpl::adjustZmpAndFootKeyPosesForLanding
+void PoseSeqInterpolator::Impl::adjustZmpAndFootKeyPosesForLanding
 (LinkSample::Seq& swingSamples, LinkSample::Seq::iterator pSwing0, LinkSample::Seq::iterator pSwing1,
  LinkZSample::Seq& swingZSamples, LinkZSample::Seq::iterator pSwingZ0, LinkZSample::Seq::iterator pSwingZ1,
  ZmpSample::Seq::iterator pZmp1,  const Vector3& zmp1, const Vector3& zmpOnSupport)
@@ -1703,7 +1721,7 @@ void PSIImpl::adjustZmpAndFootKeyPosesForLanding
 /**
    @return true if centering ZMP is inserted
 */
-bool PSIImpl::adjustZmpForBothPhase
+bool PoseSeqInterpolator::Impl::adjustZmpForBothPhase
 (ZmpSample::Seq::iterator& pZmp0, double time0, double time1,
  LinkSample::Seq::iterator pRight0, LinkZSample::Seq::iterator pRightZ0,
  LinkSample::Seq::iterator pLeft0, LinkZSample::Seq::iterator pLeftZ0,
@@ -1751,7 +1769,7 @@ bool PSIImpl::adjustZmpForBothPhase
 }
 
 
-Vector3 PSIImpl::getCenterZmp
+Vector3 PoseSeqInterpolator::Impl::getCenterZmp
 (const LinkSample::Seq::iterator& xyzrpy, const LinkZSample::Seq::iterator& z, int which)
 {
     const Vector3 p(xyzrpy->c[0].y, xyzrpy->c[1].y, z->c[0].y);
@@ -1762,7 +1780,7 @@ Vector3 PSIImpl::getCenterZmp
 }
 
 
-void PSIImpl::adjustZmpAndFootKeyPoses()
+void PoseSeqInterpolator::Impl::adjustZmpAndFootKeyPoses()
 {
     // actual left and right may be exchanged
     LinkSample::Seq& leftSamples = footLinkInfos[LEFT]->samples;
@@ -1964,7 +1982,7 @@ void PSIImpl::adjustZmpAndFootKeyPoses()
 
 
 /*
-  void PSIImpl::insertAuxKeyPosesForStealthySteps()
+  void PoseSeqInterpolator::Impl::insertAuxKeyPosesForStealthySteps()
   {
   for(size_t i=0; i < footLinkInfos.size(); ++i){
 
@@ -2033,7 +2051,7 @@ void PSIImpl::adjustZmpAndFootKeyPoses()
 */
 
 
-void PSIImpl::insertAuxKeyPosesForStealthySteps()
+void PoseSeqInterpolator::Impl::insertAuxKeyPosesForStealthySteps()
 {
     for(size_t i=0; i < footLinkInfos.size(); ++i){
 
@@ -2102,17 +2120,21 @@ void PSIImpl::insertAuxKeyPosesForStealthySteps()
 }
 
 
-void PSIImpl::appendPronun(PoseSeq::iterator poseIter)
+void PoseSeqInterpolator::Impl::appendPronun(PoseSeq::iterator poseIter)
 {
-    const string& pronun = poseIter->name();
+    PronunSymbol* pronum = poseIter->get<PronunSymbol>();
+    if(!pronum){
+        return;
+    }
+    const string& symbol = pronum->symbol();
 
-    if(pronun.empty()){
+    if(symbol.empty()){
         return;
     }
 
     int vowel = -1;
 
-    switch(tolower(pronun[pronun.size()-1])){
+    switch(tolower(symbol[symbol.size()-1])){
 
     case 'a': vowel = LS_A; break;
     case 'i': vowel = LS_I; break;
@@ -2136,8 +2158,8 @@ void PSIImpl::appendPronun(PoseSeq::iterator poseIter)
     LipSyncSample sample1;
     sample1.shapeId = -1;
 
-    if(vowel != LS_N && pronun.size() >= 2){
-        int consonantChar = tolower(pronun[0]);
+    if(vowel != LS_N && symbol.size() >= 2){
+        int consonantChar = tolower(symbol[0]);
         if(consonantChar == 'm' || consonantChar == 'b' || consonantChar == 'p'){
             sample0.shapeId = LS_N;
         } else {
@@ -2182,33 +2204,33 @@ void PSIImpl::appendPronun(PoseSeq::iterator poseIter)
 }
 
 
-LinkInfo* PSIImpl::getIkLinkInfo(int linkIndex)
+LinkInfo* PoseSeqInterpolator::Impl::getIkLinkInfo(int linkIndex)
 {
-    LinkInfoMap::iterator p = ikLinkInfos.find(linkIndex);
-    if(p == ikLinkInfos.end()){
+    auto it = ikLinkInfos.find(linkIndex);
+    if(it == ikLinkInfos.end()){
         if(linkIndex >= 0 && linkIndex < body->numLinks()){
-            p = ikLinkInfos.insert(make_pair(linkIndex, LinkInfo(body, linkIndex))).first;
+            it = ikLinkInfos.insert(make_pair(linkIndex, LinkInfo(body, linkIndex))).first;
         } else {
-            return 0;
+            return nullptr;
         }
     }
-    return &p->second;
+    return &it->second;
 }
 
 
-void PSIImpl::onPoseInserted(PoseSeq::iterator it)
+void PoseSeqInterpolator::Impl::onPoseInserted(PoseSeq::iterator /* pose */)
 {
     needUpdate = true;
 }
 
 
-void PSIImpl::onPoseRemoving(PoseSeq::iterator it, bool isMoving)
+void PoseSeqInterpolator::Impl::onPoseAboutToBeRemoved(PoseSeq::iterator /* pose */, bool /* isMoving */)
 {
     needUpdate = true;
 }
 
 
-void PSIImpl::onPoseModified(PoseSeq::iterator it)
+void PoseSeqInterpolator::Impl::onPoseModified(PoseSeq::iterator /* pose */)
 {
     needUpdate = true;
 }

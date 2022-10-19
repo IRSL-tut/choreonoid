@@ -1,9 +1,5 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "PoseSeqItem.h"
+#include "BodyKeyPose.h"
 #include "BodyMotionGenerationBar.h"
 #include <cnoid/ItemManager>
 #include <cnoid/ItemTreeView>
@@ -11,20 +7,122 @@
 #include <cnoid/MessageView>
 #include <cnoid/LinkPath>
 #include <cnoid/BodyItem>
+#include <cnoid/BodyMotionItem>
 #include <cnoid/LeggedBodyHelper>
 #include <cnoid/Archive>
 #include <cnoid/PutPropertyFunction>
 #include <fmt/format.h>
-#include <iostream>
+#include <set>
+#include <deque>
+#include <algorithm>
 #include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
 using fmt::format;
 
-namespace {
+namespace cnoid {
 
-const bool TRACE_FUNCTIONS = false;
+class PoseSeqItem::Impl
+{
+public:
+    PoseSeqItem* self;
+    
+    BodyItem* ownerBodyItem;
+    PoseSeqPtr seq;
+    PoseSeqInterpolatorPtr interpolator;
+    BodyMotionItemPtr bodyMotionItem;
+    Connection sigInterpolationParametersChangedConnection;
+
+    struct PoseSeqIteratorComp {
+        bool operator()(const PoseSeq::iterator& it1, const PoseSeq::iterator& it2) const {
+            return &(*it1) < &(*it2);
+        }
+    };
+
+    std::vector<PoseSeq::iterator> selectedPoses;
+    // Used to check the duplication
+    std::set<PoseSeq::iterator, PoseSeqIteratorComp> selectedPoseSet;
+    Signal<void(const std::vector<PoseSeq::iterator>& poses)> sigPoseSelectionChanged;
+
+    ConnectionSet editConnections;
+
+    struct EditHistory {
+        /*
+          Unify these containers into one which contains elements
+          in the operated orders and restore them in the same order
+          when undo or redo is carried out.
+        */
+        PoseSeqPtr removed;
+        PoseSeqPtr added;
+        EditHistory(){
+            removed = new PoseSeq();
+            added = new PoseSeq();
+        }
+        bool empty(){
+            return removed->empty() && added->empty();
+        }
+        void clear(){
+            if(!empty()){
+                removed = new PoseSeq();
+                added = new PoseSeq();
+            }
+        }
+    };
+
+    std::set<PoseSeq::iterator, PoseSeqIteratorComp> inserted;
+    std::set<PoseSeq::iterator, PoseSeqIteratorComp> modified;
+            
+    PoseSeq::iterator modifyingPoseIter;
+    AbstractPosePtr preModifiedPose;
+    double preModifiedPoseTime;
+    double preModifiedPoseTransitionTime;
+
+    std::deque<EditHistory> editHistories;
+    EditHistory newHistory;
+    int currentHistory;
+
+    BodyMotionGenerationBar* generationBar;
+    TimeBar* timeBar;
+
+    bool isSelectedPoseBeingMoved;
+    bool isPoseSelectionChangedByEditing;
+
+    double barLength;
+
+    Impl(PoseSeqItem* self);
+    Impl(PoseSeqItem* self, const PoseSeqItem::Impl& org);
+    void init();
+    ~Impl();
+    bool clearPoseSelection(bool doNotify);
+    void selectPose(PoseSeq::iterator pose, bool doNotify, bool doSort);
+    void selectAllPoses(bool doNotify);
+    bool deselectPose(PoseSeq::iterator pose, bool doNotify);
+    void onTreePathChanged();
+    void convert(BodyPtr orgBody);
+    bool convertSub(BodyPtr orgBody, const Mapping& convInfo);
+    void updateInterpolationParameters();
+    bool updateInterpolation();
+    bool updateTrajectory(bool putMessages);
+    void beginEditing();
+    bool endEditing(bool actuallyModified);
+    void onPoseInserted(PoseSeq::iterator pose, bool isMoving);
+    void onPoseAboutToBeRemoved(PoseSeq::iterator pose, bool isMoving);
+    void onPoseAboutToBeModified(PoseSeq::iterator pose);
+    void onPoseModified(PoseSeq::iterator pose);
+    void clearEditHistory();
+    PoseSeq::iterator removeSameElement(PoseSeq::iterator current, PoseSeq::iterator p);
+    bool undo();
+    bool redo();
+    bool updatePosesWithBalancedTrajectories(std::ostream& os);
+    void doPutProperties(PutPropertyFunction& putProperty);
+    bool store(Archive& archive);
+    bool restore(const Archive& archive);
+};
+
+}
+
+namespace {
 
 bool loadPoseSeqItem(PoseSeqItem* item, const std::string& filename, std::ostream& os, Item* parentItem)
 {
@@ -100,59 +198,239 @@ void PoseSeqItem::initializeClass(ExtensionManager* ext)
 
 
 PoseSeqItem::PoseSeqItem()
-    : seq(new PoseSeq())
 {
+    impl = new Impl(this);
+}
+
+
+PoseSeqItem::Impl::Impl(PoseSeqItem* self)
+    : self(self)
+{
+    seq = new PoseSeq;
+    
     init();
 
-    barLength_ = 1.0;
+    barLength = 1.0;
 }
 
 
 PoseSeqItem::PoseSeqItem(const PoseSeqItem& org)
-    : Item(org),
-      seq(new PoseSeq(*org.seq))
+    : Item(org)
 {
-    init();
-
-    barLength_ = org.barLength_;
+    impl = new Impl(this, *org.impl);
 }
 
 
-void PoseSeqItem::init()
+PoseSeqItem::Impl::Impl(PoseSeqItem* self, const PoseSeqItem::Impl& org)
+    : self(self)
 {
-    ownerBodyItem = 0;
+    seq = new PoseSeq(*org.seq);
     
-    interpolator_.reset(new PoseSeqInterpolator());
-    interpolator_->setPoseSeq(seq);
+    init();
+
+    barLength = org.barLength;
+}
+
+
+void PoseSeqItem::Impl::init()
+{
+    ownerBodyItem = nullptr;
     
-    bodyMotionItem_ = new BodyMotionItem();
-    bodyMotionItem_->setName("motion");
-    addSubItem(bodyMotionItem_);
+    interpolator.reset(new PoseSeqInterpolator);
+    interpolator->setPoseSeq(seq);
+    
+    bodyMotionItem = new BodyMotionItem;
+    bodyMotionItem->setName("motion");
+    self->addSubItem(bodyMotionItem);
 
     clearEditHistory();
 
     generationBar = BodyMotionGenerationBar::instance();
 
-    isSelectedPoseMoving = false;
+    isSelectedPoseBeingMoved = false;
+    isPoseSelectionChangedByEditing = false;
 }
 
 
 PoseSeqItem::~PoseSeqItem()
+{
+    delete impl;
+}
+
+
+PoseSeqItem::Impl::~Impl()
 {
     editConnections.disconnect();
     sigInterpolationParametersChangedConnection.disconnect();
 }
 
 
+Item* PoseSeqItem::doCloneItem(CloneMap* /* cloneMap */) const
+{
+    return new PoseSeqItem(*this);
+}
+
+
 bool PoseSeqItem::setName(const std::string& name)
 {
-    seq->setName(name);
+    impl->seq->setName(name);
     suggestFileUpdate();
     return Item::setName(name);
 }
 
 
+PoseSeq* PoseSeqItem::poseSeq()
+{
+    return impl->seq;
+}
+
+
+PoseSeqInterpolatorPtr PoseSeqItem::interpolator()
+{
+    return impl->interpolator;
+}
+
+
+BodyMotionItem* PoseSeqItem::bodyMotionItem()
+{
+    return impl->bodyMotionItem;
+}
+
+
+double PoseSeqItem::barLength() const
+{
+    return impl->barLength;
+}
+
+
+const std::vector<PoseSeq::iterator>& PoseSeqItem::selectedPoses() const
+{
+    return impl->selectedPoses;
+}
+
+
+bool PoseSeqItem::clearPoseSelection(bool doNotify)
+{
+    return impl->clearPoseSelection(doNotify);
+}
+
+
+bool PoseSeqItem::Impl::clearPoseSelection(bool doNotify)
+{
+    bool cleared = false;
+    if(!selectedPoses.empty()){
+        selectedPoses.clear();
+        selectedPoseSet.clear();
+        if(doNotify){
+            self->notifyPoseSelectionChange();
+        }
+        cleared = true;
+    }
+    return cleared;
+}
+
+
+void PoseSeqItem::selectPose(PoseSeq::iterator pose, bool doNotify, bool doSort)
+{
+    impl->selectPose(pose, doNotify, doSort);
+}
+
+
+void PoseSeqItem::Impl::selectPose(PoseSeq::iterator pose, bool doNotify, bool doSort)
+{
+    auto inserted = selectedPoseSet.insert(pose);
+    if(inserted.second){
+        selectedPoses.push_back(pose);
+        if(doSort){
+            std::stable_sort(
+                selectedPoses.begin(),
+                selectedPoses.end(),
+                [](const PoseSeq::iterator& a, const PoseSeq::iterator& b){
+                    return a->time() < b->time();
+                });
+        }
+        if(doNotify){
+            self->notifyPoseSelectionChange();
+        }
+    }
+}
+
+
+void PoseSeqItem::selectAllPoses(bool doNotify)
+{
+    impl->selectAllPoses(doNotify);
+}
+
+
+void PoseSeqItem::Impl::selectAllPoses(bool doNotify)
+{
+    if(seq->empty() && selectedPoses.empty()){
+        return;
+    }
+    clearPoseSelection(false);
+    for(auto it = seq->begin(); it != seq->end(); ++it){
+        selectPose(it, false, false);
+    }
+    if(doNotify){
+        self->notifyPoseSelectionChange();
+    }
+}
+
+
+bool PoseSeqItem::deselectPose(PoseSeq::iterator pose, bool doNotify)
+{
+    return impl->deselectPose(pose, doNotify);
+}
+
+
+bool PoseSeqItem::Impl::deselectPose(PoseSeq::iterator pose, bool doNotify)
+{
+    bool deselected = false;
+    if(selectedPoseSet.erase(pose) > 0){
+        auto found =
+            std::equal_range(
+            selectedPoses.begin(),
+            selectedPoses.end(),
+            pose,
+            [](const PoseSeq::iterator& a, const PoseSeq::iterator& b){
+                return a->time() < b->time();
+            });
+        selectedPoses.erase(found.first, found.second);
+        deselected = true;
+        if(doNotify){
+            self->notifyPoseSelectionChange();
+        }
+    }
+    return deselected;
+}
+
+
+bool PoseSeqItem::checkSelected(PoseSeq::iterator pose) const
+{
+    return (impl->selectedPoseSet.find(pose) != impl->selectedPoseSet.end());
+}
+
+
+void PoseSeqItem::notifyPoseSelectionChange()
+{
+    impl->sigPoseSelectionChanged(impl->selectedPoses);
+    
+}
+
+
+SignalProxy<void(const std::vector<PoseSeq::iterator>& poses)> PoseSeqItem::sigPoseSelectionChanged()
+{
+    return impl->sigPoseSelectionChanged;
+}
+
+
 void PoseSeqItem::onTreePathChanged()
+{
+    impl->onTreePathChanged();
+}
+
+
+void PoseSeqItem::Impl::onTreePathChanged()
 {
     if(!sigInterpolationParametersChangedConnection.connected()){
         sigInterpolationParametersChangedConnection =
@@ -162,13 +440,13 @@ void PoseSeqItem::onTreePathChanged()
     }
 
     BodyItemPtr prevBodyItem = ownerBodyItem;
-    ownerBodyItem = findOwnerItem<BodyItem>();
+    ownerBodyItem = self->findOwnerItem<BodyItem>();
     if(ownerBodyItem == prevBodyItem){
         return;
     }
         
     if(!ownerBodyItem){
-        interpolator_->setBody(0);
+        interpolator->setBody(nullptr);
 
     } else {
         Body* body = ownerBodyItem->body();
@@ -179,7 +457,7 @@ void PoseSeqItem::onTreePathChanged()
             convert(prevBodyItem->body());
         }
 
-        interpolator_->setBody(body);
+        interpolator->setBody(body);
 
         const Listing& linearInterpolationJoints =
             *ownerBodyItem->body()->info()->findListing("linearInterpolationJoints");
@@ -187,7 +465,7 @@ void PoseSeqItem::onTreePathChanged()
             for(int i=0; i < linearInterpolationJoints.size(); ++i){
                 Link* link = body->link(linearInterpolationJoints[i].toString());
                 if(link){
-                    interpolator_->setLinearInterpolationJoint(link->jointId());
+                    interpolator->setLinearInterpolationJoint(link->jointId());
                 }
             }
         }
@@ -195,24 +473,23 @@ void PoseSeqItem::onTreePathChanged()
         LeggedBodyHelperPtr legged = getLeggedBodyHelper(ownerBodyItem->body());
         if(legged->isValid()){
             for(int i=0; i < legged->numFeet(); ++i){
-                interpolator_->addFootLink(legged->footLink(i)->index(), legged->centerOfSoleLocal(i));
+                interpolator->addFootLink(legged->footLink(i)->index(), legged->centerOfSoleLocal(i));
             }
         }
 
-        interpolator_->setLipSyncShapes(*ownerBodyItem->body()->info()->findMapping("lipSyncShapes"));
-        bodyMotionItem_->motion()->setNumJoints(interpolator_->body()->numJoints());
+        interpolator->setLipSyncShapes(*ownerBodyItem->body()->info()->findMapping("lipSyncShapes"));
+        bodyMotionItem->motion()->setNumJoints(interpolator->body()->numJoints());
 
         if(generationBar->isAutoGenerationForNewBodyEnabled()){
             updateTrajectory(true);
         } else {
-            bodyMotionItem_->notifyUpdate();
+            bodyMotionItem->notifyUpdate();
         }
     }
 }
 
 
-
-void PoseSeqItem::convert(BodyPtr orgBody)
+void PoseSeqItem::Impl::convert(BodyPtr orgBody)
 {
     if(!orgBody){
         return;
@@ -229,12 +506,12 @@ void PoseSeqItem::convert(BodyPtr orgBody)
                     beginEditing();
                     if(endEditing(convertSub(orgBody, convInfo))){
                         
-                        clearFileInformation();
+                        self->clearFileInformation();
                         BodyPtr body = ownerBodyItem->body();
                         seq->setTargetBodyName(body->name());
                         MessageView::mainInstance()->notify(
                             format(_("Pose seq \"{0}\" has been converted. Its target has been changed from {1} to {2}"),
-                                   displayName(), orgBody->name(), body->name()));
+                                   self->displayName(), orgBody->name(), body->name()));
                         
                         return;
                     }
@@ -245,7 +522,7 @@ void PoseSeqItem::convert(BodyPtr orgBody)
 }
 
 
-bool PoseSeqItem::convertSub(BodyPtr orgBody, const Mapping& convInfo)
+bool PoseSeqItem::Impl::convertSub(BodyPtr orgBody, const Mapping& convInfo)
 {
     bool converted = false;
     
@@ -253,69 +530,71 @@ bool PoseSeqItem::convertSub(BodyPtr orgBody, const Mapping& convInfo)
     const Mapping& linkMap = *convInfo.findMapping("linkMap");
     BodyPtr body = ownerBodyItem->body();
     
-    for(PoseSeq::iterator p = seq->begin(); p != seq->end(); ++p){
-        PosePtr pose = p->get<Pose>();
-        if(pose){
+    for(auto it = seq->begin(); it != seq->end(); ++it){
 
-            bool modified = false;
-            seq->beginPoseModification(p);
-                
-            PosePtr orgPose = dynamic_cast<Pose*>(pose->duplicate());
-            if(jointMap.isValid()){
-                modified = true;
-                pose->setNumJoints(0);
-                int n = orgPose->numJoints();
-                for(int i=0; i < n; ++i){
-                    if(orgPose->isJointValid(i)){
-                        if(i < jointMap.size()){
-                            int newJointId = jointMap[i].toInt();
-                            if(newJointId >= 0){
-                                pose->setJointPosition(newJointId, orgPose->jointPosition(i));
-                                pose->setJointStationaryPoint(newJointId, orgPose->isJointStationaryPoint(i));
-                            }
+        auto pose = it->get<BodyKeyPose>();
+        
+        if(!pose){
+            continue;
+        }
+
+        bool modified = false;
+        seq->beginPoseModification(it);
+        
+        BodyKeyPosePtr orgPose = pose->clone();
+        if(jointMap.isValid()){
+            modified = true;
+            pose->setNumJoints(0);
+            int n = orgPose->numJoints();
+            for(int i=0; i < n; ++i){
+                if(orgPose->isJointValid(i)){
+                    if(i < jointMap.size()){
+                        int newJointId = jointMap[i].toInt();
+                        if(newJointId >= 0){
+                            pose->setJointDisplacement(newJointId, orgPose->jointDisplacement(i));
+                            pose->setJointStationaryPoint(newJointId, orgPose->isJointStationaryPoint(i));
                         }
                     }
                 }
             }
-
-            if(linkMap.isValid()){
-                modified = true;
-                pose->clearIkLinks();
-                int baseLinkIndex = -1;
-                for(Pose::LinkInfoMap::const_iterator q = orgPose->ikLinkBegin(); q != orgPose->ikLinkEnd(); ++q){
-                    Link* orgLink = orgBody->link(q->first);
-                    string linkName;
-                    ValueNode* linkNameNode = linkMap.find(orgLink->name());
-                    if(linkNameNode->isValid()){
-                        linkName = linkNameNode->toString();
-                    } else {
-                        linkName = orgLink->name();
+        }
+        
+        if(linkMap.isValid()){
+            modified = true;
+            pose->clearIkLinks();
+            int baseLinkIndex = -1;
+            for(auto ikLinkIter = orgPose->ikLinkBegin(); ikLinkIter != orgPose->ikLinkEnd(); ++ikLinkIter){
+                Link* orgLink = orgBody->link(ikLinkIter->first);
+                string linkName;
+                ValueNode* linkNameNode = linkMap.find(orgLink->name());
+                if(linkNameNode->isValid()){
+                    linkName = linkNameNode->toString();
+                } else {
+                    linkName = orgLink->name();
+                }
+                Link* link = body->link(linkName);
+                if(link){
+                    const BodyKeyPose::LinkInfo& orgLinkInfo = ikLinkIter->second;
+                    BodyKeyPose::LinkInfo* linkInfo = pose->getOrCreateIkLink(link->index());
+                    linkInfo->setPosition(orgLinkInfo.position());
+                    linkInfo->setStationaryPoint(orgLinkInfo.isStationaryPoint());
+                    if(orgLinkInfo.isTouching()){
+                        linkInfo->setTouching(orgLinkInfo.partingDirection(), orgLinkInfo.contactPoints());
                     }
-                    Link* link = body->link(linkName);
-                    if(link){
-                        const Pose::LinkInfo& orgLinkInfo = q->second;
-                        Pose::LinkInfo* linkInfo = pose->addIkLink(link->index());
-                        linkInfo->p = orgLinkInfo.p;
-                        linkInfo->R = orgLinkInfo.R;
-                        linkInfo->setStationaryPoint(orgLinkInfo.isStationaryPoint());
-                        if(orgLinkInfo.isTouching()){
-                            linkInfo->setTouching(orgLinkInfo.partingDirection(), orgLinkInfo.contactPoints());
-                        }
-                        linkInfo->setSlave(orgLinkInfo.isSlave());
-                        if(orgLinkInfo.isBaseLink()){
-                            baseLinkIndex = link->index();
-                        }
+                    linkInfo->setSlave(orgLinkInfo.isSlave());
+                    if(orgLinkInfo.isBaseLink()){
+                        baseLinkIndex = link->index();
                     }
                 }
-                if(baseLinkIndex >= 0){
-                    pose->setBaseLink(baseLinkIndex);
-                }
             }
-
-            if(modified){
-                seq->endPoseModification(p);
-                converted = true;
+            if(baseLinkIndex >= 0){
+                pose->setBaseLink(baseLinkIndex);
             }
+        }
+        
+        if(modified){
+            seq->endPoseModification(it);
+            converted = true;
         }
     }
 
@@ -323,47 +602,53 @@ bool PoseSeqItem::convertSub(BodyPtr orgBody, const Mapping& convInfo)
 }
 
 
-Item* PoseSeqItem::doCloneItem(CloneMap* /* cloneMap */) const
+void PoseSeqItem::Impl::updateInterpolationParameters()
 {
-    return new PoseSeqItem(*this);
-}
+    interpolator->setTimeScaleRatio(generationBar->timeScaleRatio());
 
-
-void PoseSeqItem::updateInterpolationParameters()
-{
-    interpolator_->setTimeScaleRatio(generationBar->timeScaleRatio());
-
-    interpolator_->enableStealthyStepMode(generationBar->isStealthyStepMode());
-    interpolator_->setStealthyStepParameters(
+    interpolator->enableStealthyStepMode(generationBar->isStealthyStepMode());
+    interpolator->setStealthyStepParameters(
         generationBar->stealthyHeightRatioThresh(),
         generationBar->flatLiftingHeight(), generationBar->flatLandingHeight(),
         generationBar->impactReductionHeight(), generationBar->impactReductionTime());
 
-    interpolator_->enableAutoZmpAdjustmentMode(generationBar->isAutoZmpAdjustmentMode());
-    interpolator_->setZmpAdjustmentParameters(
+    interpolator->enableAutoZmpAdjustmentMode(generationBar->isAutoZmpAdjustmentMode());
+    interpolator->setZmpAdjustmentParameters(
         generationBar->minZmpTransitionTime(),
         generationBar->zmpCenteringTimeThresh(),
         generationBar->zmpTimeMarginBeforeLifting(),
         generationBar->zmpMaxDistanceFromCenter());
 
-    interpolator_->enableLipSyncMix(generationBar->isLipSyncMixMode());
+    interpolator->enableLipSyncMix(generationBar->isLipSyncMixMode());
 }        
 
 
 bool PoseSeqItem::updateInterpolation()
 {
+    return impl->updateInterpolation();
+}
+
+
+bool PoseSeqItem::Impl::updateInterpolation()
+{
     updateInterpolationParameters();
-    return interpolator_->update();
+    return interpolator->update();
 }
 
 
 bool PoseSeqItem::updateTrajectory(bool putMessages)
 {
+    return impl->updateTrajectory(putMessages);
+}
+
+
+bool PoseSeqItem::Impl::updateTrajectory(bool putMessages)
+{
     bool result = false;
 
     if(ownerBodyItem){
         result = generationBar->shapeBodyMotion(
-            ownerBodyItem->body(), interpolator_.get(), bodyMotionItem_, putMessages);
+            ownerBodyItem->body(), interpolator.get(), bodyMotionItem, putMessages);
     }
 
     return result;
@@ -372,107 +657,150 @@ bool PoseSeqItem::updateTrajectory(bool putMessages)
 
 void PoseSeqItem::beginEditing()
 {
-    if(TRACE_FUNCTIONS){
-        cout << "PoseSeqItem::beginEditing()" << endl;
-    }
+    impl->beginEditing();
+}
+
+
+void PoseSeqItem::Impl::beginEditing()
+{
     newHistory.clear();
     inserted.clear();
     modified.clear();
     modifyingPoseIter = seq->end();
+    isSelectedPoseBeingMoved = false;
+    isPoseSelectionChangedByEditing = false;
 
     if(editConnections.empty()){
-        editConnections = seq->connectSignalSet(
-            [&](PoseSeq::iterator p, bool isMoving){ onInserted(p, isMoving); },
-            [&](PoseSeq::iterator p, bool isMoving){ onRemoving(p, isMoving); },
-            [&](PoseSeq::iterator p){ onModifying(p); },
-            [&](PoseSeq::iterator p){ onModified(p); });
+        editConnections.add(
+            seq->sigPoseInserted().connect(
+                [this](PoseSeq::iterator pose, bool isMoving){
+                    onPoseInserted(pose, isMoving);
+                }));
+        editConnections.add(
+            seq->sigPoseAboutToBeRemoved().connect(
+                [this](PoseSeq::iterator pose, bool isMoving){
+                    onPoseAboutToBeRemoved(pose, isMoving);
+                }));
+        editConnections.add(
+            seq->sigPoseAboutToBeModified().connect(
+                [this](PoseSeq::iterator pose){
+                    onPoseAboutToBeModified(pose);
+                }));
+        editConnections.add(
+            seq->sigPoseModified().connect(
+                [this](PoseSeq::iterator pose){
+                    onPoseModified(pose);
+                }));
     }
 }
 
 
 bool PoseSeqItem::endEditing(bool actuallyModified)
 {
-    if(TRACE_FUNCTIONS){
-        cout << "PoseSeqItem::endEditing()" << endl;
-    }
+    return impl->endEditing(actuallyModified);
+}
+
+
+bool PoseSeqItem::Impl::endEditing(bool actuallyModified)
+{
     if(actuallyModified){
-        for(std::set<PoseSeq::iterator, PoseIterComp>::iterator p = inserted.begin(); p != inserted.end(); ++p){
-            newHistory.added->insert(newHistory.added->end(), (*p)->time(), (*p)->poseUnit()->duplicate())
-                ->setMaxTransitionTime((*p)->maxTransitionTime());
+        for(auto& it : inserted){
+            newHistory.added->insert(newHistory.added->end(), it->time(), it->pose()->clone())
+                ->setMaxTransitionTime(it->maxTransitionTime());
         }
-        for(std::set<PoseSeq::iterator, PoseIterComp>::iterator p = modified.begin(); p != modified.end(); ++p){
-            newHistory.added->insert(newHistory.added->end(), (*p)->time(), (*p)->poseUnit()->duplicate())
-                ->setMaxTransitionTime((*p)->maxTransitionTime());
+        for(auto& it : modified){
+            newHistory.added->insert(newHistory.added->end(), it->time(), it->pose()->clone())
+                ->setMaxTransitionTime(it->maxTransitionTime());
         }
         if(!newHistory.empty()){
             editHistories.resize(currentHistory);
             editHistories.push_back(newHistory);
             currentHistory = editHistories.size();
-            suggestFileUpdate();
-        } 
+            self->suggestFileUpdate();
+        }
+
+        // This does not necessarily have to be done here.
+        // The interpolation information the following function updates
+        // is automatically updated on demand when a interpolation is actually done.
+        updateInterpolation();
+    
+        if(BodyMotionGenerationBar::instance()->isAutoGenerationMode()){
+            updateTrajectory(false);
+        }
     }
+    
     modifyingPoseIter = seq->end();
     inserted.clear();
     modified.clear();
     newHistory.clear();
     editConnections.disconnect();
 
+    isSelectedPoseBeingMoved = false;
+    if(isPoseSelectionChangedByEditing){
+        self->notifyPoseSelectionChange();
+        isPoseSelectionChangedByEditing = false;
+    }
+
     return actuallyModified;
 }
 
 
-void PoseSeqItem::onInserted(PoseSeq::iterator p, bool isMoving)
+void PoseSeqItem::Impl::onPoseInserted(PoseSeq::iterator pose, bool isMoving)
 {
-    if(isSelectedPoseMoving && isMoving){
-        modified.insert(p);
-        isSelectedPoseMoving = false;
-    }
-    inserted.insert(p);
-}
-
-
-void PoseSeqItem::onRemoving(PoseSeq::iterator p, bool isMoving)
-{
-    if(isMoving){
-        if(modified.find(p) != modified.end()){
-            modified.erase(p);
-            isSelectedPoseMoving = true;
+    if(isSelectedPoseBeingMoved){
+        if(isMoving){
+            modified.insert(pose);
+            selectPose(pose, false, true);
+            isPoseSelectionChangedByEditing = true;
         }
+        isSelectedPoseBeingMoved = false;
     }
-
-    if(inserted.find(p) != inserted.end()){
-        inserted.erase(p);
-    } else {
-        newHistory.removed->insert(newHistory.removed->end(), p->time(), p->poseUnit()->duplicate())
-            ->setMaxTransitionTime(p->maxTransitionTime());
-    }
+    inserted.insert(pose);
 }
 
 
-void PoseSeqItem::onModifying(PoseSeq::iterator p)
+void PoseSeqItem::Impl::onPoseAboutToBeRemoved(PoseSeq::iterator pose, bool isMoving)
 {
-    if(TRACE_FUNCTIONS){
-        cout << "PoseSeqItem::onModifying()" << endl;
+    if(deselectPose(pose, false)){
+        if(isMoving){
+            isSelectedPoseBeingMoved = true;
+        }
+        isPoseSelectionChangedByEditing = true;
     }
     
-    modifyingPoseTime = p->time();
-    modifyingPoseTTime = p->maxTransitionTime();
-    modifyingPoseUnitOrg = p->poseUnit()->duplicate();
-    modifyingPoseIter = p;
+    if(modified.find(pose) != modified.end()){
+        modified.erase(pose);
+    }
+
+    if(inserted.find(pose) != inserted.end()){
+        inserted.erase(pose);
+    } else {
+        newHistory.removed->insert(newHistory.removed->end(), pose->time(), pose->pose()->clone())
+            ->setMaxTransitionTime(pose->maxTransitionTime());
+    }
 }
 
 
-void PoseSeqItem::onModified(PoseSeq::iterator p)
+void PoseSeqItem::Impl::onPoseAboutToBeModified(PoseSeq::iterator pose)
 {
-    if(TRACE_FUNCTIONS){
-        cout << "PoseSeqItem::onModified()" << endl;
-    }
+    modifyingPoseIter = pose;
+    preModifiedPose = pose->pose()->clone();
+    preModifiedPoseTime = pose->time();
+    preModifiedPoseTransitionTime = pose->maxTransitionTime();
+}
 
-    if(p == modifyingPoseIter){
-        if(modified.find(p) == modified.end()){
-            newHistory.removed->insert(newHistory.removed->end(), modifyingPoseTime, modifyingPoseUnitOrg)
-                ->setMaxTransitionTime(modifyingPoseTTime);
-            modified.insert(p);
+
+void PoseSeqItem::Impl::onPoseModified(PoseSeq::iterator pose)
+{
+    if(pose == modifyingPoseIter){
+        if(modified.find(pose) == modified.end()){
+            modified.insert(pose);
+            auto removed =
+                newHistory.removed->insert(
+                    newHistory.removed->end(),
+                    preModifiedPoseTime,
+                    preModifiedPose);
+            removed->setMaxTransitionTime(preModifiedPoseTransitionTime);
         }
     }
     modifyingPoseIter = seq->end();
@@ -481,16 +809,22 @@ void PoseSeqItem::onModified(PoseSeq::iterator p)
 
 void PoseSeqItem::clearEditHistory()
 {
+    impl->clearEditHistory();
+}
+
+
+void PoseSeqItem::Impl::clearEditHistory()
+{
     currentHistory = 0;
     editHistories.clear();
 }
 
 
-PoseSeq::iterator PoseSeqItem::removeSameElement(PoseSeq::iterator current, PoseSeq::iterator p)
+PoseSeq::iterator PoseSeqItem::Impl::removeSameElement(PoseSeq::iterator current, PoseSeq::iterator it)
 {
-    current = seq->seek(current, p->time());
-    while(current->time() == p->time()){
-        if(current->poseUnit()->hasSameParts(p->poseUnit())){
+    current = seq->seek(current, it->time());
+    while(current->time() == it->time()){
+        if(current->pose()->hasSameParts(it->pose())){
             return seq->erase(current);
         }
         ++current;
@@ -501,21 +835,27 @@ PoseSeq::iterator PoseSeqItem::removeSameElement(PoseSeq::iterator current, Pose
 
 bool PoseSeqItem::undo()
 {
+    return impl->undo();
+}
+
+
+bool PoseSeqItem::Impl::undo()
+{
     if(currentHistory > 0){
         editConnections.block();
         EditHistory& history = editHistories[--currentHistory];
         PoseSeqPtr added = history.added;
-        PoseSeq::iterator current = seq->begin();
-        for(PoseSeq::iterator p = added->begin(); p != added->end(); ++p){
-            current = removeSameElement(current, p);
+        auto current = seq->begin();
+        for(auto it = added->begin(); it != added->end(); ++it){
+            current = removeSameElement(current, it);
         }
         PoseSeqPtr removed = history.removed;
-        for(PoseSeq::iterator p = removed->begin(); p != removed->end(); ++p){
-            current = seq->insert(current, p->time(), p->poseUnit()->duplicate());
-            current->setMaxTransitionTime(p->maxTransitionTime());
+        for(auto it = removed->begin(); it != removed->end(); ++it){
+            current = seq->insert(current, it->time(), it->pose()->clone());
+            current->setMaxTransitionTime(it->maxTransitionTime());
         }
         editConnections.unblock();
-        suggestFileUpdate();
+        self->suggestFileUpdate();
         return true;
     }
     return false;
@@ -524,30 +864,42 @@ bool PoseSeqItem::undo()
 
 bool PoseSeqItem::redo()
 {
+    return impl->redo();
+}
+
+
+bool PoseSeqItem::Impl::redo()
+{
     if(currentHistory < (int)editHistories.size()){
         editConnections.block();
         EditHistory& history = editHistories[currentHistory++];
         PoseSeqPtr removed = history.removed;
-        PoseSeq::iterator current = seq->begin();
-        for(PoseSeq::iterator p = removed->begin(); p != removed->end(); ++p){
-            current = removeSameElement(current, p);
+        auto current = seq->begin();
+        for(auto it = removed->begin(); it != removed->end(); ++it){
+            current = removeSameElement(current, it);
         }
         PoseSeqPtr added = history.added;
-        for(PoseSeq::iterator p = added->begin(); p != added->end(); ++p){
-            current = seq->insert(current, p->time(), p->poseUnit()->duplicate());
-            current->setMaxTransitionTime(p->maxTransitionTime());
+        for(auto it = added->begin(); it != added->end(); ++it){
+            current = seq->insert(current, it->time(), it->pose()->clone());
+            current->setMaxTransitionTime(it->maxTransitionTime());
         }
         editConnections.unblock();
-        suggestFileUpdate();
+        self->suggestFileUpdate();
         return true;
     }
     return false;
 }
 
 
-bool PoseSeqItem::updateKeyPosesWithBalancedTrajectories(std::ostream& os)
+bool PoseSeqItem::updatePosesWithBalancedTrajectories(std::ostream& os)
 {
-    auto motion = bodyMotionItem()->motion();
+    return impl->updatePosesWithBalancedTrajectories(os);
+}
+
+
+bool PoseSeqItem::Impl::updatePosesWithBalancedTrajectories(std::ostream& os)
+{
+    auto motion = bodyMotionItem->motion();
     auto qseq = motion->jointPosSeq();
     auto pseq = motion->linkPosSeq();
 
@@ -564,35 +916,35 @@ bool PoseSeqItem::updateKeyPosesWithBalancedTrajectories(std::ostream& os)
 
     beginEditing();
     
-    for(PoseSeq::iterator p = seq->begin(); p != seq->end(); ++p){
-        PosePtr pose = p->get<Pose>();
-        if(pose){
+    for(auto it = seq->begin(); it != seq->end(); ++it){
 
-            seq->beginPoseModification(p);
+        if(auto pose = it->get<BodyKeyPose>()){
+            
+            seq->beginPoseModification(it);
             
             int nj = pose->numJoints();
-            int frame = qseq->frameOfTime(p->time());
+            int frame = qseq->frameOfTime(it->time());
             MultiValueSeq::Frame q = qseq->frame(frame);
             for(int i=0; i < nj; ++i){
                 if(pose->isJointValid(i)){
-                    pose->setJointPosition(i, q[i]);
+                    pose->setJointDisplacement(i, q[i]);
                 }
             }
             MultiSE3Seq::Frame pos = pseq->frame(frame);
-            for(Pose::LinkInfoMap::iterator q = pose->ikLinkBegin(); q != pose->ikLinkEnd(); ++q){
-                int linkIndex = q->first;
-                Pose::LinkInfo& info = q->second;
+            for(auto ikLinkIter = pose->ikLinkBegin(); ikLinkIter != pose->ikLinkEnd(); ++ikLinkIter){
+                int linkIndex = ikLinkIter->first;
+                BodyKeyPose::LinkInfo& info = ikLinkIter->second;
                 const Vector3& p = pos[linkIndex].translation();
                 // only update horizontal position
-                info.p[0] = p[0];
-                info.p[1] = p[1];
+                info.p()[0] = p[0];
+                info.p()[1] = p[1];
             }
 
-            seq->endPoseModification(p);
+            seq->endPoseModification(it);
         }
     }
 
-    endEditing();
+    endEditing(true);
 
     updateInterpolation();
     
@@ -602,20 +954,32 @@ bool PoseSeqItem::updateKeyPosesWithBalancedTrajectories(std::ostream& os)
 
 void PoseSeqItem::doPutProperties(PutPropertyFunction& putProperty)
 {
+    impl->doPutProperties(putProperty);
+}
+
+
+void PoseSeqItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
+{
     putProperty(_("Target body"), seq->targetBodyName());
-    putProperty(_("Bar length"), barLength_, changeProperty(barLength_));
+    putProperty(_("Bar length"), barLength, changeProperty(barLength));
 }
 
 
 bool PoseSeqItem::store(Archive& archive)
 {
-    if(overwriteOrSaveWithDialog()){
-        archive.writeFileInformation(this);
-        archive.write("barLength", barLength_);
-        if(bodyMotionItem_->isSelected()){
+    return impl->store(archive);
+}
+
+
+bool PoseSeqItem::Impl::store(Archive& archive)
+{
+    if(self->overwriteOrSaveWithDialog()){
+        archive.writeFileInformation(self);
+        archive.write("bar_length", barLength);
+        if(bodyMotionItem->isSelected()){
             archive.write("is_body_motion_selected", true);
         }
-        if(bodyMotionItem_->isChecked()){
+        if(bodyMotionItem->isChecked()){
             archive.write("is_body_motion_checked", true);
         }
         return true;
@@ -626,13 +990,19 @@ bool PoseSeqItem::store(Archive& archive)
 
 bool PoseSeqItem::restore(const Archive& archive)
 {
-    if(archive.loadFileTo(this)){
-        archive.read("barLength", barLength_);
+    return impl->restore(archive);
+}
+
+
+bool PoseSeqItem::Impl::restore(const Archive& archive)
+{
+    if(archive.loadFileTo(self)){
+        archive.read({ "bar_length", "barLength" }, barLength);
         if(archive.get("is_body_motion_selected", false)){
-            bodyMotionItem_->setSelected(true);
+            bodyMotionItem->setSelected(true);
         }
         if(archive.get("is_body_motion_checked", false)){
-            bodyMotionItem_->setChecked(true);
+            bodyMotionItem->setChecked(true);
         }
         return true;
     }

@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro NAKAOKA
-*/
-
 #include "PronunSymbol.h"
 #include <cnoid/ValueTree>
 #include <cnoid/YAMLWriter>
@@ -18,8 +13,8 @@ PronunSymbol::PronunSymbol()
 
 
 PronunSymbol::PronunSymbol(const PronunSymbol& org)
-    : PoseUnit(org),
-      actualPoseUnit_(org.actualPoseUnit_)
+    : AbstractPose(org),
+      symbol_(org.symbol_)
 {
 
 }
@@ -31,20 +26,20 @@ PronunSymbol::~PronunSymbol()
 }
 
 
-PoseUnit* PronunSymbol::duplicate()
+Referenced* PronunSymbol::doClone(CloneMap*) const
 {
     return new PronunSymbol(*this);
 }
 
 
-bool PronunSymbol::restore(const Mapping& archive, const BodyPtr body)
+bool PronunSymbol::restore(const Mapping& archive, const Body* body)
 {
-    return true;
+    return archive.read("name", symbol_);
 }
 
 
-void PronunSymbol::store(Mapping& archive, const BodyPtr body) const
+void PronunSymbol::store(Mapping& archive, const Body* body) const
 {
     archive.write("type", "PronunSymbol");
-    archive.write("name", name(), DOUBLE_QUOTED);
+    archive.write("name", symbol_, DOUBLE_QUOTED);
 }

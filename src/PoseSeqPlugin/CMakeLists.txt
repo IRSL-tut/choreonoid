@@ -12,7 +12,9 @@ set(target CnoidPoseSeqPlugin)
 
 set(sources
   PoseSeqPlugin.cpp
-  Pose.cpp
+  AbstractPose.cpp
+  BodyKeyPose.cpp
+  SequentialPose.cpp
   PoseSeq.cpp
   PoseSeqInterpolator.cpp
   PronunSymbol.cpp
@@ -27,7 +29,9 @@ set(sources
 )
 
 set(headers
-  Pose.h
+  AbstractPose.h
+  BodyKeyPose.h
+  SequentialPose.h
   PoseSeq.h
   PoseSeqInterpolator.h
   PoseFilters.h
@@ -35,6 +39,13 @@ set(headers
   BodyMotionGenerationBar.h
   exportdecl.h
   )
+
+option(ENABLE_HUMANOID_POSE_FETCH_VIEW OFF)
+mark_as_advanced(ENABLE_HUMANOID_POSE_FETCH_VIEW)
+if(ENABLE_HUMANOID_POSE_FETCH_VIEW)
+  add_definitions(-DCNOID_ENABLE_HUMANOID_POSE_FETCH_VIEW)
+set(sources ${sources} HumanoidPoseFetchView.cpp)
+endif()
 
 qt5_add_resources(RC_SRCS PoseSeqPlugin.qrc)
 

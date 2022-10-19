@@ -1,32 +1,38 @@
+#ifndef CNOID_POSE_SEQ_PLUGIN_PRONUN_SYMBOL_H
+#define CNOID_POSE_SEQ_PLUGIN_PRONUN_SYMBOL_H
 
-#ifndef CNOID_CHOREOGRAPHY_PRONUN_SYMBOL_H_INCLUDED
-#define CNOID_CHOREOGRAPHY_PRONUN_SYMBOL_H_INCLUDED
-
-#include "Pose.h"
+#include "AbstractPose.h"
+#include <string>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class CNOID_EXPORT PronunSymbol : public PoseUnit
+class CNOID_EXPORT PronunSymbol : public AbstractPose
 {
 public:
     PronunSymbol();
     PronunSymbol(const PronunSymbol& org);
     virtual ~PronunSymbol();
 
-    virtual PoseUnit* duplicate();
-    virtual bool restore(const Mapping& archive, const BodyPtr body);
-    virtual void store(Mapping& archive, const BodyPtr body) const;
-
-    inline PoseUnitPtr actualPoseUnit(){
-        return actualPoseUnit_;
+    const std::string& symbol() const {
+        return symbol_;
     }
-                
+    void setSymbol(const std::string& symbol){
+        symbol_ = symbol;
+    }
+    
+    virtual bool restore(const Mapping& archive, const Body* body);
+    virtual void store(Mapping& archive, const Body* body) const;
+
+protected:
+    virtual Referenced* doClone(CloneMap*) const override;
+
 private:
-    PoseUnitPtr actualPoseUnit_;
+    std::string symbol_;
 };
 
 typedef ref_ptr<PronunSymbol> PronunSymbolPtr;
+
 }
 
 #endif

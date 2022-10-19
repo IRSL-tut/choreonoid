@@ -1,16 +1,11 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include <cnoid/Config>
 #include <cnoid/Plugin>
 #include <cnoid/App>
 #include "PoseSeqItem.h"
 #include "PoseSeqEngine.h"
 #include "BodyMotionGenerationBar.h"
-//#include "PoseSeqView.h"
 #include "PoseRollView.h"
+#include "HumanoidPoseFetchView.h"
 #include "FcpFileLoader.h"
 #include <fmt/format.h>
 
@@ -32,7 +27,12 @@ public:
         initializePoseSeqEngine();
         BodyMotionGenerationBar::initializeInstance(this);
         PoseRollView::initializeClass(this);
-        initializeFcpFileLoader(*this);
+
+#ifdef CNOID_ENABLE_HUMANOID_POSE_FETCH_VIEW
+        HumanoidPoseFetchView::initializeClass(this);
+#endif
+        
+        initializeFcpFileLoader(this);
             
         return true;
     }

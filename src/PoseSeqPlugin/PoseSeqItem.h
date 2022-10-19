@@ -1,24 +1,14 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
-#ifndef CNOID_POSESEQ_PLUGIN_POSE_SEQ_ITEM_H
-#define CNOID_POSESEQ_PLUGIN_POSE_SEQ_ITEM_H
+#ifndef CNOID_POSE_SEQ_PLUGIN_POSE_SEQ_ITEM_H
+#define CNOID_POSE_SEQ_PLUGIN_POSE_SEQ_ITEM_H
 
 #include "PoseSeq.h"
 #include "PoseSeqInterpolator.h"
 #include <cnoid/Item>
-#include <cnoid/BodyMotionItem>
-#include <set>
-#include <deque>
 #include "exportdecl.h"
 
 namespace cnoid {
 
-class TimeBar;
-class BodyItem;
-class BodyMotionGenerationBar;
+class BodyMotionItem;
 
 class CNOID_EXPORT PoseSeqItem : public Item
 {
@@ -28,15 +18,33 @@ public:
     PoseSeqItem();
     PoseSeqItem(const PoseSeqItem& org);
     ~PoseSeqItem();
-            
+
     virtual bool setName(const std::string& name) override;
 
-    PoseSeqPtr poseSeq() { return seq; }
-    PoseSeqInterpolatorPtr interpolator(){ return interpolator_; }
-    BodyMotionItem* bodyMotionItem(){ return bodyMotionItem_; }
+    PoseSeq* poseSeq();
+    PoseSeqInterpolatorPtr interpolator();
+    BodyMotionItem* bodyMotionItem();
+    double barLength() const;
 
-    virtual bool updateInterpolation();
-    virtual bool updateTrajectory(bool putMessages = false);
+    typedef std::vector<PoseSeq::iterator> PoseSeqIteratorList;
+    const PoseSeqIteratorList& selectedPoses() const;
+    //! \return true if any selected item is actually cleared.
+    bool clearPoseSelection(bool doNotify = false);
+    void selectPose(PoseSeq::iterator pose, bool doNotify = false, bool doSort = true);
+    //! \return true if the elemnt is actually unselected from the selected state.
+    bool deselectPose(PoseSeq::iterator pose, bool doNotify = false);
+    void selectAllPoses(bool doNotify = false);
+    bool checkSelected(PoseSeq::iterator pose) const;
+    void notifyPoseSelectionChange();
+
+    /**
+       \note When a selected pose is removed from the sequence with the PoseSeq::erase function,
+       the pose is also removed from the selection and sigPoseSelectionChanged is emitted.
+    */
+    SignalProxy<void(const std::vector<PoseSeq::iterator>& selected)> sigPoseSelectionChanged();
+
+    bool updateInterpolation();
+    bool updateTrajectory(bool putMessages = false);
 
     void beginEditing();
     bool endEditing(bool actuallyModified = true);
@@ -48,85 +56,22 @@ public:
     /**
        temporary treatment.
     */
-    bool updateKeyPosesWithBalancedTrajectories(std::ostream& os);
-
-    double barLength() const { return barLength_; }
+    bool updatePosesWithBalancedTrajectories(std::ostream& os);
 
 protected:
-
     virtual Item* doCloneItem(CloneMap* cloneMap) const override;
     virtual void onTreePathChanged() override;
     virtual void doPutProperties(PutPropertyFunction& putProperty) override;
     virtual bool store(Archive& archive) override;
     virtual bool restore(const Archive& archive) override;
 
-    BodyItem* ownerBodyItem;
-    PoseSeqPtr seq;
-    PoseSeqInterpolatorPtr interpolator_;
-    BodyMotionItemPtr bodyMotionItem_;
-    Connection sigInterpolationParametersChangedConnection;
-
-    ConnectionSet editConnections;
-
-    struct EditHistory {
-        /*
-          Unify these containers into one which contains elements
-          in the operated orders and restore them in the same order
-          when undo or redo is carried out.
-        */
-        PoseSeqPtr removed;
-        PoseSeqPtr added;
-        EditHistory(){
-            removed = new PoseSeq();
-            added = new PoseSeq();
-        }
-        bool empty(){
-            return removed->empty() && added->empty();
-        }
-        void clear(){
-            if(!empty()){
-                removed = new PoseSeq();
-                added = new PoseSeq();
-            }
-        }
-    };
-
-    struct PoseIterComp {
-        bool operator()(const PoseSeq::iterator it1, const PoseSeq::iterator it2) const {
-            return &(*it1) < &(*it2);
-        }
-    };
-    std::set<PoseSeq::iterator, PoseIterComp> inserted;
-    std::set<PoseSeq::iterator, PoseIterComp> modified;
-            
-    double modifyingPoseTime;
-    double modifyingPoseTTime;
-    PoseUnitPtr modifyingPoseUnitOrg;
-    PoseSeq::iterator modifyingPoseIter;
-
-    std::deque<EditHistory> editHistories;
-    EditHistory newHistory;
-    int currentHistory;
-
-    BodyMotionGenerationBar* generationBar;
-    TimeBar* timeBar;
-
-    bool isSelectedPoseMoving;
-
-    double barLength_;
-
-    void init();
-    void convert(BodyPtr orgBody);
-    bool convertSub(BodyPtr orgBody, const Mapping& convInfo);
-    void updateInterpolationParameters();
-    void onInserted(PoseSeq::iterator p, bool isMoving);
-    void onRemoving(PoseSeq::iterator p, bool isMoving);
-    void onModifying(PoseSeq::iterator p);
-    void onModified(PoseSeq::iterator p);
-    PoseSeq::iterator removeSameElement(PoseSeq::iterator current, PoseSeq::iterator p);
+private:
+    class Impl;
+    Impl* impl;
 };
 
 typedef ref_ptr<PoseSeqItem> PoseSeqItemPtr;
+
 }
 
 #endif
