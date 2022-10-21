@@ -1,0 +1,6 @@
+[submodule "ext/robot_assembler_plugin"]
+	path = ext/robot_assembler_plugin
+	url = https://github.com/IRSL-tut/robot_assembler_plugin.git
+[submodule "ext/jupyter_plugin"]
+	path = ext/jupyter_plugin
+	url = https://github.com/IRSL-tut/jupyter_plugin.git
