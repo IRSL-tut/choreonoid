@@ -1,8 +1,4 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
-#include "EditableSceneBody.h"
+#include "OperableSceneBody.h"
 #include "BodyItem.h"
 #include "BodyItemKinematicsKit.h"
 #include "BodySelectionManager.h"
@@ -42,27 +38,32 @@ enum LinkOperationType { None, FK, IK, SimInterference };
 
 namespace cnoid {
 
-class EditableSceneLink::Impl
+class OperableSceneLink::Impl
 {
 public:
-    EditableSceneLink* self;
+    OperableSceneLink* self;
     SgUpdate& update;
     SgPolygonDrawStylePtr highlightStyle;
     BoundingBoxMarkerPtr bbMarker;
+    CrossMarkerPtr cmMarker;
     bool isOriginShown;
+    bool isCenterOfMassShown;
     bool isPointed;
     bool isColliding;
 
-    Impl(EditableSceneBody* sceneBody, EditableSceneLink* self);
+    Impl(OperableSceneBody* sceneBody, OperableSceneLink* self);
+    OperableSceneBody* operableSceneBody();
+    double calcMarkerRadius() const;
     void showOrigin(bool on);
+    void showCenterOfMass(bool on);
 };
 
-class EditableSceneBody::Impl
+class OperableSceneBody::Impl
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    EditableSceneBody* self;
+    OperableSceneBody* self;
     BodyItemPtr bodyItem;
 
     SgUpdate update;
@@ -73,8 +74,8 @@ public:
     ScopedConnection connectionToSigLinkSelectionChanged;
 
     enum PointedType { PT_NONE, PT_SCENE_LINK, PT_ZMP };
-    EditableSceneLink* pointedSceneLink;
-    EditableSceneLink* highlightedLink;
+    OperableSceneLink* pointedSceneLink;
+    OperableSceneLink* highlightedLink;
 
     Link* targetLink;
     double orgJointPosition;
@@ -126,11 +127,11 @@ public:
     enum { NO_FORCED_POSITION, MOVE_FORCED_POSITION, KEEP_FORCED_POSITION };
     int forcedPositionMode;
 
-    Impl(EditableSceneBody* self, BodyItem* bodyItem);
+    Impl(OperableSceneBody* self, BodyItem* bodyItem);
     void initialize();
         
-    EditableSceneLink* editableSceneLink(int index){
-        return static_cast<EditableSceneLink*>(self->sceneLink(index));
+    OperableSceneLink* operableSceneLink(int index){
+        return static_cast<OperableSceneLink*>(self->sceneLink(index));
     }
 
     void onSceneGraphConnection(bool on);
@@ -141,7 +142,8 @@ public:
     void onCollisionLinkHighlightModeChanged();
     void changeCollisionLinkHighlightMode(bool on);
     void updateVisibleLinkSelectionMode();
-    void onLinkOriginsCheckChanged(bool on);
+    void onLinkOriginsCheckToggled(bool on);
+    void onLinkCmsCheckToggled(bool on);
     void enableHighlight(bool on);
     void calcBodyMarkerRadius();
     double calcLinkMarkerRadius(SceneLink* sceneLink) const;
@@ -152,11 +154,11 @@ public:
     void showCenterOfMass(bool on);
     void showCmProjection(bool on);
     void showZmp(bool on);
-    void makeLinkFree(EditableSceneLink* sceneLink);
-    void setBaseLink(EditableSceneLink* sceneLink);
-    void toggleBaseLink(EditableSceneLink* sceneLink);
-    void togglePin(EditableSceneLink* sceneLink, bool toggleTranslation, bool toggleRotation);
-    void makeLinkAttitudeLevel(EditableSceneLink* sceneLink);
+    void makeLinkFree(OperableSceneLink* sceneLink);
+    void setBaseLink(OperableSceneLink* sceneLink);
+    void toggleBaseLink(OperableSceneLink* sceneLink);
+    void togglePin(OperableSceneLink* sceneLink, bool toggleTranslation, bool toggleRotation);
+    void makeLinkAttitudeLevel(OperableSceneLink* sceneLink);
         
     PointedType findPointedObject(const SgNodePath& path);
     int checkLinkOperationType(SceneLink* sceneLink, bool doUpdateIK);
@@ -164,7 +166,7 @@ public:
     void updateMarkersAndManipulators(bool on);
     void createPositionDragger();
     void attachPositionDragger(Link* link);
-    void adjustPositionDraggerSize(Link* link, EditableSceneLink* sceneLink);
+    void adjustPositionDraggerSize(Link* link, OperableSceneLink* sceneLink);
 
     bool onKeyPressEvent(SceneWidgetEvent* event);
     bool onKeyReleaseEvent(SceneWidgetEvent* event);
@@ -207,40 +209,102 @@ public:
 }
 
 
-EditableSceneLink::EditableSceneLink(EditableSceneBody* sceneBody, Link* link)
+OperableSceneLink::OperableSceneLink(OperableSceneBody* sceneBody, Link* link)
     : SceneLink(sceneBody, link)
 {
     impl = new Impl(sceneBody, this);
 }
 
 
-EditableSceneLink::Impl::Impl(EditableSceneBody* sceneBody, EditableSceneLink* self)
+OperableSceneLink::Impl::Impl(OperableSceneBody* sceneBody, OperableSceneLink* self)
     : self(self),
       update(sceneBody->impl->update)
 {
     isOriginShown = false;
+    isCenterOfMassShown = false;
     isPointed = false;
     isColliding = false;
 }
 
 
-EditableSceneLink::~EditableSceneLink()
+OperableSceneLink::~OperableSceneLink()
 {
     delete impl;
 }
 
 
-void EditableSceneLink::showOrigin(bool on)
+OperableSceneBody* OperableSceneLink::operableSceneBody()
+{
+    return static_cast<OperableSceneBody*>(sceneBody());
+}
+
+
+OperableSceneBody* OperableSceneLink::Impl::operableSceneBody()
+{
+    return static_cast<OperableSceneBody*>(self->sceneBody());
+}
+
+
+const OperableSceneBody* OperableSceneLink::operableSceneBody() const
+{
+    return static_cast<const OperableSceneBody*>(sceneBody());
+}
+
+
+void OperableSceneLink::setVisible(bool on)
+{
+    SceneLink::setVisible(on);
+
+    bool updated = false;
+
+    if(impl->isOriginShown){
+        auto sceneBodyImpl = operableSceneBody()->impl;
+        if(on){
+            addChildOnce(sceneBodyImpl->linkOriginMarker);
+        } else {
+            removeChild(sceneBodyImpl->linkOriginMarker);
+        }
+        updated = true;
+    }
+    if(impl->isCenterOfMassShown){
+        if(on){
+            addChildOnce(impl->cmMarker);
+        } else {
+            removeChild(impl->cmMarker);
+        }
+        updated = true;
+    }
+    if(updated){
+        notifyUpdate(impl->update.withAction(on ? SgUpdate::Added : SgUpdate::Removed));
+    }
+}
+
+
+double OperableSceneLink::Impl::calcMarkerRadius() const
+{
+    if(auto shape = self->visualShape()){
+        const BoundingBox& bb = shape->boundingBox();
+        if(bb.empty()){
+            return 1.0; // Is this OK?
+        }
+        double V = ((bb.max().x() - bb.min().x()) * (bb.max().y() - bb.min().y()) * (bb.max().z() - bb.min().z()));
+        return pow(V, 1.0 / 3.0) * 0.6;
+    }
+    return 1.0;
+}
+
+
+void OperableSceneLink::showOrigin(bool on)
 {
     impl->showOrigin(on);
 }
 
 
-void EditableSceneLink::Impl::showOrigin(bool on)
+void OperableSceneLink::Impl::showOrigin(bool on)
 {
     if(on != isOriginShown){
 
-        auto& originMarker = static_cast<EditableSceneBody*>(self->sceneBody())->impl->linkOriginMarker;
+        auto& originMarker = operableSceneBody()->impl->linkOriginMarker;
 
         if(on){
             if(!originMarker){
@@ -252,11 +316,15 @@ void EditableSceneLink::Impl::showOrigin(bool on)
                 originMarker->setTransparency(0.0f);
                 originMarker->setDragEnabled(false);
             }
-            self->addChildOnce(originMarker, update);
+            if(self->isVisible()){
+                self->addChildOnce(originMarker, update);
+            }
             
         } else {
-            if(originMarker && originMarker->hasParents()){
-                self->removeChild(originMarker, update);
+            if(self->isVisible()){
+                if(originMarker && originMarker->hasParents()){
+                    self->removeChild(originMarker, update);
+                }
             }
         }
         isOriginShown = on;
@@ -264,13 +332,51 @@ void EditableSceneLink::Impl::showOrigin(bool on)
 }
 
 
-bool EditableSceneLink::isOriginShown() const
+bool OperableSceneLink::isOriginShown() const
 {
     return impl->isOriginShown;
 }
 
 
-void EditableSceneLink::enableHighlight(bool on)
+void OperableSceneLink::showCenterOfMass(bool on)
+{
+    impl->showCenterOfMass(on);
+}
+
+
+void OperableSceneLink::Impl::showCenterOfMass(bool on)
+{
+    if(on != isCenterOfMassShown){
+        if(on){
+            if(!cmMarker){
+                auto radius = calcMarkerRadius();
+                cmMarker = new CrossMarker(radius, Vector3f(0.0f, 1.0f, 0.0f), 2.0);
+                cmMarker->setName("CenterOfMass");
+            }
+            cmMarker->setTranslation(self->link()->centerOfMass());
+            if(self->isVisible()){
+                self->addChildOnce(cmMarker, update);
+            }
+            
+        } else {
+            if(self->isVisible()){
+                if(cmMarker && cmMarker->hasParents()){
+                    self->removeChild(cmMarker, update);
+                }
+            }
+        }
+        isCenterOfMassShown = on;
+    }
+}
+
+
+bool OperableSceneLink::isCenterOfMassShown() const
+{
+    return impl->isCenterOfMassShown;
+}
+
+
+void OperableSceneLink::enableHighlight(bool on)
 {
     if(!visualShape()){
         return;
@@ -294,7 +400,7 @@ void EditableSceneLink::enableHighlight(bool on)
 }
 
 
-void EditableSceneLink::showMarker(const Vector3f& color, float transparency)
+void OperableSceneLink::showMarker(const Vector3f& color, float transparency)
 {
     if(impl->bbMarker){
         removeChild(impl->bbMarker, impl->update);
@@ -306,7 +412,7 @@ void EditableSceneLink::showMarker(const Vector3f& color, float transparency)
 }
 
 
-void EditableSceneLink::hideMarker()
+void OperableSceneLink::hideMarker()
 {
     if(impl->bbMarker){
         removeChild(impl->bbMarker, impl->update);
@@ -315,7 +421,7 @@ void EditableSceneLink::hideMarker()
 }
 
 
-void EditableSceneLink::setColliding(bool on)
+void OperableSceneLink::setColliding(bool on)
 {
     if(!impl->isColliding && on){
         if(!impl->isPointed){
@@ -331,7 +437,7 @@ void EditableSceneLink::setColliding(bool on)
 }
 
 
-EditableSceneBody::EditableSceneBody(BodyItem* bodyItem)
+OperableSceneBody::OperableSceneBody(BodyItem* bodyItem)
 {
     setAttribute(Operable);
     impl = new Impl(this, bodyItem);
@@ -339,7 +445,7 @@ EditableSceneBody::EditableSceneBody(BodyItem* bodyItem)
 }
 
 
-EditableSceneBody::Impl::Impl(EditableSceneBody* self, BodyItem* bodyItem)
+OperableSceneBody::Impl::Impl(OperableSceneBody* self, BodyItem* bodyItem)
     : self(self),
       bodyItem(bodyItem),
       kinematicsBar(KinematicsBar::instance())
@@ -348,7 +454,7 @@ EditableSceneBody::Impl::Impl(EditableSceneBody* self, BodyItem* bodyItem)
 }
 
 
-void EditableSceneBody::Impl::initialize()
+void OperableSceneBody::Impl::initialize()
 {
     pointedSceneLink = nullptr;
     highlightedLink = nullptr;
@@ -360,7 +466,7 @@ void EditableSceneBody::Impl::initialize()
     isHighlightingEnabled = false;
     isVisibleLinkSelectionMode = false;
 
-    self->setBody(bodyItem->body(), [this](Link* link){ return new EditableSceneLink(self, link); });
+    self->setBody(bodyItem->body(), [this](Link* link){ return new OperableSceneLink(self, link); });
 
     dragMode = DRAG_NONE;
     isDragging = false;
@@ -384,13 +490,13 @@ void EditableSceneBody::Impl::initialize()
 }
 
 
-BodyItem* EditableSceneBody::bodyItem()
+BodyItem* OperableSceneBody::bodyItem()
 {
     return impl->bodyItem;
 }
 
 
-void EditableSceneBody::Impl::onSceneGraphConnection(bool on)
+void OperableSceneBody::Impl::onSceneGraphConnection(bool on)
 {
     connections.disconnect();
     connectionToSigLinkSelectionChanged.disconnect();
@@ -442,13 +548,13 @@ void EditableSceneBody::Impl::onSceneGraphConnection(bool on)
 }
 
 
-void EditableSceneBody::updateSceneModel()
+void OperableSceneBody::updateSceneModel()
 {
     impl->updateSceneModel();
 }
 
 
-void EditableSceneBody::Impl::updateSceneModel()
+void OperableSceneBody::Impl::updateSceneModel()
 {
     pointedSceneLink = nullptr;
     targetLink = nullptr;
@@ -464,20 +570,20 @@ void EditableSceneBody::Impl::updateSceneModel()
 }
 
 
-EditableSceneLink* EditableSceneBody::editableSceneLink(int index)
+OperableSceneLink* OperableSceneBody::operableSceneLink(int index)
 {
-    return static_cast<EditableSceneLink*>(sceneLink(index));
+    return static_cast<OperableSceneLink*>(sceneLink(index));
 }
 
 
-void EditableSceneBody::Impl::onSelectionChanged(bool on)
+void OperableSceneBody::Impl::onSelectionChanged(bool on)
 {
     isSelected = on;
     enableHighlight(isHighlightingEnabled && isEditMode && isSelected);
 }
 
 
-void EditableSceneBody::Impl::onKinematicStateChanged()
+void OperableSceneBody::Impl::onKinematicStateChanged()
 {
     if(isCmVisible){
         cmMarker->setTranslation(bodyItem->centerOfMass());
@@ -504,26 +610,26 @@ void EditableSceneBody::Impl::onKinematicStateChanged()
 }
 
 
-void EditableSceneBody::Impl::onCollisionsUpdated()
+void OperableSceneBody::Impl::onCollisionsUpdated()
 {
     if(bodyItem->collisionLinkBitSet() != collisionLinkBitSet){
         collisionLinkBitSet = bodyItem->collisionLinkBitSet();
         const int n = self->numSceneLinks();
         for(int i=0; i < n; ++i){
-            editableSceneLink(i)->setColliding(collisionLinkBitSet[i]);
+            operableSceneLink(i)->setColliding(collisionLinkBitSet[i]);
         }
         self->notifyUpdate(update.withAction(SgUpdate::Modified));
     }
 }
 
 
-void EditableSceneBody::Impl::onCollisionLinkHighlightModeChanged()
+void OperableSceneBody::Impl::onCollisionLinkHighlightModeChanged()
 {
     changeCollisionLinkHighlightMode(kinematicsBar->isCollisionLinkHighlihtMode());
 }
 
 
-void EditableSceneBody::Impl::changeCollisionLinkHighlightMode(bool on)
+void OperableSceneBody::Impl::changeCollisionLinkHighlightMode(bool on)
 {
     if(!connectionToSigCollisionsUpdated.connected() && on){
         connectionToSigCollisionsUpdated =
@@ -535,20 +641,20 @@ void EditableSceneBody::Impl::changeCollisionLinkHighlightMode(bool on)
         connectionToSigCollisionsUpdated.disconnect();
         const int n = self->numSceneLinks();
         for(int i=0; i < n; ++i){
-            editableSceneLink(i)->setColliding(false);
+            operableSceneLink(i)->setColliding(false);
         }
         self->notifyUpdate(update.withAction(SgUpdate::Modified));
     }
 }
 
 
-EditableSceneBody::~EditableSceneBody()
+OperableSceneBody::~OperableSceneBody()
 {
     delete impl;
 }
 
 
-void EditableSceneBody::setLinkVisibilities(const std::vector<bool>& visibilities)
+void OperableSceneBody::setLinkVisibilities(const std::vector<bool>& visibilities)
 {
     int i;
     const int m = numSceneLinks();
@@ -564,7 +670,7 @@ void EditableSceneBody::setLinkVisibilities(const std::vector<bool>& visibilitie
 }
 
 
-void EditableSceneBody::Impl::updateVisibleLinkSelectionMode()
+void OperableSceneBody::Impl::updateVisibleLinkSelectionMode()
 {
     bool newMode = bodyItem->isVisibleLinkSelectionMode();
 
@@ -589,15 +695,23 @@ void EditableSceneBody::Impl::updateVisibleLinkSelectionMode()
 }
 
 
-void EditableSceneBody::Impl::onLinkOriginsCheckChanged(bool on)
+void OperableSceneBody::Impl::onLinkOriginsCheckToggled(bool on)
 {
     for(int i=0; i < self->numSceneLinks(); ++i){
-        self->editableSceneLink(i)->showOrigin(on);
+        self->operableSceneLink(i)->showOrigin(on);
     }
 }
 
 
-void EditableSceneBody::Impl::enableHighlight(bool on)
+void OperableSceneBody::Impl::onLinkCmsCheckToggled(bool on)
+{
+    for(int i=0; i < self->numSceneLinks(); ++i){
+        self->operableSceneLink(i)->showCenterOfMass(on);
+    }
+}
+
+
+void OperableSceneBody::Impl::enableHighlight(bool on)
 {
     if(on){
         bool doUpdate = false;
@@ -640,7 +754,7 @@ void EditableSceneBody::Impl::enableHighlight(bool on)
 }
 
 
-void EditableSceneBody::Impl::calcBodyMarkerRadius()
+void OperableSceneBody::Impl::calcBodyMarkerRadius()
 {
     bodyMarkerRadius = 0.0;
     const int n = self->numSceneLinks();
@@ -655,32 +769,19 @@ void EditableSceneBody::Impl::calcBodyMarkerRadius()
 }
 
 
-double EditableSceneBody::Impl::calcLinkMarkerRadius(SceneLink* sceneLink) const
-{
-    SgNode* shape = sceneLink->visualShape();
-    if(shape){
-        const BoundingBox& bb = shape->boundingBox();
-        if (bb.empty()) return 1.0; // Is this OK?
-        double V = ((bb.max().x() - bb.min().x()) * (bb.max().y() - bb.min().y()) * (bb.max().z() - bb.min().z()));
-        return pow(V, 1.0 / 3.0) * 0.6;
-    }
-    return 1.0;
-}
-
-
-void EditableSceneBody::Impl::ensureCmMarker()
+void OperableSceneBody::Impl::ensureCmMarker()
 {
     if(!cmMarker){
         if(bodyMarkerRadius < 0.0){
             calcBodyMarkerRadius();
         }
         cmMarker = new CrossMarker(bodyMarkerRadius, Vector3f(0.0f, 1.0f, 0.0f), 2.0);
-        cmMarker->setName("centerOfMass");
+        cmMarker->setName("CenterOfMass");
     }
 }
 
 
-void EditableSceneBody::Impl::ensureCmProjectionMarker()
+void OperableSceneBody::Impl::ensureCmProjectionMarker()
 {
     if(!cmProjectionMarker){
         if(bodyMarkerRadius < 0.0){
@@ -692,7 +793,7 @@ void EditableSceneBody::Impl::ensureCmProjectionMarker()
 }
 
 
-LeggedBodyHelper* EditableSceneBody::Impl::checkLeggedBody()
+LeggedBodyHelper* OperableSceneBody::Impl::checkLeggedBody()
 {
     auto legged = getLeggedBodyHelper(self->body());
     if(!legged->isValid() || legged->numFeet() == 0){
@@ -702,12 +803,13 @@ LeggedBodyHelper* EditableSceneBody::Impl::checkLeggedBody()
 }
 
 
-bool EditableSceneBody::Impl::ensureZmpMarker()
+bool OperableSceneBody::Impl::ensureZmpMarker()
 {
     if(!zmpMarker){
         if(auto legged = checkLeggedBody()){
             Link* footLink = legged->footLink(0);
-            double radius = calcLinkMarkerRadius(self->sceneLink(footLink->index()));
+            auto sceneLink = self->operableSceneLink(footLink->index());
+            double radius = sceneLink->impl->calcMarkerRadius();
             zmpMarker = new SphereMarker(radius, Vector3f(0.0f, 1.0f, 0.0f), 0.3);
             zmpMarker->addChild(new CrossMarker(radius * 2.5, Vector3f(0.0f, 1.0f, 0.0f), 2.0f));
             zmpMarker->setName("ZMP");
@@ -717,7 +819,7 @@ bool EditableSceneBody::Impl::ensureZmpMarker()
 }
 
 
-void EditableSceneBody::Impl::showCenterOfMass(bool on)
+void OperableSceneBody::Impl::showCenterOfMass(bool on)
 {
     isCmVisible = on;
     if(on){
@@ -734,7 +836,7 @@ void EditableSceneBody::Impl::showCenterOfMass(bool on)
 }
 
 
-void EditableSceneBody::Impl::showCmProjection(bool on)
+void OperableSceneBody::Impl::showCmProjection(bool on)
 {
     isCmProjectionVisible = on;
     if(on){
@@ -753,7 +855,7 @@ void EditableSceneBody::Impl::showCmProjection(bool on)
 }
 
 
-void EditableSceneBody::Impl::showZmp(bool on)
+void OperableSceneBody::Impl::showZmp(bool on)
 {
     if(on){
         if(ensureZmpMarker()){
@@ -771,7 +873,7 @@ void EditableSceneBody::Impl::showZmp(bool on)
 }
 
 
-void EditableSceneBody::Impl::makeLinkFree(EditableSceneLink* sceneLink)
+void OperableSceneBody::Impl::makeLinkFree(OperableSceneLink* sceneLink)
 {
     if(bodyItem->currentBaseLink() == sceneLink->link()){
         bodyItem->setCurrentBaseLink(nullptr);
@@ -783,14 +885,14 @@ void EditableSceneBody::Impl::makeLinkFree(EditableSceneLink* sceneLink)
 }
 
 
-void EditableSceneBody::Impl::setBaseLink(EditableSceneLink* sceneLink)
+void OperableSceneBody::Impl::setBaseLink(OperableSceneLink* sceneLink)
 {
     bodyItem->setCurrentBaseLink(sceneLink->link());
     bodyItem->notifyUpdate();
 }
     
 
-void EditableSceneBody::Impl::toggleBaseLink(EditableSceneLink* sceneLink)
+void OperableSceneBody::Impl::toggleBaseLink(OperableSceneLink* sceneLink)
 {
     Link* baseLink = bodyItem->currentBaseLink();
     if(sceneLink->link() != baseLink){
@@ -802,7 +904,7 @@ void EditableSceneBody::Impl::toggleBaseLink(EditableSceneLink* sceneLink)
 }
 
 
-void EditableSceneBody::Impl::togglePin(EditableSceneLink* sceneLink, bool toggleTranslation, bool toggleRotation)
+void OperableSceneBody::Impl::togglePin(OperableSceneLink* sceneLink, bool toggleTranslation, bool toggleRotation)
 {
     auto pin = bodyItem->getOrCreatePinDragIK();
     PinDragIK::AxisSet axes = pin->pinAxes(sceneLink->link());
@@ -827,7 +929,7 @@ void EditableSceneBody::Impl::togglePin(EditableSceneLink* sceneLink, bool toggl
 }
 
 
-void EditableSceneBody::Impl::makeLinkAttitudeLevel(EditableSceneLink* sceneLink)
+void OperableSceneBody::Impl::makeLinkAttitudeLevel(OperableSceneLink* sceneLink)
 {
     Link* link = sceneLink->link();
     auto ik = bodyItem->getCurrentIK(link);
@@ -851,12 +953,12 @@ void EditableSceneBody::Impl::makeLinkAttitudeLevel(EditableSceneLink* sceneLink
 }
 
 
-EditableSceneBody::Impl::PointedType EditableSceneBody::Impl::findPointedObject(const SgNodePath& path)
+OperableSceneBody::Impl::PointedType OperableSceneBody::Impl::findPointedObject(const SgNodePath& path)
 {
     PointedType pointedType = PT_NONE;
     pointedSceneLink = nullptr;
     for(size_t i = path.size() - 1; i >= 1; --i){
-        pointedSceneLink = dynamic_cast<EditableSceneLink*>(path[i].get());
+        pointedSceneLink = dynamic_cast<OperableSceneLink*>(path[i].get());
         if(pointedSceneLink){
             pointedType = PT_SCENE_LINK;
             break;
@@ -872,7 +974,7 @@ EditableSceneBody::Impl::PointedType EditableSceneBody::Impl::findPointedObject(
 }
 
 
-int EditableSceneBody::Impl::checkLinkOperationType(SceneLink* sceneLink, bool doUpdateIK)
+int OperableSceneBody::Impl::checkLinkOperationType(SceneLink* sceneLink, bool doUpdateIK)
 {
     if(doUpdateIK){
         currentIK.reset();
@@ -904,9 +1006,9 @@ int EditableSceneBody::Impl::checkLinkOperationType(SceneLink* sceneLink, bool d
 }
 
 
-int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link, bool doUpdateIK)
+int OperableSceneBody::Impl::checkLinkKinematicsType(Link* link, bool doUpdateIK)
 {
-    // Check if the link is editable considering the ancestor bodies
+    // Check if the link is operable considering the ancestor bodies
     BodyItem* bodyItemChain = bodyItem;
     Link* linkChain = link;
     while(true){
@@ -959,14 +1061,14 @@ int EditableSceneBody::Impl::checkLinkKinematicsType(Link* link, bool doUpdateIK
 }
 
 
-void EditableSceneBody::Impl::updateMarkersAndManipulators(bool on)
+void OperableSceneBody::Impl::updateMarkersAndManipulators(bool on)
 {
     Link* baseLink = bodyItem->currentBaseLink();
     auto pin = bodyItem->checkPinDragIK();
 
     const int n = self->numSceneLinks();
     for(int i=0; i < n; ++i){
-        EditableSceneLink* sceneLink = editableSceneLink(i);
+        OperableSceneLink* sceneLink = operableSceneLink(i);
         sceneLink->hideMarker();
         sceneLink->removeChild(positionDragger, update);
 
@@ -988,7 +1090,7 @@ void EditableSceneBody::Impl::updateMarkersAndManipulators(bool on)
 }
 
 
-void EditableSceneBody::Impl::createPositionDragger()
+void OperableSceneBody::Impl::createPositionDragger()
 {
     if(GLSceneRenderer::rendererType() == GLSceneRenderer::GL1_RENDERER){
         /** GL1SceneRenderer does not support the overlay rendering with SgOverlay and use the
@@ -1006,7 +1108,7 @@ void EditableSceneBody::Impl::createPositionDragger()
 }
 
     
-void EditableSceneBody::Impl::attachPositionDragger(Link* link)
+void OperableSceneBody::Impl::attachPositionDragger(Link* link)
 {
     if(!positionDragger){
         createPositionDragger();
@@ -1045,7 +1147,7 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
                 [this, link](){ attachPositionDragger(link); });
     }
     
-    auto sceneLink = editableSceneLink(link->index());
+    auto sceneLink = operableSceneLink(link->index());
 
     if(!positionDragger->isScreenFixedSizeMode()){
         double size = link->info("gui_handle_size", -1.0);
@@ -1066,7 +1168,7 @@ void EditableSceneBody::Impl::attachPositionDragger(Link* link)
    the sizes of the neighboring links of the target link are also taken into account
    to determine the size.
 */
-void EditableSceneBody::Impl::adjustPositionDraggerSize(Link* link, EditableSceneLink* sceneLink)
+void OperableSceneBody::Impl::adjustPositionDraggerSize(Link* link, OperableSceneLink* sceneLink)
 {
     BoundingBox bb;
     
@@ -1075,14 +1177,14 @@ void EditableSceneBody::Impl::adjustPositionDraggerSize(Link* link, EditableScen
     }
     constexpr double s = 0.5;
     if(auto parent = link->parent()){
-        if(auto parentSceneLink = editableSceneLink(parent->index())){
+        if(auto parentSceneLink = operableSceneLink(parent->index())){
             auto parentBBox = parentSceneLink->untransformedBoundingBox();
             parentBBox.scale(s);
             bb.expandBy(parentBBox);
         }
     }
     for(auto child = link->child(); child; child = child->sibling()){
-        if(auto childSceneLink = editableSceneLink(child->index())){
+        if(auto childSceneLink = operableSceneLink(child->index())){
             auto childBBox = childSceneLink->untransformedBoundingBox();
             childBBox.scale(s);
             bb.expandBy(childBBox);
@@ -1093,13 +1195,13 @@ void EditableSceneBody::Impl::adjustPositionDraggerSize(Link* link, EditableScen
 }
 
 
-void EditableSceneBody::onSceneModeChanged(SceneWidgetEvent* event)
+void OperableSceneBody::onSceneModeChanged(SceneWidgetEvent* event)
 {
     impl->onSceneModeChanged(event);
 }
 
 
-void EditableSceneBody::Impl::onSceneModeChanged(SceneWidgetEvent* event)
+void OperableSceneBody::Impl::onSceneModeChanged(SceneWidgetEvent* event)
 {
     bool wasEditMode = isEditMode;
     isEditMode = event->sceneWidget()->isEditMode();
@@ -1124,7 +1226,7 @@ void EditableSceneBody::Impl::onSceneModeChanged(SceneWidgetEvent* event)
 }
 
 
-bool EditableSceneBody::Impl::finishEditing()
+bool OperableSceneBody::Impl::finishEditing()
 {
     bool finished = false;
     
@@ -1151,13 +1253,13 @@ bool EditableSceneBody::Impl::finishEditing()
 }
 
 
-bool EditableSceneBody::onButtonPressEvent(SceneWidgetEvent* event)
+bool OperableSceneBody::onButtonPressEvent(SceneWidgetEvent* event)
 {
     return impl->onButtonPressEvent(event);
 }
 
 
-bool EditableSceneBody::Impl::onButtonPressEvent(SceneWidgetEvent* event)
+bool OperableSceneBody::Impl::onButtonPressEvent(SceneWidgetEvent* event)
 {
     if(highlightedLink){
         highlightedLink->enableHighlight(false);
@@ -1238,13 +1340,13 @@ bool EditableSceneBody::Impl::onButtonPressEvent(SceneWidgetEvent* event)
 }
 
 
-bool EditableSceneBody::onButtonReleaseEvent(SceneWidgetEvent* event)
+bool OperableSceneBody::onButtonReleaseEvent(SceneWidgetEvent* event)
 {
     return impl->onButtonReleaseEvent(event);
 }
 
 
-bool EditableSceneBody::Impl::onButtonReleaseEvent(SceneWidgetEvent* event)
+bool OperableSceneBody::Impl::onButtonReleaseEvent(SceneWidgetEvent* event)
 {
     bool handled = finishEditing();
 
@@ -1257,7 +1359,7 @@ bool EditableSceneBody::Impl::onButtonReleaseEvent(SceneWidgetEvent* event)
 }
 
 
-bool EditableSceneBody::onDoubleClickEvent(SceneWidgetEvent* event)
+bool OperableSceneBody::onDoubleClickEvent(SceneWidgetEvent* event)
 {
     if(impl->targetLink){
         if(impl->checkLinkKinematicsType(impl->targetLink, false) != LinkOperationType::None){
@@ -1272,7 +1374,7 @@ bool EditableSceneBody::onDoubleClickEvent(SceneWidgetEvent* event)
 
 
 /*
-bool EditableSceneBody::Impl::makePointedLinkCurrent()
+bool OperableSceneBody::Impl::makePointedLinkCurrent()
 {
     if(event->button() == Qt::LeftButton){
         if(findPointedObject(event->nodePath()) == PT_SCENE_LINK){
@@ -1285,13 +1387,13 @@ bool EditableSceneBody::Impl::makePointedLinkCurrent()
 */
 
 
-bool EditableSceneBody::onPointerMoveEvent(SceneWidgetEvent* event)
+bool OperableSceneBody::onPointerMoveEvent(SceneWidgetEvent* event)
 {
     return impl->onPointerMoveEvent(event);
 }
 
 
-bool EditableSceneBody::Impl::onPointerMoveEvent(SceneWidgetEvent* event)
+bool OperableSceneBody::Impl::onPointerMoveEvent(SceneWidgetEvent* event)
 {
     if(dragMode == DRAG_NONE){
         findPointedObject(event->nodePath());
@@ -1353,13 +1455,13 @@ bool EditableSceneBody::Impl::onPointerMoveEvent(SceneWidgetEvent* event)
 }
 
 
-void EditableSceneBody::onPointerLeaveEvent(SceneWidgetEvent* event)
+void OperableSceneBody::onPointerLeaveEvent(SceneWidgetEvent* event)
 {
     return impl->onPointerLeaveEvent(event);
 }
 
 
-void EditableSceneBody::Impl::onPointerLeaveEvent(SceneWidgetEvent* event)
+void OperableSceneBody::Impl::onPointerLeaveEvent(SceneWidgetEvent* event)
 {
     if(highlightedLink){
         highlightedLink->enableHighlight(false);
@@ -1368,25 +1470,25 @@ void EditableSceneBody::Impl::onPointerLeaveEvent(SceneWidgetEvent* event)
 }
 
 
-bool EditableSceneBody::onScrollEvent(SceneWidgetEvent* event)
+bool OperableSceneBody::onScrollEvent(SceneWidgetEvent* event)
 {
     return impl->onScrollEvent(event);
 }
 
 
-bool EditableSceneBody::Impl::onScrollEvent(SceneWidgetEvent* event)
+bool OperableSceneBody::Impl::onScrollEvent(SceneWidgetEvent* event)
 {
     return false;
 }
 
 
-bool EditableSceneBody::onKeyPressEvent(SceneWidgetEvent* event)
+bool OperableSceneBody::onKeyPressEvent(SceneWidgetEvent* event)
 {
     return impl->onKeyPressEvent(event);
 }
 
 
-bool EditableSceneBody::Impl::onKeyPressEvent(SceneWidgetEvent* event)
+bool OperableSceneBody::Impl::onKeyPressEvent(SceneWidgetEvent* event)
 {
     if(!highlightedLink){
         return false;
@@ -1417,19 +1519,19 @@ bool EditableSceneBody::Impl::onKeyPressEvent(SceneWidgetEvent* event)
 }
 
 
-bool EditableSceneBody::onKeyReleaseEvent(SceneWidgetEvent* event)
+bool OperableSceneBody::onKeyReleaseEvent(SceneWidgetEvent* event)
 {
     return impl->onKeyReleaseEvent(event);
 }
 
 
-bool EditableSceneBody::Impl::onKeyReleaseEvent(SceneWidgetEvent* event)
+bool OperableSceneBody::Impl::onKeyReleaseEvent(SceneWidgetEvent* event)
 {
     return false;
 }
 
 
-void EditableSceneBody::onFocusChanged(SceneWidgetEvent* event, bool on)
+void OperableSceneBody::onFocusChanged(SceneWidgetEvent* event, bool on)
 {
     impl->isFocused = on;
     if(!on){
@@ -1438,13 +1540,13 @@ void EditableSceneBody::onFocusChanged(SceneWidgetEvent* event, bool on)
 }
 
 
-bool EditableSceneBody::onContextMenuRequest(SceneWidgetEvent* event)
+bool OperableSceneBody::onContextMenuRequest(SceneWidgetEvent* event)
 {
     return impl->onContextMenuRequest(event);
 }
 
 
-bool EditableSceneBody::Impl::onContextMenuRequest(SceneWidgetEvent* event)
+bool OperableSceneBody::Impl::onContextMenuRequest(SceneWidgetEvent* event)
 {
     PointedType pointedType = findPointedObject(event->nodePath());
 
@@ -1495,27 +1597,46 @@ bool EditableSceneBody::Impl::onContextMenuRequest(SceneWidgetEvent* event)
 
     menu->setPath(_("Markers"));
 
-    auto linkOriginAction = new CheckBoxAction(_("Link Origins"));
-    int checkState = Qt::Unchecked;
     int numLinks = self->numSceneLinks();
-    int numOriginShowns = 0;
+    
+    auto linkOriginAction = new CheckBoxAction(_("Link Origins"));
+    int numOriginsShown = 0;
     for(int i=0; i < numLinks; ++i){
-        if(self->editableSceneLink(i)->isOriginShown()){
-            ++numOriginShowns;
+        if(self->operableSceneLink(i)->isOriginShown()){
+            ++numOriginsShown;
         }
     }
-    auto check = linkOriginAction->checkBox();
-    check->setTristate();
-    if(numOriginShowns == 0){
-        check->setCheckState(Qt::Unchecked);
-    } else if(numOriginShowns == numLinks){
-        check->setCheckState(Qt::Checked);
+    auto originsCheck = linkOriginAction->checkBox();
+    originsCheck->setTristate();
+    if(numOriginsShown == 0){
+        originsCheck->setCheckState(Qt::Unchecked);
+    } else if(numOriginsShown == numLinks){
+        originsCheck->setCheckState(Qt::Checked);
     } else {
-        check->setCheckState(Qt::PartiallyChecked);
+        originsCheck->setCheckState(Qt::PartiallyChecked);
     }
     menu->addAction(linkOriginAction);
-    check->sigToggled().connect([&](bool on){ onLinkOriginsCheckChanged(on); });
-        
+    originsCheck->sigToggled().connect([&](bool on){ onLinkOriginsCheckToggled(on); });
+
+    auto linkCmAction = new CheckBoxAction(_("Link Center of Masses"));
+    int numCmsShown = 0;
+    for(int i=0; i < numLinks; ++i){
+        if(self->operableSceneLink(i)->isCenterOfMassShown()){
+            ++numCmsShown;
+        }
+    }
+    auto cmsCheck = linkCmAction->checkBox();
+    cmsCheck->setTristate();
+    if(numCmsShown == 0){
+        cmsCheck->setCheckState(Qt::Unchecked);
+    } else if(numCmsShown == numLinks){
+        cmsCheck->setCheckState(Qt::Checked);
+    } else {
+        cmsCheck->setCheckState(Qt::PartiallyChecked);
+    }
+    menu->addAction(linkCmAction);
+    cmsCheck->sigToggled().connect([&](bool on){ onLinkCmsCheckToggled(on); });
+    
     auto item = menu->addCheckItem(_("Center of Mass"));
     item->setChecked(isCmVisible);
     item->sigToggled().connect([&](bool on){ showCenterOfMass(on); });
@@ -1538,7 +1659,7 @@ bool EditableSceneBody::Impl::onContextMenuRequest(SceneWidgetEvent* event)
 }
 
 
-void EditableSceneBody::Impl::onDraggerDragStarted()
+void OperableSceneBody::Impl::onDraggerDragStarted()
 {
     activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
     if(!activeSimulatorItem){
@@ -1548,7 +1669,7 @@ void EditableSceneBody::Impl::onDraggerDragStarted()
 }
 
 
-void EditableSceneBody::Impl::onDraggerDragged()
+void OperableSceneBody::Impl::onDraggerDragged()
 {
     activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
     if(activeSimulatorItem){
@@ -1560,7 +1681,7 @@ void EditableSceneBody::Impl::onDraggerDragged()
 }
 
 
-void EditableSceneBody::Impl::onDraggerDragFinished()
+void OperableSceneBody::Impl::onDraggerDragFinished()
 {
     activeSimulatorItem = SimulatorItem::findActiveSimulatorItemFor(bodyItem);
     if(activeSimulatorItem){
@@ -1575,7 +1696,7 @@ void EditableSceneBody::Impl::onDraggerDragFinished()
 }
 
 
-bool EditableSceneBody::Impl::initializeIK()
+bool OperableSceneBody::Impl::initializeIK()
 {
     if(!currentIK){
         if(auto pin = bodyItem->checkPinDragIK()){
@@ -1602,7 +1723,7 @@ bool EditableSceneBody::Impl::initializeIK()
 }
 
 
-void EditableSceneBody::Impl::startIK(SceneWidgetEvent* event)
+void OperableSceneBody::Impl::startIK(SceneWidgetEvent* event)
 {
     Body* body = self->body();
     Link* baseLink = bodyItem->currentBaseLink();
@@ -1626,7 +1747,7 @@ void EditableSceneBody::Impl::startIK(SceneWidgetEvent* event)
 }
 
 
-void EditableSceneBody::Impl::dragIK(SceneWidgetEvent* event)
+void OperableSceneBody::Impl::dragIK(SceneWidgetEvent* event)
 {
     if(dragProjector.dragTranslation(event)){
         //Position T = dragProjector.initialPosition();
@@ -1642,7 +1763,7 @@ void EditableSceneBody::Impl::dragIK(SceneWidgetEvent* event)
 }
 
 
-void EditableSceneBody::Impl::doIK(const Isometry3& position)
+void OperableSceneBody::Impl::doIK(const Isometry3& position)
 {
     if(currentIK){
         if(currentIK->calcInverseKinematics(position) || true /* Best effort */){
@@ -1656,7 +1777,7 @@ void EditableSceneBody::Impl::doIK(const Isometry3& position)
 }
 
 
-void EditableSceneBody::Impl::startFK(SceneWidgetEvent* event)
+void OperableSceneBody::Impl::startFK(SceneWidgetEvent* event)
 {
     dragProjector.setInitialPosition(targetLink->position());
     
@@ -1677,7 +1798,7 @@ void EditableSceneBody::Impl::startFK(SceneWidgetEvent* event)
 }
 
 
-void EditableSceneBody::Impl::dragFKRotation(SceneWidgetEvent* event)
+void OperableSceneBody::Impl::dragFKRotation(SceneWidgetEvent* event)
 {
     if(dragProjector.dragRotation(event)){
         double q = orgJointPosition + dragProjector.rotationAngle();
@@ -1688,7 +1809,7 @@ void EditableSceneBody::Impl::dragFKRotation(SceneWidgetEvent* event)
 }
 
 
-void EditableSceneBody::Impl::dragFKTranslation(SceneWidgetEvent* event)
+void OperableSceneBody::Impl::dragFKTranslation(SceneWidgetEvent* event)
 {
     if(dragProjector.dragTranslation(event)){
         double q = orgJointPosition + dragProjector.translationAxis().dot(dragProjector.translation());
@@ -1699,7 +1820,7 @@ void EditableSceneBody::Impl::dragFKTranslation(SceneWidgetEvent* event)
 }
 
 
-void EditableSceneBody::Impl::startLinkOperationDuringSimulation(SceneWidgetEvent* event)
+void OperableSceneBody::Impl::startLinkOperationDuringSimulation(SceneWidgetEvent* event)
 {
     if(event->button() == Qt::LeftButton){
         if(targetLink->isRoot() && (forcedPositionMode != NO_FORCED_POSITION)){
@@ -1711,7 +1832,7 @@ void EditableSceneBody::Impl::startLinkOperationDuringSimulation(SceneWidgetEven
 }
 
 
-void EditableSceneBody::Impl::setForcedPositionMode(int mode, bool on)
+void OperableSceneBody::Impl::setForcedPositionMode(int mode, bool on)
 {
     if(on){
         forcedPositionMode = mode;
@@ -1723,7 +1844,7 @@ void EditableSceneBody::Impl::setForcedPositionMode(int mode, bool on)
 }
 
 
-void EditableSceneBody::Impl::startVirtualElasticString(SceneWidgetEvent* event)
+void OperableSceneBody::Impl::startVirtualElasticString(SceneWidgetEvent* event)
 {
     const Vector3& point = event->point();
     dragProjector.setInitialTranslation(point);
@@ -1738,7 +1859,7 @@ void EditableSceneBody::Impl::startVirtualElasticString(SceneWidgetEvent* event)
 }
 
 
-void EditableSceneBody::Impl::dragVirtualElasticString(SceneWidgetEvent* event)
+void OperableSceneBody::Impl::dragVirtualElasticString(SceneWidgetEvent* event)
 {
     if(dragMode == LINK_VIRTUAL_ELASTIC_STRING){
         SimulatorItem* simulatorItem = activeSimulatorItem.lock();
@@ -1763,7 +1884,7 @@ void EditableSceneBody::Impl::dragVirtualElasticString(SceneWidgetEvent* event)
 }
 
 
-void EditableSceneBody::Impl::finishVirtualElasticString()
+void OperableSceneBody::Impl::finishVirtualElasticString()
 {
     if(SimulatorItem* simulatorItem = activeSimulatorItem.lock()){
         simulatorItem->clearVirtualElasticStrings();
@@ -1772,7 +1893,7 @@ void EditableSceneBody::Impl::finishVirtualElasticString()
 }
 
 
-void EditableSceneBody::Impl::startForcedPosition(SceneWidgetEvent* event)
+void OperableSceneBody::Impl::startForcedPosition(SceneWidgetEvent* event)
 {
     finishForcedPosition();
     updateMarkersAndManipulators(true);
@@ -1787,7 +1908,7 @@ void EditableSceneBody::Impl::startForcedPosition(SceneWidgetEvent* event)
 }
 
 
-void EditableSceneBody::Impl::setForcedPosition(const Isometry3& position)
+void OperableSceneBody::Impl::setForcedPosition(const Isometry3& position)
 {
     if(SimulatorItem* simulatorItem = activeSimulatorItem.lock()){
         simulatorItem->setForcedPosition(bodyItem, position);
@@ -1795,7 +1916,7 @@ void EditableSceneBody::Impl::setForcedPosition(const Isometry3& position)
 }
     
     
-void EditableSceneBody::Impl::dragForcedPosition(SceneWidgetEvent* event)
+void OperableSceneBody::Impl::dragForcedPosition(SceneWidgetEvent* event)
 {
     if(dragProjector.dragTranslation(event)){
         Isometry3 T;
@@ -1807,7 +1928,7 @@ void EditableSceneBody::Impl::dragForcedPosition(SceneWidgetEvent* event)
 }
 
 
-void EditableSceneBody::Impl::finishForcedPosition()
+void OperableSceneBody::Impl::finishForcedPosition()
 {
     if(forcedPositionMode != KEEP_FORCED_POSITION){
         if(SimulatorItem* simulatorItem = activeSimulatorItem.lock()){
@@ -1817,7 +1938,7 @@ void EditableSceneBody::Impl::finishForcedPosition()
 }
 
 
-void EditableSceneBody::Impl::startZmpTranslation(SceneWidgetEvent* event)
+void OperableSceneBody::Impl::startZmpTranslation(SceneWidgetEvent* event)
 {
     dragProjector.setInitialTranslation(bodyItem->zmp());
     dragProjector.setTranslationPlaneNormal(Vector3::UnitZ());
@@ -1827,7 +1948,7 @@ void EditableSceneBody::Impl::startZmpTranslation(SceneWidgetEvent* event)
 }
 
 
-void EditableSceneBody::Impl::dragZmpTranslation(SceneWidgetEvent* event)
+void OperableSceneBody::Impl::dragZmpTranslation(SceneWidgetEvent* event)
 {
     if(dragProjector.dragTranslation(event)){
         Vector3 p = dragProjector.position().translation();
@@ -1839,17 +1960,17 @@ void EditableSceneBody::Impl::dragZmpTranslation(SceneWidgetEvent* event)
 }
 
 
-bool EditableSceneBody::Impl::storeProperties(Archive& archive)
+bool OperableSceneBody::Impl::storeProperties(Archive& archive)
 {
     ListingPtr states = new Listing();
 
     for(auto& bodyItem : RootItem::instance()->descendantItems<BodyItem>()){
-        EditableSceneBody* sceneBody = bodyItem->existingSceneBody();
+        OperableSceneBody* sceneBody = bodyItem->existingSceneBody();
         if(sceneBody){
             if(auto id = archive.getItemIdNode(bodyItem)){
-                EditableSceneBody::Impl* impl = sceneBody->impl;
+                OperableSceneBody::Impl* impl = sceneBody->impl;
                 MappingPtr state = new Mapping();
-                state->insert("bodyItem", id);
+                state->insert("body_item", id);
                 state->write("show_cm", impl->isCmVisible);
                 state->write("show_cm_projection", impl->isCmProjectionVisible);
                 state->write("show_zmp", impl->isZmpVisible);
@@ -1858,14 +1979,14 @@ bool EditableSceneBody::Impl::storeProperties(Archive& archive)
         }
     }
     if(!states->empty()){
-        archive.insert("editableSceneBodies", states);
+        archive.insert("scene_bodies", states);
     }
 
     return true;
 }
     
     
-void EditableSceneBody::Impl::restoreProperties(const Archive& archive)
+void OperableSceneBody::Impl::restoreProperties(const Archive& archive)
 {
     archive.addPostProcess(
         [&archive](){ restoreSceneBodyProperties(archive); },
@@ -1873,15 +1994,15 @@ void EditableSceneBody::Impl::restoreProperties(const Archive& archive)
 }
 
 
-void EditableSceneBody::Impl::restoreSceneBodyProperties(const Archive& archive)
+void OperableSceneBody::Impl::restoreSceneBodyProperties(const Archive& archive)
 {
-    Listing& states = *archive.findListing("editableSceneBodies");
+    Listing& states = *archive.findListing({ "scene_bodies", "editableSceneBodies" });
     if(states.isValid()){
         for(int i=0; i < states.size(); ++i){
             Mapping* state = states[i].toMapping();
-            BodyItem* bodyItem = archive.findItem<BodyItem>(state->find("bodyItem"));
+            BodyItem* bodyItem = archive.findItem<BodyItem>(state->find({ "body_item", "bodyItem" }));
             if(bodyItem){
-                EditableSceneBody::Impl* impl = bodyItem->sceneBody()->impl;
+                OperableSceneBody::Impl* impl = bodyItem->sceneBody()->impl;
                 impl->showCenterOfMass(state->get({ "show_cm", "showCenterOfMass" }, impl->isCmVisible));
                 impl->showCmProjection(state->get({ "show_cm_projection", "showCmProjection" }, impl->isCmProjectionVisible));
                 impl->showZmp(state->get({ "show_zmp", "showZmp" }, impl->isZmpVisible));
@@ -1891,10 +2012,15 @@ void EditableSceneBody::Impl::restoreSceneBodyProperties(const Archive& archive)
 }
 
 
-void EditableSceneBody::initializeClass(ExtensionManager* ext)
+void OperableSceneBody::initializeClass(ExtensionManager* ext)
 {
     ext->setProjectArchiver(
+        "OperableSceneBody",
+        OperableSceneBody::Impl::storeProperties,
+        OperableSceneBody::Impl::restoreProperties);
+
+    ext->setProjectArchiver(
         "EditableSceneBody",
-        EditableSceneBody::Impl::storeProperties,
-        EditableSceneBody::Impl::restoreProperties);
+        nullptr,
+        OperableSceneBody::Impl::restoreProperties);
 }
