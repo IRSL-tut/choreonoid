@@ -27,17 +27,20 @@ public:
     typedef value_type Element; ///< \deprecated. Use value_type.
 
     MultiSeq(const char* seqType)
-        : Container(0, 1),
-          AbstractMultiSeq(seqType) {
+        : AbstractMultiSeq(seqType) {
         frameRate_ = 0.0;
         offsetTime_ = 0.0;
     }
 
-    MultiSeq(const char* seqType, int numFrames, int numParts)
+    MultiSeq(const char* seqType, int numFrames, int numParts, bool initializeElements = false)
         : Container(numFrames, numParts),
           AbstractMultiSeq(seqType) {
         frameRate_ = 0.0;
         offsetTime_ = 0.0;
+
+        if(initializeElements){
+            fillNewElements(0, 0);
+        }
     }
 
     MultiSeq(const MultiSeqType& org)
@@ -78,28 +81,15 @@ public:
         setNumParts(source.numParts());
     }
             
-    virtual void setDimension(int newNumFrames, int newNumParts, bool fillNewElements = false) override {
+    virtual void setDimension(int newNumFrames, int newNumParts, bool doFillNewElements = false) override {
 
-        const int prevNumParts = numParts();
         const int prevNumFrames = numFrames();
-
+        const int prevNumParts = numParts();
+        
         Container::resize(newNumFrames, newNumParts);
 
-        if(fillNewElements){
-            if(newNumParts != prevNumParts){
-                std::fill(Container::begin(), Container::end(), defaultValue());
-            } else {
-                if(newNumFrames > prevNumFrames){
-                    if(prevNumFrames == 0){
-                        std::fill(Container::begin() + prevNumFrames * newNumParts, Container::end(), defaultValue());
-                    } else {
-                        Frame last = frame(prevNumFrames - 1);
-                        for(int i=prevNumFrames; i < newNumFrames; ++i){
-                            std::copy(last.begin(), last.end(), frame(i).begin());
-                        }
-                    }
-                }
-            }
+        if(doFillNewElements){
+            fillNewElements(prevNumFrames, prevNumParts);
         }
     }
 
@@ -116,8 +106,7 @@ public:
     }
 
     const double timeStep() const {
-        const double r = getFrameRate();
-        return (r > 0.0) ? 1.0 / r : 0.0;
+        return (frameRate_ > 0.0) ? 1.0 / frameRate_ : 0.0;
     }
 
     virtual void setNumParts(int newNumParts, bool fillNewElements = false) override {
@@ -134,10 +123,6 @@ public:
 
     virtual void setNumFrames(int newNumFrames, bool fillNewElements = false) override {
         setDimension(newNumFrames, numParts(), fillNewElements);
-    }
-
-    void clearFrames(){
-        setNumFrames(0);
     }
 
     virtual int getNumParts() const override {
@@ -200,19 +185,44 @@ public:
         return Container::row(index);
     }
 
+    Frame lastFrame() {
+        return Container::last();
+    }
+
+    const Frame lastFrame() const {
+        return Container::last();
+    }
+
     void popFrontFrame() {
         Container::pop_front();
+    }
+
+    void popFrontFrames(int numFrames) {
+        Container::pop_front(numFrames);
     }
 
     Frame appendFrame() {
         return Container::append();
     }
 
+    int clampFrameIndex(int frameIndex, bool& out_isWithinRange){
+        if(frameIndex < 0){
+            frameIndex = 0;
+            out_isWithinRange = false;
+        } else if(frameIndex >= numFrames()){
+            frameIndex = numFrames() - 1;
+            out_isWithinRange = false;
+        } else {
+            out_isWithinRange = true;
+        }
+        return frameIndex;
+    }
+
     int clampFrameIndex(int frameIndex){
         if(frameIndex < 0){
-            return 0;
+            frameIndex = 0;
         } else if(frameIndex >= numFrames()){
-            return numFrames() - 1;
+            frameIndex = numFrames() - 1;
         }
         return frameIndex;
     }
@@ -222,6 +232,26 @@ protected:
     double offsetTime_;
 
     virtual value_type defaultValue() const { return value_type(); }
+
+private:
+    void fillNewElements(int prevNumFrames, int prevNumParts){
+        const int newNumFrames = numFrames();
+        const int newNumParts = numParts();
+        if(newNumParts != prevNumParts){
+            std::fill(Container::begin(), Container::end(), defaultValue());
+        } else {
+            if(newNumFrames > prevNumFrames){
+                if(prevNumFrames == 0){
+                    std::fill(Container::begin() + prevNumFrames * newNumParts, Container::end(), defaultValue());
+                } else {
+                    Frame last = frame(prevNumFrames - 1);
+                    for(int i=prevNumFrames; i < newNumFrames; ++i){
+                        std::copy(last.begin(), last.end(), frame(i).begin());
+                    }
+                }
+            }
+        }
+    }
 };
 
 }

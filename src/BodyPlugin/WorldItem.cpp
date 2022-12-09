@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "WorldItem.h"
 #include "MaterialTableItem.h"
 #include "KinematicsBar.h"
@@ -236,7 +231,7 @@ ItemList<BodyItem> WorldItem::coldetBodyItems() const
 }
 
 
-std::vector<CollisionLinkPairPtr>& WorldItem::collisions() const
+std::vector<WorldItem::CollisionLinkPairPtr>& WorldItem::collisions() const
 {
     return *impl->collisions;
 }
@@ -374,13 +369,14 @@ void WorldItem::Impl::updateCollisionDetector(bool forceUpdate)
     for(auto& bodyInfo : coldetBodyInfos){
         BodyItem* bodyItem = bodyInfo.bodyItem;
 
-        bodyCollisionDetector.addBody(
-            bodyItem->body(), bodyInfo.isSelfCollisionDetectionEnabled,
+        bodyCollisionDetector.setLinkAssociatedObjectFunction(
             [&bodyInfo](Link* link, GeometryHandle geometry){
-                ColdetLinkInfo* linkInfo = new ColdetLinkInfo(bodyInfo.bodyItem, link, geometry);
+                auto linkInfo = new ColdetLinkInfo(bodyInfo.bodyItem, link, geometry);
                 bodyInfo.linkInfos.push_back(linkInfo);
                 return linkInfo;
             });
+            
+        bodyCollisionDetector.addBody(bodyItem->body(), bodyInfo.isSelfCollisionDetectionEnabled);
 
         ColdetBodyInfo* pBodyInfo = &bodyInfo;
         sigKinematicStateChangedConnections.add(
@@ -485,7 +481,7 @@ void WorldItem::Impl::ignoreLinkPair
 void WorldItem::Impl::extractCollisions(const CollisionPair& collisionPair)
 {
     CollisionLinkPairPtr collisionLinkPair = std::make_shared<CollisionLinkPair>();
-    collisionLinkPair->collisions = collisionPair.collisions();
+    collisionLinkPair->setCollisions(collisionPair.collisions());
     BodyItem* bodyItem = 0;
     for(int i=0; i < 2; ++i){
         ColdetLinkInfo* linkInfo = static_cast<ColdetLinkInfo*>(collisionPair.object(i));
@@ -493,9 +489,8 @@ void WorldItem::Impl::extractCollisions(const CollisionPair& collisionPair)
             bodyItem = linkInfo->bodyItem;
             bodyItem->collisions().push_back(collisionLinkPair);
         }
-        collisionLinkPair->body[i] = bodyItem->body();
         Link* link = linkInfo->link;
-        collisionLinkPair->link[i] = link;
+        collisionLinkPair->setLink(i, link);
         bodyItem->collisionsOfLink(link->index()).push_back(collisionLinkPair);
         bodyItem->collisionLinkBitSet()[link->index()] = true;
     }

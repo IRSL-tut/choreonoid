@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "WaistBalancer.h"
 #include <cnoid/PoseProvider>
 #include <cnoid/LeggedBodyHelper>
@@ -17,20 +13,22 @@ using namespace cnoid;
 
 namespace {
 
-    const bool DoVerticalAccCompensation = true;
-    
+const bool DoVerticalAccCompensation = true;
+
 #if defined(_MSC_VER) && _MSC_VER < 1800
-    inline long lround(double x) {
-        return static_cast<long>((x > 0.0) ? floor(x + 0.5) : ceil(x -0.5));
-    }
+inline long lround(double x) {
+    return static_cast<long>((x > 0.0) ? floor(x + 0.5) : ceil(x -0.5));
+}
 #endif
 
-    struct Zelements {
-        vector<Vector3>& array;
-        int offset;
-        Zelements(vector<Vector3>& array, int offset) : array(array), offset(offset) { }
-        double& operator[](int index) { return array[index + offset].z(); }
-    };
+struct Zelements
+{
+    vector<Vector3>& array;
+    int offset;
+    Zelements(vector<Vector3>& array, int offset) : array(array), offset(offset) { }
+    double& operator[](int index) { return array[index + offset].z(); }
+};
+
 }
 
 
@@ -51,6 +49,12 @@ WaistBalancer::WaistBalancer()
 
     setBoundarySmoother(QUINTIC_SMOOTHER, 0.5);
     setFullTimeRange();
+}
+
+
+void WaistBalancer::setMessageOutputStream(std::ostream& os)
+{
+    os_ = &os;
 }
 
 
@@ -380,7 +384,7 @@ bool WaistBalancer::calcBoundaryCmAdjustmentTrajectorySub(int begin, int directi
             Vector3 p = r * translation;
             boundaryCmAdjustmentTranslations[frame] = p;
             totalCmTranslations[frame] = p;
-			++i;
+            ++i;
         }
     }
 
@@ -419,10 +423,10 @@ bool WaistBalancer::calcWaistTranslationWithCmAboveZmp
 
         provider->getBaseLinkPosition(baseLink->T());
         
-        provider->getJointPositions(jointPositions);
+        provider->getJointDisplacements(jointDisplacements);
         for(int j=0; j < n; ++j){
             Link* joint = body_->joint(j);
-            const auto& q = jointPositions[j];
+            const auto& q = jointDisplacements[j];
             joint->q() = q ? *q : 0.0;
         }
         fkTraverse.calcForwardKinematics(true);
@@ -461,10 +465,10 @@ void WaistBalancer::initBodyKinematics(int frame, const Vector3& cmTranslation)
     fkTraverse.find(baseLink);
 
     const int n = body_->numJoints();
-    provider->getJointPositions(jointPositions);
+    provider->getJointDisplacements(jointDisplacements);
     for(int i=0; i < n; ++i){
         Link* joint = body_->joint(i);
-        const auto& q = jointPositions[i];
+        const auto& q = jointDisplacements[i];
         joint->q() = q ? *q : 0.0;
         joint->dq() = 0.0;
     }
@@ -550,10 +554,10 @@ bool WaistBalancer::updateBodyKinematics1(int frame)
             baseLink->v() = (T_next.translation() - baseLink->p()) / dt;
             baseLink->w() = omegaFromRot(baseLink->R().transpose() * T_next.linear()) / dt;
 
-            provider->getJointPositions(jointPositions);
+            provider->getJointDisplacements(jointDisplacements);
             for(int i=0; i < n; ++i){
                 Link* joint = body_->joint(i);
-                const auto& q = jointPositions[i];
+                const auto& q = jointDisplacements[i];
                 if(q){
                     joint->dq() = (*q - joint->q()) / dt;
                 } else {
@@ -572,10 +576,10 @@ bool WaistBalancer::updateBodyKinematics1(int frame)
 void WaistBalancer::updateBodyKinematics2()
 {
     const int n = body_->numJoints();
-    provider->getJointPositions(jointPositions);
+    provider->getJointDisplacements(jointDisplacements);
     for(int i=0; i < n; ++i){
         Link* joint = body_->joint(i);
-        const auto& q = jointPositions[i];
+        const auto& q = jointDisplacements[i];
         if(q){
             joint->q() = *q;
         }
@@ -841,34 +845,31 @@ bool WaistBalancer::applyCmTranslations(BodyMotion& motion, bool putAllLinkPosit
     }
     
     bool completed = true;
-
+    const int numLinkPositions = (putAllLinkPositions ? body_->numLinks() : 1);
     const int numJoints = body_->numJoints();
-    const int numLinksToPut = (putAllLinkPositions ? body_->numLinks() : 1);
-    
-    motion.setDimension(endingFrame + 1, numJoints, numLinksToPut, true);
-
-    MultiValueSeq& qseq = *motion.jointPosSeq();
-    MultiSE3Seq& pseq = *motion.linkPosSeq();
+    auto pseq = motion.positionSeq();
+    pseq->setNumLinkPositionsHint(numLinkPositions);
+    pseq->setNumJointDisplacementsHint(numJoints);
+    motion.setNumFrames(endingFrame + 1, true);
     auto zmpseq = getOrCreateZMPSeq(motion);
     zmpseq->setRootRelative(false);
 
     initBodyKinematics(beginningFrame, totalCmTranslations[beginningFrame]);
 
-    for(int frame = beginningFrame; frame <= endingFrame; ++frame){
+    for(int frameIndex = beginningFrame; frameIndex <= endingFrame; ++frameIndex){
 
-        completed &= updateBodyKinematics1(frame); 
+        completed &= updateBodyKinematics1(frameIndex); 
 
-        MultiValueSeq::Frame qs = qseq.frame(frame);
-        for(int i=0; i < numJoints; ++i){
-            qs[i] = body_->joint(i)->q();
-        }
-
-        zmpseq->at(frame) = zmp;
-        
-        for(int i=0; i < numLinksToPut; ++i){
+        auto& frame = pseq->allocateFrame(frameIndex);
+        for(int i=0; i < numLinkPositions; ++i){
             Link* link = body_->link(i);
-            pseq.at(frame, i).set(link->T());
+            frame.linkPosition(i).set(link->T());
         }
+        auto displacements = frame.jointDisplacements();
+        for(int i=0; i < numJoints; ++i){
+            displacements[i] = body_->joint(i)->q();
+        }
+        zmpseq->at(frameIndex) = zmp;
 
         updateBodyKinematics2();
     }

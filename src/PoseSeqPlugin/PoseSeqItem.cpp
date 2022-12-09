@@ -8,9 +8,9 @@
 #include <cnoid/LinkPath>
 #include <cnoid/BodyItem>
 #include <cnoid/BodyMotionItem>
-#include <cnoid/LeggedBodyHelper>
 #include <cnoid/Archive>
 #include <cnoid/PutPropertyFunction>
+#include <cnoid/ConnectionSet>
 #include <fmt/format.h>
 #include <set>
 #include <deque>
@@ -28,7 +28,7 @@ class PoseSeqItem::Impl
 public:
     PoseSeqItem* self;
     
-    BodyItem* ownerBodyItem;
+    BodyItem* targetBodyItem;
     PoseSeqPtr seq;
     PoseSeqInterpolatorPtr interpolator;
     BodyMotionItemPtr bodyMotionItem;
@@ -83,7 +83,6 @@ public:
     int currentHistory;
 
     BodyMotionGenerationBar* generationBar;
-    TimeBar* timeBar;
 
     bool isSelectedPoseBeingMoved;
     bool isPoseSelectionChangedByEditing;
@@ -234,7 +233,7 @@ PoseSeqItem::Impl::Impl(PoseSeqItem* self, const PoseSeqItem::Impl& org)
 
 void PoseSeqItem::Impl::init()
 {
-    ownerBodyItem = nullptr;
+    targetBodyItem = nullptr;
     
     interpolator.reset(new PoseSeqInterpolator);
     interpolator->setPoseSeq(seq);
@@ -276,6 +275,12 @@ bool PoseSeqItem::setName(const std::string& name)
     impl->seq->setName(name);
     suggestFileUpdate();
     return Item::setName(name);
+}
+
+
+BodyItem* PoseSeqItem::targetBodyItem()
+{
+    return impl->targetBodyItem;
 }
 
 
@@ -439,17 +444,17 @@ void PoseSeqItem::Impl::onTreePathChanged()
         updateInterpolationParameters();
     }
 
-    BodyItemPtr prevBodyItem = ownerBodyItem;
-    ownerBodyItem = self->findOwnerItem<BodyItem>();
-    if(ownerBodyItem == prevBodyItem){
+    BodyItemPtr prevBodyItem = targetBodyItem;
+    targetBodyItem = self->findOwnerItem<BodyItem>();
+    if(targetBodyItem == prevBodyItem){
         return;
     }
         
-    if(!ownerBodyItem){
+    if(!targetBodyItem){
         interpolator->setBody(nullptr);
 
     } else {
-        Body* body = ownerBodyItem->body();
+        Body* body = targetBodyItem->body();
 
         if(seq->targetBodyName().empty()){
             seq->setTargetBodyName(body->name());
@@ -460,7 +465,7 @@ void PoseSeqItem::Impl::onTreePathChanged()
         interpolator->setBody(body);
 
         const Listing& linearInterpolationJoints =
-            *ownerBodyItem->body()->info()->findListing("linearInterpolationJoints");
+            *targetBodyItem->body()->info()->findListing("linearInterpolationJoints");
         if(linearInterpolationJoints.isValid()){
             for(int i=0; i < linearInterpolationJoints.size(); ++i){
                 Link* link = body->link(linearInterpolationJoints[i].toString());
@@ -470,14 +475,7 @@ void PoseSeqItem::Impl::onTreePathChanged()
             }
         }
 
-        LeggedBodyHelperPtr legged = getLeggedBodyHelper(ownerBodyItem->body());
-        if(legged->isValid()){
-            for(int i=0; i < legged->numFeet(); ++i){
-                interpolator->addFootLink(legged->footLink(i)->index(), legged->centerOfSoleLocal(i));
-            }
-        }
-
-        interpolator->setLipSyncShapes(*ownerBodyItem->body()->info()->findMapping("lipSyncShapes"));
+        interpolator->setLipSyncShapes(*targetBodyItem->body()->info()->findMapping("lipSyncShapes"));
         bodyMotionItem->motion()->setNumJoints(interpolator->body()->numJoints());
 
         if(generationBar->isAutoGenerationForNewBodyEnabled()){
@@ -495,7 +493,7 @@ void PoseSeqItem::Impl::convert(BodyPtr orgBody)
         return;
     }
     
-    const Listing& convInfoTop = *ownerBodyItem->body()->info()->findListing("poseConversionInfo");
+    const Listing& convInfoTop = *targetBodyItem->body()->info()->findListing("poseConversionInfo");
     if(convInfoTop.isValid()){
         for(int i=0; i < convInfoTop.size(); ++i){
             const Mapping& convInfo = *convInfoTop[i].toMapping();
@@ -507,7 +505,7 @@ void PoseSeqItem::Impl::convert(BodyPtr orgBody)
                     if(endEditing(convertSub(orgBody, convInfo))){
                         
                         self->clearFileInformation();
-                        BodyPtr body = ownerBodyItem->body();
+                        BodyPtr body = targetBodyItem->body();
                         seq->setTargetBodyName(body->name());
                         MessageView::mainInstance()->notify(
                             format(_("Pose seq \"{0}\" has been converted. Its target has been changed from {1} to {2}"),
@@ -528,7 +526,7 @@ bool PoseSeqItem::Impl::convertSub(BodyPtr orgBody, const Mapping& convInfo)
     
     const Listing& jointMap = *convInfo.findListing("jointMap");
     const Mapping& linkMap = *convInfo.findMapping("linkMap");
-    BodyPtr body = ownerBodyItem->body();
+    BodyPtr body = targetBodyItem->body();
     
     for(auto it = seq->begin(); it != seq->end(); ++it){
 
@@ -606,11 +604,20 @@ void PoseSeqItem::Impl::updateInterpolationParameters()
 {
     interpolator->setTimeScaleRatio(generationBar->timeScaleRatio());
 
-    interpolator->enableStealthyStepMode(generationBar->isStealthyStepMode());
+    /*
+    interpolator->enableStealthyStepMode(
+        generationBar->stepTrajectoryAdjustmentMode() == PoseSeqInterpolator::StealthyStepMode);
+    */
+
+    interpolator->setStepTrajectoryAdjustmentMode(generationBar->stepTrajectoryAdjustmentMode());
+    
     interpolator->setStealthyStepParameters(
         generationBar->stealthyHeightRatioThresh(),
         generationBar->flatLiftingHeight(), generationBar->flatLandingHeight(),
         generationBar->impactReductionHeight(), generationBar->impactReductionTime());
+
+    interpolator->setToeStepParameters(
+        generationBar->toeContactAngle(), generationBar->toeContactTime());
 
     interpolator->enableAutoZmpAdjustmentMode(generationBar->isAutoZmpAdjustmentMode());
     interpolator->setZmpAdjustmentParameters(
@@ -646,9 +653,9 @@ bool PoseSeqItem::Impl::updateTrajectory(bool putMessages)
 {
     bool result = false;
 
-    if(ownerBodyItem){
+    if(targetBodyItem){
         result = generationBar->shapeBodyMotion(
-            ownerBodyItem->body(), interpolator.get(), bodyMotionItem, putMessages);
+            targetBodyItem->body(), interpolator.get(), bodyMotionItem, putMessages);
     }
 
     return result;
@@ -900,16 +907,14 @@ bool PoseSeqItem::updatePosesWithBalancedTrajectories(std::ostream& os)
 bool PoseSeqItem::Impl::updatePosesWithBalancedTrajectories(std::ostream& os)
 {
     auto motion = bodyMotionItem->motion();
-    auto qseq = motion->jointPosSeq();
-    auto pseq = motion->linkPosSeq();
-
+    auto pseq = motion->positionSeq();
     double length = seq->endingTime();
     
-    if(qseq->timeLength() < length || pseq->timeLength() < length){
+    if(pseq->timeLength() < length){
         os << "Length of the interpolated trajectories is shorter than key pose sequence.";
         return false;
     }
-    if(pseq->numParts() < ownerBodyItem->body()->numLinks()){
+    if(pseq->numLinkPositionsHint() < targetBodyItem->body()->numLinks()){
         os << "Not all link positions are available. Please do interpolate with \"Put all link positions\"";
         return false;
     }
@@ -917,24 +922,23 @@ bool PoseSeqItem::Impl::updatePosesWithBalancedTrajectories(std::ostream& os)
     beginEditing();
     
     for(auto it = seq->begin(); it != seq->end(); ++it){
-
         if(auto pose = it->get<BodyKeyPose>()){
-            
             seq->beginPoseModification(it);
-            
-            int nj = pose->numJoints();
-            int frame = qseq->frameOfTime(it->time());
-            MultiValueSeq::Frame q = qseq->frame(frame);
+
+            int frameIndex = pseq->frameOfTime(it->time());
+            auto& frame = pseq->frame(frameIndex);
+            int nj = std::min(pose->numJoints(), frame.numJointDisplacements());
+            auto displacements = frame.jointDisplacements();
             for(int i=0; i < nj; ++i){
                 if(pose->isJointValid(i)){
-                    pose->setJointDisplacement(i, q[i]);
+                    pose->setJointDisplacement(i, displacements[i]);
                 }
             }
-            MultiSE3Seq::Frame pos = pseq->frame(frame);
+
             for(auto ikLinkIter = pose->ikLinkBegin(); ikLinkIter != pose->ikLinkEnd(); ++ikLinkIter){
                 int linkIndex = ikLinkIter->first;
                 BodyKeyPose::LinkInfo& info = ikLinkIter->second;
-                const Vector3& p = pos[linkIndex].translation();
+                auto p = frame.linkPosition(linkIndex).translation();
                 // only update horizontal position
                 info.p()[0] = p[0];
                 info.p()[1] = p[1];

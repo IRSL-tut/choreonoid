@@ -18,6 +18,7 @@ set(sources
   BodyHandlerManager.cpp
   CustomJointPathBase.cpp
   JointSpaceConfigurationHandler.cpp
+  LinkedJointHandler.cpp
   BodyCustomizerInterface.cpp
   Material.cpp
   ContactMaterial.cpp
@@ -58,6 +59,7 @@ set(sources
   BodyCollisionDetector.cpp
   BodyCollisionDetectorUtil.cpp
   BodyMotion.cpp
+  BodyPositionSeq.cpp
   BodyMotionPoseProvider.cpp
   BodyState.cpp
   ZMPSeq.cpp
@@ -86,6 +88,7 @@ set(headers
   CustomJointPathHandler.h
   CustomJointPathBase.h
   JointSpaceConfigurationHandler.h
+  LinkedJointHandler.h
   BodyCustomizerInterface.h
   VRMLBody.h
   AbstractBodyLoader.h
@@ -147,6 +150,7 @@ set(headers
   ConstraintForceSolver.h
   PoseProvider.h
   BodyMotion.h
+  BodyPositionSeq.h
   BodyMotionPoseProvider.h
   PoseProviderToBodyMotionConverter.h
   BodyMotionUtil.h

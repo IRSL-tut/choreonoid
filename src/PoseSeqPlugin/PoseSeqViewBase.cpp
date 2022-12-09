@@ -3,6 +3,7 @@
 #include "PronunSymbol.h"
 #include "PoseFilters.h"
 #include "BodyMotionGenerationBar.h"
+#include "BodyKeyPoseSelectionDialog.h"
 #include <cnoid/RootItem>
 #include <cnoid/LeggedBodyHelper>
 #include <cnoid/BodySelectionManager>
@@ -64,53 +65,8 @@ public:
     CheckBox targetAxisCheck[3];
     DoubleSpinBox positionSpin[3];
 
-    LinkPositionAdjustmentDialog(View* parentView)
-        : Dialog(parentView) {
-
-        setWindowTitle(_("Link Position Adjustment"));
-
-        auto vbox = new QVBoxLayout;
-        auto hbox = new QHBoxLayout;
-
-        vbox->addLayout(hbox);
-
-        absoluteRadio.setText(_("Absolute"));
-        hbox->addWidget(&absoluteRadio);
-        relativeRadio.setText(_("Relative"));
-        relativeRadio.setChecked(true);
-        hbox->addWidget(&relativeRadio);
-
-        hbox = new QHBoxLayout;
-        vbox->addLayout(hbox);
-
-        const char* axisLabel[] = { "X", "Y", "Z" };
-            
-        for(int i=0; i < 3; ++i){
-            targetAxisCheck[i].setText(axisLabel[i]);
-            hbox->addWidget(&targetAxisCheck[i]);
-            positionSpin[i].setDecimals(3);
-            positionSpin[i].setRange(-99.999, 99.999);
-            positionSpin[i].setSingleStep(0.001);
-            positionSpin[i].setValue(0.0);
-            hbox->addWidget(&positionSpin[i]);
-        }
-
-        auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok);
-        connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
-        vbox->addWidget(buttonBox);
-
-        setLayout(vbox);
-    }
-
-    bool storeState(Archive& archive) {
-        return true;
-    }
-
-    bool restoreState(const Archive& archive) {
-        return true;
-    }
+    LinkPositionAdjustmentDialog(View* parentView);
 };
-
 
 class YawOrientationRotationDialog : public Dialog
 {
@@ -118,112 +74,9 @@ public:
     DoubleSpinBox angleSpin;
     DoubleSpinBox centerPosSpins[2];
 
-    YawOrientationRotationDialog(View* parentView)
-        : Dialog(parentView) {
-
-        setWindowTitle(_("Yaw Orientation Rotation"));
-
-        auto vbox = new QVBoxLayout;
-        auto hbox = new QHBoxLayout;
-        vbox->addLayout(hbox);
-
-        hbox->addWidget(new QLabel(_("Center:")));
-        hbox->addSpacing(8);
-        const char* axisLabel[] = { "X", "Y" };
-        for(int i=0; i < 2; ++i){
-            hbox->addWidget(new QLabel(axisLabel[i]));
-            centerPosSpins[i].setDecimals(3);
-            centerPosSpins[i].setRange(-99.999, 99.999);
-            centerPosSpins[i].setSingleStep(0.001);
-            hbox->addWidget(&centerPosSpins[i]);
-        }
-
-        hbox = new QHBoxLayout;
-        vbox->addLayout(hbox);
-
-        hbox->addWidget(new QLabel(_("Angle")));
-        angleSpin.setDecimals(1);
-        angleSpin.setRange(0.1, 90.0);
-        angleSpin.setSingleStep(0.1);
-        hbox->addWidget(&angleSpin);
-        hbox->addWidget(new QLabel(_("[deg]")));
-
-        auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok);
-        connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
-        vbox->addWidget(buttonBox);
-            
-        setLayout(vbox);
-    }
-
-    bool storeState(Archive& archive) {
-        return true;
-    }
-
-    bool restoreState(const Archive& archive) {
-        return true;
-    }
+    YawOrientationRotationDialog(View* parentView);
 };
     
-
-class PoseSelectionDialog : public Dialog
-{
-public:
-    DoubleSpinBox startTimeSpin;
-    DoubleSpinBox endTimeSpin;
-    RadioButton allPartRadio;
-    RadioButton selectedPartRadio;
-    RadioButton justSelectedPartRadio;
-
-    PoseSelectionDialog(View* parentView)
-        : Dialog(parentView) {
-
-        setWindowTitle(_("Select Specified Key Poses"));
-
-        auto vbox = new QVBoxLayout;
-
-        auto hbox = new QHBoxLayout;
-        vbox->addLayout(hbox);
-
-        hbox->addWidget(new QLabel(_("Start")));
-        startTimeSpin.setDecimals(2);
-        startTimeSpin.setRange(0.00, 999.99);
-        startTimeSpin.setSingleStep(0.01);
-        hbox->addWidget(&startTimeSpin);
-        hbox->addWidget(new QLabel(_("[s]")));
-
-        hbox->addWidget(new QLabel(_("End")));
-        endTimeSpin.setDecimals(2);
-        endTimeSpin.setRange(0.00, 999.99);
-        endTimeSpin.setSingleStep(0.01);
-        hbox->addWidget(&endTimeSpin);
-        hbox->addWidget(new QLabel(_("[s]")));
-            
-        hbox = new QHBoxLayout;
-        vbox->addLayout(hbox);
-
-        allPartRadio.setText(_("all parts"));
-        hbox->addWidget(&allPartRadio);
-        selectedPartRadio.setText(_("having selected parts"));
-        selectedPartRadio.setChecked(true);
-        hbox->addWidget(&selectedPartRadio);
-        justSelectedPartRadio.setText(_("just selected parts"));
-        hbox->addWidget(&justSelectedPartRadio);
-
-        auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok);
-        connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
-        vbox->addWidget(buttonBox);
-            
-        setLayout(vbox);
-    }
-
-    bool storeState(Archive& archive) {
-        return true;
-    }
-
-    bool restoreState(const Archive& archive) {
-        return true;
-    }
-};
 }
 
 
@@ -257,17 +110,9 @@ PoseSeqViewBase::PoseSeqViewBase(View* view)
 
     copiedPoses = new PoseSeq;
     
-    poseSelectionDialog = new PoseSelectionDialog(view);
-    poseSelectionDialog->sigAccepted().connect(
-        [this](){ onPoseSelectionDialogAccepted(); });
-
-    linkPositionAdjustmentDialog = new LinkPositionAdjustmentDialog(view);
-    linkPositionAdjustmentDialog->sigAccepted().connect(
-        [this](){ onLinkPositionAdjustmentDialogAccepted(); });
-
-    yawOrientationRotationDialog = new YawOrientationRotationDialog(view);
-    yawOrientationRotationDialog->sigAccepted().connect(
-        [this](){ onYawOrientationRotationDialogAccepted(); });
+    poseSelectionDialog = nullptr;
+    linkPositionAdjustmentDialog = nullptr;
+    yawOrientationRotationDialog = nullptr;
 
     menuManager.addItem(_("Select all poses after current position"))->sigTriggered().connect(
         [this](){ selectAllPosesAfterCurrentPosition(); });
@@ -1194,55 +1039,24 @@ void PoseSeqViewBase::popupContextMenu(QMouseEvent* event)
 }
 
 
-void PoseSeqViewBase::onSelectSpecifiedPosesActivated()
+BodyKeyPoseSelectionDialog* PoseSeqViewBase::getOrCreatePoseSelectionDialog()
 {
-    poseSelectionDialog->show();
+    if(!poseSelectionDialog){
+        poseSelectionDialog =
+            new BodyKeyPoseSelectionDialog(
+                linkTreeWidget,
+                [this]() -> PoseSeqItem* { return currentPoseSeqItem; });
+        if(stateArchive){
+            poseSelectionDialog->restoreState(stateArchive);
+        }
+    }
+    return poseSelectionDialog;
 }
 
 
-void PoseSeqViewBase::onPoseSelectionDialogAccepted()
+void PoseSeqViewBase::showSpecificKeyPoseSelectionDialog()
 {
-    if(!body || !seq){
-        return;
-    }
-
-    bool changed = currentPoseSeqItem->clearPoseSelection();
-    
-    const vector<int> selectedLinkIndices = linkTreeWidget->selectedLinkIndices();
-    const double t0 = poseSelectionDialog->startTimeSpin.value();
-    const double t1 = poseSelectionDialog->endTimeSpin.value();
-
-    auto it = seq->seek(seq->begin(), t0);
-
-    while(it != seq->end()){
-        if(it->time() > t1){
-            break;
-        }
-        if(!poseSelectionDialog->selectedPartRadio.isChecked()){
-            currentPoseSeqItem->selectPose(it);
-            changed = true;
-        } else {
-            if(auto pose = it->get<BodyKeyPose>()){
-                bool match = false;
-                for(size_t i=0; i < selectedLinkIndices.size(); ++i){
-                    int linkIndex = selectedLinkIndices[i];
-                    if(pose->isJointValid(body->link(linkIndex)->jointId()) || pose->ikLinkInfo(linkIndex)){
-                        match = true;
-                        break;
-                    }
-                }
-                if(match){
-                    currentPoseSeqItem->selectPose(it);
-                    changed = true;
-                }
-            }
-        }
-        ++it;
-    }
-
-    if(changed){
-        currentPoseSeqItem->notifyPoseSelectionChange();
-    }
+    getOrCreatePoseSelectionDialog()->show();
 }
 
 
@@ -1275,6 +1089,12 @@ void PoseSeqViewBase::onAdjustStepPositionsActivated()
 
 void PoseSeqViewBase::onRotateYawOrientationsActivated()
 {
+    if(!yawOrientationRotationDialog){
+        yawOrientationRotationDialog = new YawOrientationRotationDialog(view);
+        yawOrientationRotationDialog->sigAccepted().connect(
+            [this](){ onYawOrientationRotationDialogAccepted(); });
+    }
+        
     yawOrientationRotationDialog->show();
 }
 
@@ -1314,6 +1134,12 @@ void PoseSeqViewBase::onYawOrientationRotationDialogAccepted()
 
 void PoseSeqViewBase::onAdjustWaistPositionActivated()
 {
+    if(!linkPositionAdjustmentDialog){
+        linkPositionAdjustmentDialog = new LinkPositionAdjustmentDialog(view);
+        linkPositionAdjustmentDialog->sigAccepted().connect(
+            [this](){ onLinkPositionAdjustmentDialogAccepted(); });
+    }
+
     linkPositionAdjustmentDialog->show();
 }
 
@@ -1635,12 +1461,12 @@ bool PoseSeqViewBase::setCurrentLinkStateToIkLink(Link* link, BodyKeyPose::LinkI
     }
     
     std::vector<Vector3> contactPoints;
-    const std::vector<CollisionLinkPairPtr>& collisions = currentBodyItem->collisionsOfLink(link->index());
+    const auto& collisions = currentBodyItem->collisionsOfLink(link->index());
     for(size_t i=0; i < collisions.size(); ++i){
         if(!collisions[i]->isSelfCollision()){
             CollisionLinkPair& collisionPair = *collisions[i];
-            for(auto it = collisionPair.collisions.begin(); it != collisionPair.collisions.end(); ++it){
-                contactPoints.push_back(link->R().transpose()*(it->point - link->p()));
+            for(auto& collision : collisionPair.collisions()){
+                contactPoints.push_back(link->R().transpose() * (collision.point - link->p()));
             }
         }
     }
@@ -1844,8 +1670,8 @@ bool PoseSeqViewBase::storeState(Archive& archive)
     archive.write("autoUpdate", autoUpdateModeCheck.isChecked());
     archive.write("timeSync", timeSyncCheck.isChecked());
 
-    linkPositionAdjustmentDialog->storeState(archive);
-    
+    getOrCreatePoseSelectionDialog()->storeState(&archive);
+
     return linkTreeWidget->storeState(archive);
 }
 
@@ -1856,11 +1682,15 @@ bool PoseSeqViewBase::restoreState(const Archive& archive)
     updateAllToggle.setChecked(archive.get("updateAll", updateAllToggle.isChecked()));
     autoUpdateModeCheck.setChecked(archive.get("autoUpdate", autoUpdateModeCheck.isChecked()));
     timeSyncCheck.setChecked(archive.get("timeSync", timeSyncCheck.isChecked()));
-    
-    linkPositionAdjustmentDialog->restoreState(archive);
+
+    if(poseSelectionDialog){
+        poseSelectionDialog->restoreState(&archive);
+    }
     
     archive.addPostProcess(
         [this, &archive](){ restoreCurrentPoseSeqItem(archive); });
+
+    stateArchive = const_cast<Archive*>(&archive);
 
     return true;
 }
@@ -1873,4 +1703,81 @@ void PoseSeqViewBase::restoreCurrentPoseSeqItem(const Archive& archive)
     if(auto item = archive.findItem<PoseSeqItem>("currentPoseSeqItem")){
         setCurrentPoseSeqItem(item);
     }
+}
+
+
+LinkPositionAdjustmentDialog::LinkPositionAdjustmentDialog(View* parentView)
+    : Dialog(parentView)
+{
+    setWindowTitle(_("Link Position Adjustment"));
+
+    auto vbox = new QVBoxLayout;
+    auto hbox = new QHBoxLayout;
+
+    vbox->addLayout(hbox);
+
+    absoluteRadio.setText(_("Absolute"));
+    hbox->addWidget(&absoluteRadio);
+    relativeRadio.setText(_("Relative"));
+    relativeRadio.setChecked(true);
+    hbox->addWidget(&relativeRadio);
+
+    hbox = new QHBoxLayout;
+    vbox->addLayout(hbox);
+
+    const char* axisLabel[] = { "X", "Y", "Z" };
+
+    for(int i=0; i < 3; ++i){
+        targetAxisCheck[i].setText(axisLabel[i]);
+        hbox->addWidget(&targetAxisCheck[i]);
+        positionSpin[i].setDecimals(3);
+        positionSpin[i].setRange(-99.999, 99.999);
+        positionSpin[i].setSingleStep(0.001);
+        positionSpin[i].setValue(0.0);
+        hbox->addWidget(&positionSpin[i]);
+    }
+
+    auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok);
+    connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
+    vbox->addWidget(buttonBox);
+
+    setLayout(vbox);
+}
+
+
+YawOrientationRotationDialog::YawOrientationRotationDialog(View* parentView)
+    : Dialog(parentView)
+{
+    setWindowTitle(_("Yaw Orientation Rotation"));
+
+    auto vbox = new QVBoxLayout;
+    auto hbox = new QHBoxLayout;
+    vbox->addLayout(hbox);
+
+    hbox->addWidget(new QLabel(_("Center:")));
+    hbox->addSpacing(8);
+    const char* axisLabel[] = { "X", "Y" };
+    for(int i=0; i < 2; ++i){
+        hbox->addWidget(new QLabel(axisLabel[i]));
+        centerPosSpins[i].setDecimals(3);
+        centerPosSpins[i].setRange(-99.999, 99.999);
+        centerPosSpins[i].setSingleStep(0.001);
+        hbox->addWidget(&centerPosSpins[i]);
+    }
+
+    hbox = new QHBoxLayout;
+    vbox->addLayout(hbox);
+
+    hbox->addWidget(new QLabel(_("Angle")));
+    angleSpin.setDecimals(1);
+    angleSpin.setRange(0.1, 90.0);
+    angleSpin.setSingleStep(0.1);
+    hbox->addWidget(&angleSpin);
+    hbox->addWidget(new QLabel(_("[deg]")));
+
+    auto buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok);
+    connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
+    vbox->addWidget(buttonBox);
+
+    setLayout(vbox);
 }

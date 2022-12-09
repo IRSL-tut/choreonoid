@@ -1,7 +1,3 @@
-/*! @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "BodyPlugin.h"
 #include "BodySelectionManager.h"
 #include "WorldItem.h"
@@ -15,6 +11,7 @@
 #include "ControllerItem.h"
 #include "SimpleControllerItem.h"
 #include "BodyMotionControllerItem.h"
+#include "CollisionDetectionControllerItem.h"
 #include "RegionIntrusionDetectorItem.h"
 #include "ControllerLogItem.h"
 #include "BodyContactPointLoggerItem.h"
@@ -24,6 +21,7 @@
 #include "BodyMotionItem.h"
 #include "ZMPSeqItem.h"
 #include "MultiDeviceStateSeqItem.h"
+#include "MultiDeviceStateSeqEngine.h"
 #include "WorldLogFileItem.h"
 #include "IoConnectionMapItem.h"
 #include "SensorVisualizerItem.h"
@@ -108,6 +106,7 @@ bool BodyPlugin::initialize()
     ControllerItem::initializeClass(this);
     SimpleControllerItem::initializeClass(this);
     BodyMotionControllerItem::initializeClass(this);
+    CollisionDetectionControllerItem::initializeClass(this);
     RegionIntrusionDetectorItem::initializeClass(this);
     ControllerLogItem::initializeClass(this);
     BodyContactPointLoggerItem::initializeClass(this);
@@ -115,6 +114,10 @@ bool BodyPlugin::initialize()
     GLVisionSimulatorItem::initializeClass(this);
     SimulationScriptItem::initializeClass(this);
     BodyMotionItem::initializeClass(this);
+    BodyMotionEngine::initializeClass(this);
+    MultiDeviceStateSeqItem::initializeClass(this);
+    MultiDeviceStateSeqEngine::initializeClass(this);
+    ZMPSeqItem::initializeClass(this); 
     WorldLogFileItem::initializeClass(this);
     IoConnectionMapItem::initializeClass(this);
     SensorVisualizerItem::initializeClass(this);
@@ -126,15 +129,7 @@ bool BodyPlugin::initialize()
     LinkOverwriteItem::initializeClass(this);
     DeviceOverwriteItem::initializeClass(this);
     CollisionSeqItem::initislizeClass(this);
-    
-    BodyMotionEngine::initializeClass(this);
     CollisionSeqEngine::initializeClass();
-    KinematicFaultChecker::initializeClass(this);
-    initializeSplineFilterDialog(this);
-    
-    // This should be after the initialization of BodyMotionEngine
-    ZMPSeqItem::initializeClass(this); 
-    MultiDeviceStateSeqItem::initializeClass(this);
     
     OperableSceneBody::initializeClass(this);
     
@@ -155,6 +150,8 @@ bool BodyPlugin::initialize()
     LinkGraphView::initializeClass(this);
     BodyLinkView::initializeClass(this);
     
+    KinematicFaultChecker::initializeClass(this);
+    initializeSplineFilterDialog(this);
     initializeHrpsysFileIO(this);
     
     loadDefaultBodyCustomizers(mvout(false));

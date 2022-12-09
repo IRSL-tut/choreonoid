@@ -38,15 +38,15 @@ void exportPyItems(py::module m)
         .def_property_readonly("childItem", &Item::childItem)
         .def_property_readonly("prevItem", &Item::prevItem)
         .def_property_readonly("nextItem", &Item::nextItem)
-        .def_property_readonly("parentItem", &Item::parentItem)
+        .def_property_readonly("parentItem", [](Item& self){ return self.parentItem(); })
         .def("addChildItem", &Item::addChildItem, py::arg("item"), py::arg("isManualOperation") = false)
         .def("addSubItem", &Item::addSubItem)
         .def("isSubItem", &Item::isSubItem)
         .def("removeFromParentItem", &Item::removeFromParentItem)
         .def("insertChild",
              &Item::insertChild, py::arg("position"), py::arg("item"), py::arg("isManualOperation") = false)
-        .def("isTemporal", &Item::isTemporal)
-        .def("setTemporal", &Item::setTemporal, py::arg("on") = true)
+        .def("isTemporary", &Item::isTemporary)
+        .def("setTemporary", &Item::setTemporary, py::arg("on") = true)
         .def("isSelected", &Item::isSelected)
         .def("setSelected", &Item::setSelected, py::arg("on"), py::arg("isCurrent") = false)
         .def("isChecked", [](Item& self){ return self.isChecked(); })
@@ -113,7 +113,7 @@ void exportPyItems(py::module m)
         .def("getChildItem", &Item::childItem)
         .def("getPrevItem", &Item::prevItem)
         .def("getNextItem", &Item::nextItem)
-        .def("getParentItem", &Item::parentItem)
+        .def("getParentItem", [](Item& self){ return self.parentItem(); })
         .def("getHeadItem", &Item::headItem)
         .def("getDescendantItems", [](Item& self){ return self.descendantItems(); })
         .def("getDescendantItems", [](Item& self, py::object itemClass) {
@@ -129,6 +129,10 @@ void exportPyItems(py::module m)
              [](Item& self, bool forceOverwrite, const string& format){
                  return self.overwriteOrSaveWithDialog(forceOverwrite, format); },
              py::arg("forceOverwrite") = false, py::arg("format") = string())
+
+        // deprecated
+        .def("isTemporal", &Item::isTemporary)
+        .def("setTemporal", &Item::setTemporary, py::arg("on") = true)
         ;
 
     py::enum_<Item::CheckId>(itemClass, "CheckId")

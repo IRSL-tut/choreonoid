@@ -21,8 +21,6 @@ public:
 
     void setLinearInterpolationJoint(int jointId);
 
-    void addFootLink(int linkIndex, const Vector3& soleCenter);
-
     void setLipSyncShapes(const Mapping& info);
     const std::vector<int>& lipSyncLinkIndices();
             
@@ -32,12 +30,22 @@ public:
 
     virtual double beginningTime() const override;
     virtual double endingTime() const override;
-            
-    void enableStealthyStepMode(bool on);
+
+    enum StepTrajectoryAdjustmentMode {
+        NoStepAdjustmentMode,
+        StealthyStepMode,
+        ToeStepMode
+    };
+
+    int stepTrajectoryAdjustmentMode() const;
+    void setStepTrajectoryAdjustmentMode(int mode);
+
     void setStealthyStepParameters(
         double heightRatioThresh,
         double flatLiftingHeight, double flatLandingHeight,
         double impactReductionHeight, double impactReductionTime);
+
+    void setToeStepParameters(double toeContactAngle, double toeContactTime);
 
     void enableAutoZmpAdjustmentMode(bool on);
     void setZmpAdjustmentParameters(
@@ -70,7 +78,7 @@ public:
     stdx::optional<double> jointPosition(int jointId) const;
     virtual stdx::optional<Vector3> ZMP() const override;
 
-    virtual void getJointPositions(std::vector<stdx::optional<double>>& out_q) const override;
+    virtual void getJointDisplacements(std::vector<stdx::optional<double>>& out_q) const override;
 
 private:
     class Impl;

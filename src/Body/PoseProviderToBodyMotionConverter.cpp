@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro NAKAOKA
-*/
-
 #include "PoseProviderToBodyMotionConverter.h"
 #include "Body.h"
 #include "LinkPath.h"
@@ -47,13 +42,14 @@ bool PoseProviderToBodyMotionConverter::convert(Body* body, PoseProvider* provid
     const int beginningFrame = static_cast<int>(frameRate * std::max(provider->beginningTime(), lowerTime));
     const int endingFrame = static_cast<int>(frameRate * std::min(provider->endingTime(), upperTime));
     const int numJoints = body->numJoints();
-    const int numLinksToPut = (allLinkPositionOutputMode ? body->numLinks() : 1);
-    
-    motion.setDimension(endingFrame + 1, numJoints, numLinksToPut, true);
+    const int numLinkPositions = (allLinkPositionOutputMode ? body->numLinks() : 1);
 
-    MultiValueSeq& qseq = *motion.jointPosSeq();
-    MultiSE3Seq& pseq = *motion.linkPosSeq();
-    ZMPSeq& zmpseq = *getOrCreateZMPSeq(motion);
+    auto pseq = motion.positionSeq();
+    pseq->setNumLinkPositionsHint(numLinkPositions);
+    pseq->setNumJointDisplacementsHint(numJoints);
+    motion.setNumFrames(endingFrame + 1, true);
+
+    ZMPSeq& zmpSeq = *getOrCreateZMPSeq(motion);
     bool isZmpValid = false;
 
     Link* rootLink = body->rootLink();
@@ -67,18 +63,18 @@ bool PoseProviderToBodyMotionConverter::convert(Body* body, PoseProvider* provid
     }
 
     // store the original state
-    vector<double> orgq(numJoints);
+    vector<double> orgJointDisplacements(numJoints);
     for(int i=0; i < numJoints; ++i){
-        orgq[i] = body->joint(i)->q();
+        orgJointDisplacements[i] = body->joint(i)->q();
     }
     Vector3 p0 = rootLink->p();
     Matrix3 R0 = rootLink->R();
 
-    std::vector<stdx::optional<double>> jointPositions(numJoints);
+    std::vector<stdx::optional<double>> srcJointDisplacements(numJoints);
 
-    for(int frame = beginningFrame; frame <= endingFrame; ++frame){
+    for(int frameIndex = beginningFrame; frameIndex <= endingFrame; ++frameIndex){
 
-        provider->seek(frame / frameRate);
+        provider->seek(frameIndex / frameRate);
 
         const int baseLinkIndex = provider->baseLinkIndex();
         if(baseLinkIndex >= 0){
@@ -93,27 +89,25 @@ bool PoseProviderToBodyMotionConverter::convert(Body* body, PoseProvider* provid
             provider->getBaseLinkPosition(baseLink->T());
         }
 
-        MultiValueSeq::Frame qs = qseq.frame(frame);
-        provider->getJointPositions(jointPositions);
+        auto& frame = pseq->allocateFrame(frameIndex);
+
+        provider->getJointDisplacements(srcJointDisplacements);
+        auto displacements = frame.jointDisplacements();
         for(int i=0; i < numJoints; ++i){
-            const auto& q = jointPositions[i];
-            qs[i] = q ? *q : 0.0;
-            body->joint(i)->q() = qs[i];
+            const auto& q = srcJointDisplacements[i];
+            body->joint(i)->q() = displacements[i] = q ? *q : 0.0;
         }
 
         if(allLinkPositionOutputMode || baseLink != rootLink){
             fkTraverse->calcForwardKinematics();
         }
 
-        for(int i=0; i < numLinksToPut; ++i){
-            SE3& p = pseq(frame, i);
-            Link* link = body->link(i);
-            p.set(link->p(), link->R());
+        for(int i=0; i < numLinkPositions; ++i){
+            frame.linkPosition(i).set(body->link(i)->position());
         }
 
-        auto zmp = provider->ZMP();
-        if(zmp){
-            zmpseq[frame] = *zmp;
+        if(auto zmp = provider->ZMP()){
+            zmpSeq[frameIndex] = *zmp;
             isZmpValid = true;
         }
 
@@ -125,7 +119,7 @@ bool PoseProviderToBodyMotionConverter::convert(Body* body, PoseProvider* provid
 
     // restore the original state
     for(int i=0; i < numJoints; ++i){
-        body->joint(i)->q() = orgq[i];
+        body->joint(i)->q() = orgJointDisplacements[i];
     }
     rootLink->p() = p0;
     rootLink->R() = R0;

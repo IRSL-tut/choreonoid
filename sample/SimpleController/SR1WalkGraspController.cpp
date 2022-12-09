@@ -59,10 +59,11 @@ public:
             string filename = path.make_preferred().string();
 
             BodyMotion motion;
-            if(!motion.loadStandardYAMLformat(filename)){
+            if(!motion.load(filename)){
                 os << motion.seqMessage() << endl;
                 return false;
             }
+            motion.updateJointPosSeqWithBodyPositionSeq();
             qseq = motion.jointPosSeq();
             if(qseq->numFrames() == 0){
                 os << "Empty motion data." << endl;

@@ -71,10 +71,11 @@ public:
         auto filename = path.make_preferred().string();
         
         BodyMotion motion;
-        if(!motion.loadStandardYAMLformat(filename)){
+        if(!motion.load(filename)){
             io->os() << motion.seqMessage() << endl;
             return false;
         }
+        motion.updateJointPosSeqWithBodyPositionSeq();
         qseq = motion.jointPosSeq();
         if(qseq->numFrames() == 0){
             io->os() << "Empty motion data." << endl;

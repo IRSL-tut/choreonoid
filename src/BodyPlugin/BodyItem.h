@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_PLUGIN_BODY_ITEM_H
 #define CNOID_BODY_PLUGIN_BODY_ITEM_H
 
@@ -12,6 +7,7 @@
 #include <cnoid/LocatableItem>
 #include <cnoid/RenderableItem>
 #include <cnoid/stdx/optional>
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -59,7 +55,7 @@ public:
     bool attachToParentBody(bool doNotifyUpdate = true);    
 
     // The current parent body can temporarily be changed by this function
-    //void setTemporalParentBodyItem(BodyItem* parentBodyItem);
+    //void setTemporaryParentBodyItem(BodyItem* parentBodyItem);
     // The parent body item defined by the parent-child relationship in the item tree is restored
     // if the relationship exists. Otherwise, the parent body item is cleared.
     //void resetParentBodyItem();
@@ -154,6 +150,8 @@ public:
     
     void clearCollisions();
 
+    typedef std::shared_ptr<CollisionLinkPair> CollisionLinkPairPtr;
+    
     std::vector<CollisionLinkPairPtr>& collisions() { return collisions_; }
     const std::vector<CollisionLinkPairPtr>& collisions() const { return collisions_; }
     std::vector<bool>& collisionLinkBitSet() { return collisionLinkBitSet_; }

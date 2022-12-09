@@ -1,16 +1,15 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "BodyMotionItem.h"
 #include "BodyItem.h"
 #include <cnoid/MultiSeqItemCreationPanel>
 #include <cnoid/ItemManager>
-#include <cnoid/Archive>
+#include <cnoid/MenuManager>
+#include <cnoid/MultiSE3SeqItem>
+#include <cnoid/MultiValueSeqItem>
 #include <cnoid/ZMPSeq>
 #include <cnoid/MessageView>
+#include <cnoid/ItemTreeView>
 #include <cnoid/PutPropertyFunction>
+#include <cnoid/Archive>
 #include <fmt/format.h>
 #include "gettext.h"
 
@@ -28,11 +27,10 @@ struct ExtraSeqItemInfo : public Referenced
 {
     string key;
     AbstractSeqItemPtr item;
-    Connection sigUpdateConnection;
+    ScopedConnection sigUpdateConnection;
 
     ExtraSeqItemInfo(const string& key, AbstractSeqItemPtr& item) : key(key), item(item) { }
     ~ExtraSeqItemInfo() {
-        sigUpdateConnection.disconnect();
         item->removeFromParentItem();
     }
 };
@@ -57,17 +55,12 @@ class BodyMotionItem::Impl
 {
 public:
     BodyMotionItem* self;
-        
-    Connection jointPosSeqUpdateConnection;
-    Connection linkPosSeqUpdateConnection;
-
     ExtraSeqItemInfoMap extraSeqItemInfoMap;
     vector<ExtraSeqItemInfoPtr> extraSeqItemInfos;
     Signal<void()> sigExtraSeqItemsChanged;
-    Connection extraSeqsChangedConnection;
+    ScopedConnection extraSeqsChangedConnection;
 
     Impl(BodyMotionItem* self);
-    ~Impl();
     void initialize();
     void onSubItemUpdated();
     void updateExtraSeqItems();
@@ -109,7 +102,7 @@ void BodyMotionItemCreationPanel::doExtraItemUpdate(AbstractSeqItem* protoItem, 
     if(bodyItem){
         auto motionItem = static_cast<BodyMotionItem*>(protoItem);
         auto body = bodyItem->body();
-        auto qseq = motionItem->jointPosSeq();
+        auto qseq = motionItem->motion()->jointPosSeq();
         int n = std::min(body->numJoints(), qseq->numParts());
         for(int i=0; i < n; ++i){
             auto joint = body->joint(i);
@@ -149,6 +142,40 @@ void BodyMotionItem::initializeClass(ExtensionManager* ext)
         _("Body Motion (version 1.0)"), "BODY-MOTION-YAML", "seq;yaml",
         [](BodyMotionItem* item, const std::string& filename, std::ostream& os, Item* /* parentItem */){
             return item->motion()->save(filename, 1.0, os);
+        });
+
+    addExtraSeqItemFactory(
+        BodyMotion::linkPosSeqKey(),
+        [](std::shared_ptr<AbstractSeq> seq) -> AbstractSeqItem* {
+            MultiSE3SeqItem* item = nullptr;
+            if(auto linkPosSeq = dynamic_pointer_cast<MultiSE3Seq>(seq)){
+                item = new MultiSE3SeqItem(linkPosSeq);
+                item->setName("Cartesian");
+            }
+            return item;
+        });
+    
+    addExtraSeqItemFactory(
+        BodyMotion::jointPosSeqKey(),
+        [](std::shared_ptr<AbstractSeq> seq) -> AbstractSeqItem* {
+            MultiValueSeqItem* item = nullptr;
+            if(auto jointPosSeq = dynamic_pointer_cast<MultiValueSeq>(seq)){
+                item = new MultiValueSeqItem(jointPosSeq);
+                item->setName("Joint");
+            }
+            return item;
+        });
+
+    ItemTreeView::customizeContextMenu<BodyMotionItem>(
+        [](BodyMotionItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
+            menuManager.setPath("/").setPath(_("Data conversion"));
+            menuManager.addItem(_("Generate old-format position data items"))->sigTriggered().connect(
+                [item](){ item->motion()->updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq(); });
+            menuManager.addItem(_("Restore position data from old-format data items"))->sigTriggered().connect(
+                [item](){ item->motion()->updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq(); });
+            menuManager.setPath("/");
+            menuManager.addSeparator();
+            menuFunction.dispatchAs<Item>(item);
         });
 
     initialized = true;
@@ -200,22 +227,6 @@ BodyMotionItem::Impl::Impl(BodyMotionItem* self)
 
 void BodyMotionItem::Impl::initialize()
 {
-    self->jointPosSeqItem_ = new MultiValueSeqItem(self->bodyMotion_->jointPosSeq());
-    self->jointPosSeqItem_->setName("Joint");
-    self->addSubItem(self->jointPosSeqItem_);
-
-    jointPosSeqUpdateConnection =
-        self->jointPosSeqItem_->sigUpdated().connect(
-            [&](){ onSubItemUpdated(); });
-
-    self->linkPosSeqItem_ = new MultiSE3SeqItem(self->bodyMotion_->linkPosSeq());
-    self->linkPosSeqItem_->setName("Cartesian");
-    self->addSubItem(self->linkPosSeqItem_);
-
-    linkPosSeqUpdateConnection = 
-        self->linkPosSeqItem_->sigUpdated().connect(
-            [&](){ onSubItemUpdated(); });
-
     extraSeqsChangedConnection =
         self->bodyMotion_->sigExtraSeqsChanged().connect(
             [&](){ updateExtraSeqItems(); });
@@ -227,14 +238,6 @@ void BodyMotionItem::Impl::initialize()
 BodyMotionItem::~BodyMotionItem()
 {
     delete impl;
-}
-
-
-BodyMotionItem::Impl::~Impl()
-{
-    extraSeqsChangedConnection.disconnect();
-    jointPosSeqUpdateConnection.disconnect();
-    linkPosSeqUpdateConnection.disconnect();
 }
 
 
@@ -252,14 +255,6 @@ std::shared_ptr<AbstractSeq> BodyMotionItem::abstractSeq()
 
 void BodyMotionItem::notifyUpdate()
 {
-    impl->jointPosSeqUpdateConnection.block();
-    jointPosSeqItem_->notifyUpdate();
-    impl->jointPosSeqUpdateConnection.unblock();
-
-    impl->linkPosSeqUpdateConnection.block();
-    linkPosSeqItem_->notifyUpdate();
-    impl->linkPosSeqUpdateConnection.unblock();
-
     vector<ExtraSeqItemInfoPtr>& extraSeqItemInfos = impl->extraSeqItemInfos;
     for(size_t i=0; i < extraSeqItemInfos.size(); ++i){
         ExtraSeqItemInfo* info = extraSeqItemInfos[i];
@@ -398,7 +393,12 @@ bool BodyMotionItem::onChildItemAboutToBeAdded(Item* childItem_, bool isManualOp
 void BodyMotionItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     AbstractSeqItem::doPutProperties(putProperty);
+
+    auto pseq = bodyMotion_->positionSeq();
     
+    putProperty(_("Number of link positions"), pseq->numLinkPositionsHint());
+    putProperty(_("Number of joint displacements"), pseq->numJointDisplacementsHint());
+
     putProperty(_("Body joint velocity update"), isBodyJointVelocityUpdateEnabled_,
                 changeProperty(isBodyJointVelocityUpdateEnabled_));
 }
