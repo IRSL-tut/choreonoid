@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-01 10:20+0900\n"
+"POT-Creation-Date: 2022-12-14 12:39+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -22,10 +22,10 @@ msgstr "順動力学"
 msgid "Kinematics"
 msgstr "運動学"
 
-msgid "Euler"
-msgstr "オイラー"
+msgid "Semi-implicit Euler"
+msgstr "半陰オイラー"
 
-msgid "Runge Kutta"
+msgid "Runge-Kutta"
 msgstr "ルンゲクッタ"
 
 msgid ""
@@ -133,6 +133,12 @@ msgstr "反転コピー"
 msgid "Copy the left side pose to the right side"
 msgstr "左側の姿勢を右側にコピー"
 
+msgid "CollisionSeqItem"
+msgstr "干渉時系列アイテム"
+
+msgid "Collision Data"
+msgstr "干渉データ"
+
 msgid "BodyContactPointLoggerItem"
 msgstr "ボディ接触点ロガーアイテム"
 
@@ -204,6 +210,9 @@ msgstr "アタッチメント有効化"
 
 msgid "Multiplexing number"
 msgstr "多重化数"
+
+msgid "Existence"
+msgstr "存在"
 
 msgid "Mismatched size of the stored joint positions for {}"
 msgstr "{}に対して読み込まれる関節位置情報のサイズが一致しません"
@@ -487,7 +496,7 @@ msgid "Camera Creation"
 msgstr "カメラの作成"
 
 msgid "{0} Camera"
-msgstr ""
+msgstr "{0}カメラ"
 
 msgid "Camera Configuration"
 msgstr "カメラの設定"
@@ -519,14 +528,11 @@ msgstr "近方クリップ距離"
 msgid "Far clip distance"
 msgstr "遠方クリップ距離"
 
+msgid "CollisionDetectionController"
+msgstr "干渉検出コントローラ"
+
 msgid "The function to read CollisionSeq is not implemented."
 msgstr "CollisionSeqを読み込む機能は実装されていません．"
-
-msgid "CollisionSeqItem"
-msgstr "干渉時系列アイテム"
-
-msgid "Collision Data"
-msgstr "干渉データ"
 
 msgid "No delay mode"
 msgstr "無遅延モード"

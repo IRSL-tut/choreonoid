@@ -4,6 +4,7 @@
 #include "Collision.h"
 #include "Referenced.h"
 #include <cnoid/stdx/optional>
+#include <vector>
 #include <cstdint>
 #include "exportdecl.h"
 
@@ -57,12 +58,18 @@ public:
     }
 
     /**
+       This function is used to temporarily disable the collsiion detection for a particular geometry.
+       \todo This function should be a pure virtual function to force override.
+    */
+    virtual void setGeometryEnabled(GeometryHandle geometry, bool isEnabled);
+
+    /**
        If the dynamic geometry pair change is enabled, geometry pairs for collision detection can be
        changed after the makeReady funciton is executed. Note that this mode is optional.
     */
     virtual void setDynamicGeometryPairChangeEnabled(bool on);
     virtual bool isDynamicGeometryPairChangeEnabled() const;
-    
+
     virtual bool makeReady() = 0;
     
     virtual void updatePosition(GeometryHandle geometry, const Isometry3& position) = 0;
