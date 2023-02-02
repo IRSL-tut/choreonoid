@@ -214,7 +214,6 @@ public:
     void extractAssociatedItems(bool doReset);
     void extractControllerItems(Item* item, ControllerItem* parentControllerItem);
     void copyStateToBodyItem();
-    void cloneShapesOnce();
     void initializeRecording();
     void initializeRecordBuffers();
     void initializeRecordItems();
@@ -410,7 +409,7 @@ public:
     }
 
 protected:
-    virtual Item* doCloneItem(CloneMap* cloneMap) const { return nullptr; }
+    virtual Item* doCloneItem(CloneMap* cloneMap) const override { return nullptr; }
 
     virtual bool initialize(ControllerIO* io) override {
         this->io = io;
@@ -822,18 +821,6 @@ void SimulationBody::Impl::copyStateToBodyItem()
 {
     BodyState state(*body_);
     state.restorePositions(*bodyItem->body());
-}
-
-
-void SimulationBody::cloneShapesOnce()
-{
-    if(!impl->areShapesCloned){
-        if(!impl->simImpl){
-            // throw exception
-        }
-        impl->body_->cloneShapes(impl->simImpl->cloneMap);
-        impl->areShapesCloned = true;
-    }
 }
 
 
@@ -1316,6 +1303,7 @@ void SimulatorItem::onTreePathChanged()
 void SimulatorItem::onDisconnectedFromRoot()
 {
     impl->stopSimulation(true, true);
+    impl->clearSimulation();
     impl->worldItem = nullptr;
 }
 
@@ -1589,7 +1577,7 @@ void FunctionSet::updateFunctions()
 void SimulatorItem::Impl::clearSimulation()
 {
     allSimBodies.clear();
-    simBodiesWithBody.clear();;
+    simBodiesWithBody.clear();
     activeSimBodies.clear();
     loggedControllerInfos.clear();
     simBodyMap.clear();

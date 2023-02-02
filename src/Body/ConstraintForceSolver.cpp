@@ -13,6 +13,7 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/CloneMap>
 #include <cnoid/TimeMeasure>
+#include <cnoid/stdx/clamp>
 #include <fmt/format.h>
 #include <random>
 #include <unordered_map>
@@ -265,9 +266,9 @@ public:
     int numGaussSeidelTotalCalls;
     int numGaussSeidelTotalLoopsMax;
 
-
     Impl(DyWorldBase& world);
     ~Impl();
+    void clearBodies();
     void initBody(DyBody* body);
     void initSubBody(DySubBody* subBody);
     void initExtraJoint(ExtraJoint& extrajoint);
@@ -396,6 +397,25 @@ ConstraintForceSolver::Impl::~Impl()
 }
 
 
+void ConstraintForceSolver::clearBodies()
+{
+    impl->clearBodies();
+}
+
+
+void ConstraintForceSolver::Impl::clearBodies()
+{
+    cloneMap.clear();
+
+    bodyCollisionDetector.clearBodies();
+
+    geometryPairToLinkPairMap.clear();
+    constrainedLinkPairs.clear();
+    extraJointLinkPairs.clear();
+    constrain2dLinkPairs.clear();
+}    
+
+
 void ConstraintForceSolver::Impl::initBody(DyBody* body)
 {
     for(auto& subBody : body->subBodies()){
@@ -435,6 +455,7 @@ void ConstraintForceSolver::Impl::init2Dconstraint(DySubBody* subBody)
         body->setRootLink(link);
         link->p().setZero();
         link->R().setIdentity();
+        // The following code causes a memory leak
         subBodyFor2dConstraint = new DySubBody(link);
         initSubBody(subBodyFor2dConstraint);
     }
@@ -536,7 +557,7 @@ void ConstraintForceSolver::Impl::initialize(void)
         //os << setprecision(50);
     }
 
-    cloneMap.clear();
+    clearBodies();
 
     if(CFS_MCP_DEBUG){
         numGaussSeidelTotalCalls = 0;
@@ -546,13 +567,7 @@ void ConstraintForceSolver::Impl::initialize(void)
 
     if(!bodyCollisionDetector.collisionDetector()){
         bodyCollisionDetector.setCollisionDetector(new AISTCollisionDetector);
-    } else {
-        bodyCollisionDetector.clearBodies();
     }
-    geometryPairToLinkPairMap.clear();
-    constrainedLinkPairs.clear();
-    extraJointLinkPairs.clear();
-    constrain2dLinkPairs.clear();
 
     initializeContactMaterials();
 
@@ -1308,7 +1323,8 @@ void ConstraintForceSolver::Impl::initABMForceElementsWithNoExtForce(DySubBody* 
 
         if(i > 0){
             if(!link->isFixedJoint()){
-                link->cfs.uu0  = link->uu() + link->u() - (link->sv().dot(link->cfs.pf0) + link->sw().dot(link->cfs.ptau0));
+                double u = stdx::clamp(link->u(), link->u_lower(), link->u_upper());
+                link->cfs.uu0  = link->uu() + u - (link->sv().dot(link->cfs.pf0) + link->sw().dot(link->cfs.ptau0));
                 link->cfs.uu = link->cfs.uu0;
             }
         }

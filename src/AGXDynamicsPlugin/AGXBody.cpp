@@ -3,6 +3,7 @@
 #include <cnoid/MeshExtractor>
 #include <cnoid/SceneDrawables>
 #include <cnoid/ForceSensor>
+#include <cnoid/stdx/clamp>
 #include <mutex>
 #include "AGXVehicleContinuousTrack.h"
 #include "AGXConvexDecomposition.h"
@@ -691,7 +692,8 @@ void AGXLink::setTorqueToAGX()
             double dq_l = std::max(-1.0E12, orgLink->dq_lower());
             double dq_u = std::min(1.0E12, orgLink->dq_upper());
             joint1DOF->getMotor1D()->setSpeed( orgLink->u() < 0 ? dq_l : dq_u);
-            joint1DOF->getMotor1D()->setForceRange( agx::RangeReal(orgLink->u()));
+            double u = stdx::clamp(orgLink->u(), orgLink->u_lower(), orgLink->u_upper());
+            joint1DOF->getMotor1D()->setForceRange(agx::RangeReal(u));
 #endif
             break;
         }
@@ -852,14 +854,16 @@ void AGXBody::setCollisionExclude(){
 void AGXBody::setCollisionExcludeLinks(const Mapping& cdMapping){
     const Listing& excludeLinks = *cdMapping.findListing("excludeLinks");
     for(auto linkName : excludeLinks){
-        getAGXLink(linkName->toString())->enableExternalCollision(false);
+        if(auto agxLink = getAGXLink(linkName->toString())){
+            agxLink->enableExternalCollision(false);
+        }
     }
 }
 
 void AGXBody::setCollisionExcludeLinksDynamic(const Mapping& cdMapping){
     const Listing& excludeLinksDynamic = *cdMapping.findListing("excludeLinksDynamic");
     for(auto linkName : excludeLinksDynamic){
-        if(AGXLink* agxLink = getAGXLink(linkName->toString())){
+        if(auto agxLink = getAGXLink(linkName->toString())){
             agxLink->getAGXGeometry()->removeGroup(AGXGeometryDesc::globalCollisionGroupName);
             getAGXScene()->setCollisionPair(agxLink->getCollisionGroupName(), AGXGeometryDesc::globalCollisionGroupName, false);
         }
@@ -924,8 +928,8 @@ void AGXBody::setCollisionExcludeLinkGroups(const Mapping& cdMapping){
         vector<string> excludeLinkNames;
         if(!agxConvert::setVector(linkNode->toListing(), excludeLinkNames)) continue;
         for(auto linkName : excludeLinkNames){
-            if(AGXLink*agxLink = getAGXLink(linkName)){
-                if(agxCollide::Geometry*geometry = agxLink->getAGXGeometry())
+            if(auto agxLink = getAGXLink(linkName)){
+                if(auto geometry = agxLink->getAGXGeometry())
                     geometry->addGroup(ss.str());
             }
         }
@@ -945,8 +949,8 @@ void AGXBody::setCollisionExcludeSelfCollisionLinks(const Mapping& cdMapping)
     vector<string> linkNames;
     if(!agxConvert::setVector(excludeSCLinksNode->toListing(), linkNames)) return;
     for(auto linkName : linkNames){
-        if(AGXLink* agxLink = getAGXLink(linkName)){
-            if(agxCollide::Geometry* geometry = agxLink->getAGXGeometry())
+        if(auto agxLink = getAGXLink(linkName)){
+            if(auto geometry = agxLink->getAGXGeometry())
                 geometry->addGroup(ss.str());
         }
     }
@@ -961,7 +965,7 @@ void AGXBody::setCollisionExcludeLinksWireCollision(const Mapping& cdMapping)
     vector<string> linkNames;
     if(!agxConvert::setVector(excludeLinksWireNode->toListing(), linkNames)) return;
     for(auto linkName : linkNames){
-        if(AGXLink* agxLink = getAGXLink(linkName)){
+        if(auto agxLink = getAGXLink(linkName)){
             getAGXScene()->setCollisionPair(agxLink->getCollisionGroupName(), AGXWireDesc::globalCollisionGroupName, false);
         }
     }

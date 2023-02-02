@@ -37,6 +37,7 @@ set(sources
   ForceSensor.cpp
   RateGyroSensor.cpp
   AccelerationSensor.cpp
+  Imu.cpp
   BasicSensorSimulationHelper.cpp
   VisionSensor.cpp
   Camera.cpp
@@ -47,7 +48,6 @@ set(sources
   SpotLight.cpp
   MarkerDevice.cpp
   MultiDeviceStateSeq.cpp
-  ExtraBodyStateAccessor.cpp
   SceneCollision.cpp
   InverseKinematics.cpp
   CompositeIK.cpp
@@ -56,12 +56,14 @@ set(sources
   #KinematicBodyPart.cpp
   KinematicBodySet.cpp
   LeggedBodyHelper.cpp
+  BodyCollisionLinkFilter.cpp
   BodyCollisionDetector.cpp
   BodyCollisionDetectorUtil.cpp
   BodyMotion.cpp
   BodyPositionSeq.cpp
   BodyMotionPoseProvider.cpp
   BodyState.cpp
+  ExtraBodyStateAccessor.cpp
   ZMPSeq.cpp
   ForwardDynamics.cpp
   ForwardDynamicsABM.cpp
@@ -96,6 +98,7 @@ set(headers
   BodyLoader.h
   StdBodyLoader.h
   StdBodyWriter.h
+  StdBodyFileUtil.h
   ZMPSeq.h
   Link.h
   LinkTraverse.h
@@ -106,6 +109,7 @@ set(headers
   Material.h
   ContactMaterial.h
   MaterialTable.h
+  BodyCollisionLinkFilter.h
   BodyCollisionDetector.h
   BodyCollisionDetectorUtil.h
   MultiDeviceStateSeq.h
@@ -118,6 +122,7 @@ set(headers
   ForceSensor.h
   RateGyroSensor.h
   AccelerationSensor.h
+  Imu.h
   BasicSensorSimulationHelper.h
   VisionSensor.h
   Camera.h
@@ -155,6 +160,7 @@ set(headers
   PoseProviderToBodyMotionConverter.h
   BodyMotionUtil.h
   BodyState.h
+  ExtraBodyStateAccessor.h
   CollisionLinkPair.h
   ExtraJoint.h
   ControllerIO.h
