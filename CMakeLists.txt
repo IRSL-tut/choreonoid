@@ -166,7 +166,7 @@ endif()
 
 if(MSVC)
   set(CHOREONOID_DEFAULT_FVISIBILITY_HIDDEN OFF)
-  set(compiler_general_options "/MP /source-charset:utf-8 /wd4250 /wd4251 /wd4275 /wd4819 /wd4800 /wd4018 /wd4244 /wd4267")
+  set(compiler_general_options "/MP /source-charset:utf-8 /wd4018 /wd4068 /wd4244 /wd4250 /wd4251 /wd4267 /wd4275 /wd4800 /wd4819")
   set(compiler_release_options "/O2 /Ob2 /Oi /Gy /GS- /fp:fast")
 
   if(${MSVC_VERSION} GREATER_EQUAL 1915)
@@ -214,7 +214,7 @@ if(MSVC)
   set(CHOREONOID_USE_SUBSYSTEM_CONSOLE ${USE_SUBSYSTEM_CONSOLE})
 
   set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS
-    NOMINMAX _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS)
+    NOMINMAX _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_DEPRECATE)
 endif()
 
 set(ADDITIONAL_CXX_FLAGS ${ADDITIONAL_CXX_FLAGS} CACHE STRING "Additional c++ compiler optimization flags")
@@ -748,9 +748,10 @@ if(NOT USE_BUNDLED_LIBYAML)
   pkg_check_modules(LIBYAML yaml-0.1)
 endif()
 if((NOT LIBYAML_FOUND) OR USE_BUNDLED_LIBYAML)
-  add_subdirectory(thirdparty/yaml-0.1.7)
-  set(LIBYAML_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/thirdparty/yaml-0.1.7/include)
-  set(LIBYAML_LIBRARY_DIRS ${PROJECT_SOURCE_DIR}/thirdparty/yaml-0.1.7/lib)
+  set(libyaml_dir thirdparty/libyaml-0.2.5)
+  add_subdirectory(${libyaml_dir})
+  set(LIBYAML_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/${libyaml_dir}/include)
+  set(LIBYAML_LIBRARY_DIRS "")
   set(LIBYAML_LIBRARIES yaml)
 endif()
 
