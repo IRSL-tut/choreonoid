@@ -27,6 +27,7 @@ public:
     void addRecord(EditRecordPtr record);
     void beginEditGroup(const std::string& label, bool isValidForSingleRecord = true);
     void endEditGroup();
+    void flushNewRecordBuffer();
 
     class RecordBlocker : public Referenced
     {
@@ -49,6 +50,7 @@ public:
     bool undo();
     bool redo();
     void clear();
+    void terminateRecording();
 
     SignalProxy<void()> sigHistoryUpdated();
     SignalProxy<void(int position)> sigCurrentPositionChanged();
