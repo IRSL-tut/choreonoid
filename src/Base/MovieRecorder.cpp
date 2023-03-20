@@ -243,17 +243,17 @@ MovieRecorder::Impl::Impl(MovieRecorder* self)
 
     currentEncoderIndex = 0;
 
-    auto config = AppConfig::archive()->findMapping("MovieRecorder");
-    if(config->isValid()){
-        restore(config);
-    }
-
     for(auto& encoder : newEncoders){
         addEncoder(encoder);
     }
     newEncoders.clear();
 
     addEncoder(new SequentialNumberedImageFileEncoder);
+
+    auto config = AppConfig::archive()->findMapping("MovieRecorder");
+    if(config->isValid()){
+        restore(config);
+    }
 }
 
 
@@ -674,7 +674,7 @@ bool MovieRecorder::Impl::initializeRecording()
     filesystem::path dirPath = fromUTF8(directory);
     if(filesystem::exists(dirPath)){
         if(!filesystem::is_directory(dirPath)){
-            showWarningDialog(fmt::format(_("{} is not a directory."), dirPath.string()));
+            showWarningDialog(fmt::format(_("{} is not a directory."), toUTF8(dirPath.string())));
             return false;
         }
     } else {

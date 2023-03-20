@@ -167,8 +167,10 @@ public:
     ~Impl();
     void init(bool calledFromCopyConstructor);
     void initBody(bool calledFromCopyConstructor);
-    bool loadModelFile(const std::string& filename);
+    void resetLinkCollisions();
+    bool doAssign(const Item* srcItem);
     void setBody(Body* body);
+    void notifyModelUpdate(int flags);
     void setCurrentBaseLink(Link* link, bool forceUpdate, bool doNotify);
     bool makeRootFixed();
     bool makeRootFree();
@@ -183,7 +185,6 @@ public:
     bool setCollisionDetectionEnabled(bool on);
     bool setSelfCollisionDetectionEnabled(bool on);
     void updateCollisionDetectorLater();
-    bool doAssign(const Item* srcItem);
     void setLocationEditable(bool on, bool updateInitialPositionWhenLocked);
     void createSceneBody();
     void setTransparency(float t);
@@ -332,16 +333,23 @@ void BodyItem::Impl::initBody(bool calledFromCopyConstructor)
         pinDragIK.reset();
     }
 
-    int n = body->numLinks();
-
-    self->collisionsOfLink_.resize(n);
-    self->collisionLinkBitSet_.resize(n);
-    
     if(!calledFromCopyConstructor){
         setCurrentBaseLink(nullptr, true, false);
         zmp.setZero();
         self->storeInitialState();
     }
+
+    resetLinkCollisions();
+}
+
+
+void BodyItem::Impl::resetLinkCollisions()
+{
+    int n = body->numLinks();
+    self->collisionsOfLink_.clear();
+    self->collisionsOfLink_.resize(n);
+    self->collisionLinkBitSet_.clear();
+    self->collisionLinkBitSet_.resize(n);
 }
 
 
@@ -492,7 +500,7 @@ void BodyItem::Impl::setBody(Body* body_)
     }
 
     // Is this necessary?
-    //self->notifyModelUpdate();
+    //notifyModelUpdate();
     //self->notifyUpdate();
 }
 
@@ -529,25 +537,35 @@ SignalProxy<void(int flags)> BodyItem::sigModelUpdated()
 
 void BodyItem::notifyModelUpdate(int flags)
 {
+    impl->notifyModelUpdate(flags);
+}
+
+
+void BodyItem::Impl::notifyModelUpdate(int flags)
+{
     if(flags & LinkSetUpdate){
-        impl->setCurrentBaseLink(impl->currentBaseLink, true, false);
-        if(impl->kinematicsKitManager){
-            impl->kinematicsKitManager->clearKinematicsKits();
+        resetLinkCollisions();
+        setCurrentBaseLink(currentBaseLink, true, false);
+        if(kinematicsKitManager){
+            kinematicsKitManager->clearKinematicsKits();
         }
     }
 
-    if(impl->sceneBody){
+    if(sceneBody){
         if(flags & (LinkSetUpdate | LinkSpecUpdate | ShapeUpdate)){
-            impl->sceneBody->updateSceneModel();
+            sceneBody->updateSceneModel();
+            if(transparency > 0.0f){
+                sceneBody->setTransparency(transparency);
+            }
         } else if(flags & (DeviceSetUpdate | DeviceSpecUpdate)){
             //! This is a temporary code to support DeviceOverwriteItem.
-            impl->sceneBody->updateSceneDeviceModels(true);
+            sceneBody->updateSceneDeviceModels(true);
         }
     }
 
-    impl->sigModelUpdated(flags);
+    sigModelUpdated(flags);
 
-    notifyUpdate();
+    self->notifyUpdate();
 }
 
 
@@ -1600,7 +1618,7 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Root fixed"), body->isFixedRootModel(),
                 [this](bool on){
                     body->setRootLinkFixed(on);
-                    self->notifyModelUpdate(LinkSpecUpdate);
+                    notifyModelUpdate(LinkSpecUpdate);
                     return true;
                 });
     

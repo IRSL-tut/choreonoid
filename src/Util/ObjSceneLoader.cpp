@@ -195,12 +195,12 @@ SgNode* ObjSceneLoader::load(const std::string& filename)
 
 SgNode* ObjSceneLoader::Impl::load(const string& filename)
 {
-    if(!scanner.open(fromUTF8(filename).c_str())){
+    if(!scanner.open(filename.c_str())){
         os() << format(_("Unable to open file \"{}\"."), filename) << endl;
         return nullptr;
     }
-    filePath = filename;
-    fileBaseName = filePath.stem().string();
+    filePath = fromUTF8(filename);
+    fileBaseName = toUTF8(filePath.stem().string());
     directoryPath = filePath.parent_path();
 
     SgNodePtr scene;
@@ -215,17 +215,26 @@ SgNode* ObjSceneLoader::Impl::load(const string& filename)
 
     doCoordinateConversion = false;
     scale = 1.0f;
+    string metadata;
     auto lengthUnit = self->lengthUnitHint();
     if(lengthUnit == AbstractSceneLoader::Millimeter){
         scale = 1.0e-3f;
         doCoordinateConversion = true;
+        metadata = "millimeter";
     } else if(lengthUnit == AbstractSceneLoader::Inch){
         scale = 0.0254f;
         doCoordinateConversion = true;
+        metadata = "inch";
     }
     upperAxis = self->upperAxisHint();
     if(upperAxis != Z_Upper){
         doCoordinateConversion = true;
+        if(upperAxis == Y_Upper){
+            if(!metadata.empty()){
+                metadata += " ";
+            }
+            metadata += "y_upper";
+        }
     }
     
     try {
@@ -237,6 +246,9 @@ SgNode* ObjSceneLoader::Impl::load(const string& filename)
 
     if(scene){
         scene->setUriByFilePathAndCurrentDirectory(filename);
+        if(!metadata.empty()){
+            scene->setUriMetadataString(metadata);
+        }
     }
 
     scanner.close();
@@ -553,7 +565,8 @@ void ObjSceneLoader::Impl::readMaterial(const std::string& name)
 
 bool ObjSceneLoader::Impl::loadMaterialTemplateLibrary(const std::string& filename)
 {
-    if(!subScanner.open((directoryPath / filename).string())){
+    string fullpath = toUTF8((directoryPath / fromUTF8(filename)).string());
+    if(!subScanner.open(fullpath)){
         os() << format("Material template library file \"{0}\" cannot be open.", filename) << endl;
         return false;
     }
