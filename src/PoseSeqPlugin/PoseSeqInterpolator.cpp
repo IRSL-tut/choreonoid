@@ -292,7 +292,13 @@ public:
     
     vector<ZmpSampleIterPair> orgZmpSampleIterPairs;
 
-    enum SupportPhase { RIGHT = 0, LEFT, BOTH, FLOATING, NONE };
+    enum SupportPhase {
+        LEFT = LeggedBodyHelper::Left,
+        RIGHT = LeggedBodyHelper::Right,
+        BOTH = 2,
+        FLOATING,
+        NONE
+    };
 
     enum LipShapeId {
         LS_A, LS_I, LS_U, LS_E, LS_O, LS_N,
@@ -1390,7 +1396,7 @@ void PoseSeqInterpolator::Impl::calcIkJointPositionsSub
             if(iter != ikJointPathMap.end()){
                 jointPath = iter->second;
             } else {
-                jointPath = getCustomJointPath(body, baseLink, link);
+                jointPath = JointPath::getCustomPath(baseLink, link);
                 ikJointPathMap[linkPair] = jointPath;
             }
 
