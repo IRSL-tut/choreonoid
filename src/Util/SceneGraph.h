@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_SCENE_GRAPH_H
 #define CNOID_UTIL_SCENE_GRAPH_H
 
@@ -92,6 +87,12 @@ public:
         SgUpdate update(action);
         update.reservePathCapacity(16);
         notifyUpperNodesOfUpdate(update);
+    }
+
+    void notifyUpdate(SgUpdateRef update){
+        if(update){
+            notifyUpdate(*update);
+        }
     }
 
     void addParent(SgObject* parent, SgUpdateRef update = nullptr);

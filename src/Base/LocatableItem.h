@@ -38,8 +38,9 @@ public:
     virtual std::string getCategory() const;
     
     virtual Isometry3 getLocation() const = 0;
-    virtual bool isEditable() const;
-    virtual void setEditable(bool on);
+    virtual bool isLocked() const;
+    virtual void setLocked(bool on);
+    virtual bool isDoingContinuousUpdate() const;
     virtual bool setLocation(const Isometry3& T);
     virtual void finishLocationEditing();
     virtual Item* getCorrespondingItem();
@@ -61,7 +62,7 @@ protected:
 
 private:
     LocationType locationType_;
-    bool isEditable_;
+    bool isLocked_;
     Signal<void()> sigAttributeChanged_;
     Signal<void()> sigExpired_;
     ScopedConnection itemNameConnection_;
