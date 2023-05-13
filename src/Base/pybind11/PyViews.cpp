@@ -1,20 +1,16 @@
-/*!
- * @author Shin'ichiro Nakaoka
-*/
-
 #include "PyQObjectHolder.h"
 #include "PyQString.h"
 #include "../MessageView.h"
 #include "../SceneWidget.h"
 #include "../SceneWidgetEvent.h"
 #include "../SceneView.h"
-#include "../GLSceneRenderer.h"
 #include "../InteractiveCameraTransform.h"
 #include "../TaskView.h"
 #include "../ViewManager.h"
 #include "../Menu.h"
 #include <cnoid/PyUtil>
 #include <cnoid/SceneRenderer>
+#include <cnoid/GLSceneRenderer>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
 #include <QWidget>
@@ -88,7 +84,8 @@ void exportPyViews(py::module m)
         ;
 
     m.def("showMessageBox", (void(*)(const std::string&)) &showMessageBox);
-    m.def("showWarningDialog", (void(*)(const std::string&)) &showWarningDialog);
+    m.def("showWarningDialog", (bool(*)(const std::string&, bool)) &showWarningDialog);
+    m.def("showWarningDialog", (bool(*)(const std::string&, const std::string&, bool)) &showWarningDialog);
     m.def("showConfirmDialog", (bool(*)(const std::string&, const std::string&)) &showConfirmDialog);
 
     py::class_<SceneWidget, PyQObjectHolder<SceneWidget>, QWidget> sceneWidget(m, "SceneWidget");

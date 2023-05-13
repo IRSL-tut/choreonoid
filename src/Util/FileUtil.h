@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_FILE_UTIL_H
 #define CNOID_UTIL_FILE_UTIL_H
 
@@ -27,16 +22,27 @@ CNOID_EXPORT stdx::filesystem::path getCompactPath(const stdx::filesystem::path&
 CNOID_EXPORT void makePathCompact(stdx::filesystem::path& io_path);
 
 
+CNOID_EXPORT int findPathInDirectory(
+    const stdx::filesystem::path& directory,
+    const stdx::filesystem::path& path,
+    stdx::filesystem::path& out_subdirectory);
+
+[[deprecated("Use findPathInDirectory.")]]
 CNOID_EXPORT int findSubDirectory(
     const stdx::filesystem::path& directory,
     const stdx::filesystem::path& path,
     stdx::filesystem::path& out_subdirectory);
 
+CNOID_EXPORT stdx::filesystem::path getRelativePath(
+    const stdx::filesystem::path& path, const stdx::filesystem::path& base);
+
+[[deprecated("Use getRelativePath.")]]
 CNOID_EXPORT bool findRelativePath(
     const stdx::filesystem::path& from,
     const stdx::filesystem::path& to,
     stdx::filesystem::path& out_relativePath);
 
+CNOID_EXPORT stdx::filesystem::path getNativeUniformPath(const stdx::filesystem::path& path);
 
 /**
    This function returs the extension without dot.

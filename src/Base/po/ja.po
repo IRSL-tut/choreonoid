@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-03-26 03:35+0900\n"
+"POT-Creation-Date: 2023-05-11 15:47+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -227,67 +227,6 @@ msgstr "プロジェクトを保存"
 
 msgid "FolderItem"
 msgstr "フォルダアイテム"
-
-msgid "OpenGL {0} is available for the \"{1}\" view.\n"
-msgstr "OpenGL {0} が \"{1}\" ビューで利用可能です．\n"
-
-msgid "Driver profile: {0} {1}."
-msgstr "ドライバプロファイル: {0} {1}."
-
-msgid "FT_Init_FreeType failed with error code {0}."
-msgstr "FT_Init_FreeTypeがエラーコード{0}で失敗しました．"
-
-msgid "FT_New_Face for \"{0}\" failed with error code {1}."
-msgstr "\"{0}\" に対するFT_New_Faceがエラーコード{1}で失敗しました."
-
-msgid "Shader \"{}\" is not found."
-msgstr "シェーダ \"{}\" がみつかりません．"
-
-msgid ""
-"Shader compilation of \"{0}\" failed.\n"
-"{1}"
-msgstr ""
-"\"{0}\" のシェーダコンパイルに失敗しました．\n"
-"{1}"
-
-msgid "Shader compilation of \"{}\" failed."
-msgstr "\"{}\" のシェーダコンパイルに失敗しました．"
-
-msgid "Unable to create shader program."
-msgstr "シェーダプログラムを生成できません．"
-
-msgid "Program has not been compiled."
-msgstr "プログラムはコンパイルされていません．"
-
-msgid "Program link failed."
-msgstr "プログラムのリンクに失敗しました．"
-
-msgid "Program is not linked"
-msgstr "プログラムはリンクされていません"
-
-msgid "Program failed to validate"
-msgstr "プログラムの有効化に失敗しました"
-
-msgid "Shader has not been linked."
-msgstr "シェーダがリンクされていません．"
-
-msgid "OpenGL {0}.{1} (GLSL {2}) is available for the \"{3}\" view.\n"
-msgstr "OpenGL {0}.{1} (GLSL {2}) が \"{3}\" ビューで利用可能です．\n"
-
-msgid "Driver profile: {0} {1} {2}.\n"
-msgstr "ドライバプロファイル: {0} {1} {2}.\n"
-
-msgid "Shadow casting is disabled according to the value of CNOID_ENABLE_GLSL_SHADOW.\n"
-msgstr "影の描画はCNOID_ENABLE_GLSL_SHADOWの値に従い無効化されました．\n"
-
-msgid "Shadow casting is enabled according to the value of CNOID_ENABLE_GLSL_SHADOW.\n"
-msgstr "影の描画はCNOID_ENABLE_GLSL_SHADOWの値に従い有効化されました．\n"
-
-msgid "Shadow casting is disabled for this GPU due to some problems.\n"
-msgstr "影の描画はこのGPUに対しては問題があるため無効化されます．\n"
-
-msgid "Framebuffer is not complete.\n"
-msgstr "フレームバッファが不完全です．\n"
 
 msgid "The file format of \"{}\" is not supported.\n"
 msgstr "ファイルフォーマット \"{}\" はサポートされていません．\n"
@@ -1305,21 +1244,6 @@ msgstr "編集可能"
 msgid "Num points"
 msgstr "ポイント数"
 
-msgid "Roll-pitch-yaw"
-msgstr "ロールピッチヨー"
-
-msgid "Fetch as a unique RPY value"
-msgstr "一意なRPY値として取り込み"
-
-msgid "Quaternion"
-msgstr "クォータニオン"
-
-msgid "Rotation matrix"
-msgstr "回転行列"
-
-msgid "Additional precision"
-msgstr "追加精度"
-
 msgid "PositionTagGroupItem"
 msgstr "ポジションタググループアイテム"
 
@@ -1389,6 +1313,21 @@ msgstr "\"%1\" の親座標系は \"%2\" の座標系に変更されます."
 msgid "The parent coordinate system of \"%1\" is changed to the global coordinate system."
 msgstr "\"%1\" の親座標系はグローバル座標系に変更されます."
 
+msgid "Roll-pitch-yaw"
+msgstr "ロールピッチヨー"
+
+msgid "Fetch as a unique RPY value"
+msgstr "一意なRPY値として取り込み"
+
+msgid "Quaternion"
+msgstr "クォータニオン"
+
+msgid "Rotation matrix"
+msgstr "回転行列"
+
+msgid "Additional precision"
+msgstr "追加精度"
+
 msgid ""
 "The state of the \"{0}\" {1} was not completely restored.\n"
 "{2}"
@@ -1448,13 +1387,13 @@ msgid "Project files (*.cnoid)"
 msgstr "プロジェクトファイル (*.cnoid)"
 
 msgid ""
-"Current project has not been saved yet. Do you want to save it as a project file before loading a "
-"new project?"
+"The current project has not been saved yet. Do you want to save it as a project file before "
+"loading a new project?"
 msgstr "現在のプロジェクトは保存されていません．新しいプロジェクトを読み込む前に保存しますか？"
 
 msgid ""
-"Current project has not been saved yet. Do you want to save it as a project file before closing "
-"the project?"
+"The current project has not been saved yet. Do you want to save it as a project file before "
+"closing the project?"
 msgstr "現在のプロジェクトは保存されていません．プロジェクトを閉じる前に保存しますか？"
 
 msgid "Project \"%1\" has been updated. Do you want to save it before loading a new project?"
@@ -1468,6 +1407,58 @@ msgstr "プロジェクトの保存"
 
 msgid "Save temporary items"
 msgstr "一時的アイテムを保存"
+
+msgid "Directory \"{0}\" for packing a project already exists and cannot be removed: {1}."
+msgstr "プロジェクトのパッキング用のディレクトリ \"{0}\" が既に存在していて削除できません： {1}．"
+
+msgid "Directory \"{0}\" for packing a project cannot be created: {1}."
+msgstr "プロジェクトのパッキング用のディレクトリ \"{0}\" を作成できません： {1}．"
+
+msgid "Directory \"{0}\" for \"{1}\" cannot be created in \"{2}\": {3}."
+msgstr "\"{1}\" 用のディレクトリ \"{0}\" を \"{2}\" に作成できません： {3}．"
+
+msgid "File \"{0}\" cannot be copied into the directory \"{1}\" for packing: {2}."
+msgstr "ファイル \"{0}\" をパッキング用ディレクトリ \"{1}\" にコピーできません： {2}．"
+
+msgid "The project for packing cannot be saved as project file \"{0}\"."
+msgstr "パッキングするプロジェクトをプロジェクトファイル \"{0}\" として保存できません．"
+
+msgid ""
+"A relative path \"{0}\" is given to the project packer as a file path to which {1} depends but it "
+"must be an absolute path."
+msgstr ""
+"{1}が依存するファイルのパスとして相対パス \"{0}\" がプロジェクトパッカーに与えられましたが、これ"
+"は絶対パスである必要があります．"
+
+msgid "The file path \"{0}\" for {1} cannot be relocated to be a file path in the project pack."
+msgstr "{1}のファイルパス \"{0}\" をプロジェクトパック内のファイルパスに再配置できません．"
+
+msgid "The project pack file \"{0}\" already exists and cannot be removed: {1}."
+msgstr "プロジェクトパックファイル \"{0}\" が既に存在していて、削除もできません： {1}．"
+
+msgid "Failed to create the project pack file \"{0}\": {1}"
+msgstr "プロジェクトパックファイル \"{0}\" を作成することができません： {1}"
+
+msgid "Failed to add directory \"{0}\" to the project pack: {1}"
+msgstr "プロジェクトパックにディレクトリ \"{0}\" を追加することができません： {1}"
+
+msgid "Failed to add file \"{0}\" to the project pack: {1}"
+msgstr "プロジェクトパックにファイル \"{0}\" を追加することができません： {1}"
+
+msgid "Failed to open the project pack file \"{0}\": {1}"
+msgstr "プロジェクトパックファイル \"{0}\" を開くことができません： {1}"
+
+msgid "Entry {0} in \"{1}\" cannot be extracted."
+msgstr "\"{1}\" 内のエントリ{0}を展開できません．"
+
+msgid "Directory \"{0}\" in the project pack \"{1}\" cannot be created: {2}."
+msgstr "プロジェクトパック \"{1}\" のディレクトリ \"{0}\" を作成できません： {2}．"
+
+msgid "File \"{0}\" in the project pack \"{1}\" cannot be extracted."
+msgstr "プロジェクトパック \"{1}\" のファイル \"{0}\" を展開できません．"
+
+msgid "The project pack file \"{0}\" does not include a project file."
+msgstr "プロジェクトパック \"{0}\" はプロジェクトファイルを含んでいません．"
 
 msgid "ReferencedObjectSeqItem"
 msgstr "参照オブジェクト時系列アイテム"
@@ -1501,6 +1492,12 @@ msgstr " 法線: {}\n"
 
 msgid " Triangles: {}"
 msgstr " トライアングル: {}"
+
+msgid "The project must be saved to detect the scene files for {0}."
+msgstr ""
+
+msgid "The file \"{0}\" on which {1} depends is not relocatable and will be lost in the archive."
+msgstr ""
 
 msgid "RootItem"
 msgstr "ルートアイテム"

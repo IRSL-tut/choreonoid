@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #include "App.h"
 #include "AppUtil.h"
 #include "AppConfig.h"
@@ -60,10 +56,10 @@
 #include "GeneralSliderView.h"
 #include "VirtualJoystickView.h"
 #include "MainMenu.h"
-#include "GLSceneRenderer.h"
 #include "Licenses.h"
 #include "MovieRecorderBar.h"
 #include "LazyCaller.h"
+#include <cnoid/GLSceneRenderer>
 #include <cnoid/MessageOut>
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
@@ -345,8 +341,9 @@ void App::Impl::initialize()
     qapplication->setWindowIcon(
         QIcon(!iconFilename.empty() ? iconFilename.c_str() : ":/Base/icon/choreonoid.svg"));
 
-    FilePathVariableProcessor::systemInstance()->setUserVariables(
-        AppConfig::archive()->findMapping({ "path_variables", "pathVariables" }));
+    auto fpvp = FilePathVariableProcessor::systemInstance();
+    fpvp->restoreUserVariables(AppConfig::archive()->findMapping({ "path_variables", "pathVariables" }));
+    FilePathVariableProcessor::setCurrentInstance(fpvp);
 
     ext = new ExtensionManager("Base", false);
 
