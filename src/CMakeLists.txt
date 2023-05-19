@@ -16,6 +16,7 @@ add_subdirectory(Body)
 add_subdirectory(PiecewiseRigidContinuousTrack)
 add_subdirectory(URDFBodyLoader)
 add_subdirectory(SDFBodyLoader)
+add_subdirectory(URDFBodyWriter)
 add_subdirectory(Corba)
 
 if(ENABLE_GUI)
