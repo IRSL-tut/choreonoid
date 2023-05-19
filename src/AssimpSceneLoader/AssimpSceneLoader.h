@@ -49,6 +49,9 @@ public:
     */
     void clearImageSearchDirectories() override;
 
+
+    void setMessageSinkStdErr();
+
 private:
     class Impl;
     Impl* impl;

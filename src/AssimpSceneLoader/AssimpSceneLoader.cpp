@@ -15,6 +15,7 @@
 #include <Eigen/Dense>
 #include <map>
 #include <cmath>
+#include <iostream>
 
 using namespace std;
 using namespace cnoid;
@@ -123,6 +124,10 @@ AssimpSceneLoader::Impl* AssimpSceneLoader::getOrCreateImpl()
     return impl;
 }
 
+void AssimpSceneLoader::setMessageSinkStdErr()
+{
+    setMessageSink(std::cerr);
+}
 
 AssimpSceneLoader::Impl::Impl()
 {
