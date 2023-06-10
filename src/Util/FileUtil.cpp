@@ -92,7 +92,7 @@ int findSubDirectory(const filesystem::path& directory, const filesystem::path& 
 }
 
 
-filesystem::path getRelativePath(const filesystem::path& path_, const filesystem::path& base_)
+stdx::optional<stdx::filesystem::path> getRelativePath(const filesystem::path& path_, const filesystem::path& base_)
 {
     filesystem::path relativePath;
     bool isAbsolute;
@@ -101,11 +101,11 @@ filesystem::path getRelativePath(const filesystem::path& path_, const filesystem
         if(base_.is_absolute()){
             isAbsolute = true;
         } else {
-            return relativePath;
+            return stdx::nullopt;
         }
     } else {
         if(base_.is_absolute()){
-            return relativePath;
+            return stdx::nullopt;
         }
         isAbsolute = false;
     }
@@ -143,7 +143,7 @@ filesystem::path getRelativePath(const filesystem::path& path_, const filesystem
 
     if(isFirstElement && isAbsolute){
         // There is no relative path
-        return relativePath;
+        return stdx::nullopt;
     }
 
     while(it2 != base.end()){
@@ -155,6 +155,22 @@ filesystem::path getRelativePath(const filesystem::path& path_, const filesystem
     }
 
     return relativePath;
+}
+
+
+bool checkIfSubFilePath(const stdx::filesystem::path& path, const stdx::filesystem::path& base)
+{
+    bool result = false;
+    if(auto relPath = getRelativePath(path, base)){
+        result = true;
+        for(auto& element : *relPath){
+            if(element.string() == ".."){
+                result = false;
+                break;
+            }
+        }
+    }
+    return result;
 }
 
 
