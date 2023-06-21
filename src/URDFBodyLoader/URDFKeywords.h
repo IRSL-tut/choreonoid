@@ -1,8 +1,3 @@
-/**
-   \file
-   \author Yuki Onishi
-*/
-
 #ifndef CNOID_URDF_BODY_LOADER_URDF_KEYWORDS_H
 #define CNOID_URDF_BODY_LOADER_URDF_KEYWORDS_H
 
@@ -56,6 +51,26 @@ const char VALUE[] = "value";
 const char VELOCITY[] = "velocity";
 const char VISUAL[] = "visual";
 const char XYZ[] = "xyz";
+
+// for sensors
+const char CAMERA[] = "camera";
+const char DEPTH_FORMAT[] = "depth_format";
+const char FAR[] = "far";
+const char HEIGHT[] = "height";
+const char HFOV[] = "hfov";
+const char HORIZONTAL[] = "horizontal";
+const char IMAGE[] = "image";
+const char MAX_ANGLE[] = "max_angle";
+const char MIN_ANGLE[] = "min_angle";
+const char MONO8[] = "mono8";
+const char MONO16[] = "mono16";
+const char NEAR[] = "near";
+const char RAY[] = "ray";
+const char SAMPLES[] = "samples";
+const char SENSOR[] = "sensor";
+const char UPDATE_RATE[] = "update_rate";
+const char VERTICAL[] = "vertical";
+const char WIDTH[] = "width";
 
 }  // namespace cnoid
 

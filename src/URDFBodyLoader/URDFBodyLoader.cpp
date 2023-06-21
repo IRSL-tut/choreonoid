@@ -10,10 +10,13 @@
 
 #include <cnoid/Body>
 #include <cnoid/BodyLoader>
+#include <cnoid/Camera>
 #include <cnoid/EigenUtil>
 #include <cnoid/ExecutablePath>
 #include <cnoid/MeshGenerator>
 #include <cnoid/NullOut>
+#include <cnoid/RangeCamera>
+#include <cnoid/RangeSensor>
 #include <cnoid/SceneLoader>
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
@@ -165,6 +168,9 @@ private:
     void setMaterialToAllShapeNodes(SgNodePtr& node, SgMaterialPtr& material);
     bool loadJoint(std::unordered_map<string, LinkPtr>& linkMap,
                    const xml_node& jointNode);
+    bool loadSensor(Body* body,
+                    std::unordered_map<string, LinkPtr>& linkMap,
+                    const xml_node& sensorNode);
 };
 }  // namespace cnoid
 
@@ -246,7 +252,7 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
         os() << "Error: parsing XML failed: " << result.description() << endl;
         return false;
     }
-    
+
     // checks if only one 'robot' tag exists in the URDF
     if (doc.child(ROBOT).empty()) {
         os() << "Error: 'robot' tag is not found.";
@@ -320,6 +326,15 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
     }
     body->setRootLink(rootLinks.at(0));
     body->rootLink()->setJointType(Link::FreeJoint);
+
+    // loads sensors
+    auto sensorNodes = robotNode.children(SENSOR);
+    for (xml_node sensorNode : sensorNodes) {
+        if (!loadSensor(body, linkMap, sensorNode)) {
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -916,5 +931,242 @@ bool URDFBodyLoader::Impl::loadJoint(
     if (!jointNode.child(MIMIC).empty()) {
         os() << "Warning: mimic joint is currently not supported." << endl;
     }
+    return true;
+}
+
+
+bool URDFBodyLoader::Impl::loadSensor(
+    Body* body,
+    std::unordered_map<string, LinkPtr>& linkMap,
+    const xml_node& sensorNode)
+{
+    // 'name' attribute (required)
+    const string sensorName = sensorNode.attribute(NAME).as_string();
+    if (sensorName.empty()) {
+        os() << "Error: an unnamed sensor is found." << endl;
+        return false;
+    }
+
+    // 'update_rate' attribute (optional)
+    // default: 1.0
+    const double update_rate = sensorNode.attribute(UPDATE_RATE).as_double(1.0);
+
+    // 'parent' tag (required)
+    LinkPtr parentLink = nullptr;
+    if (sensorNode.child(PARENT).empty()) {
+        os() << "Error: the sensor \"" << sensorName << "\" has no parent tag."
+             << endl;
+        return false;
+    } else {
+        // 'link' attribute (required)
+        const string parentName
+            = sensorNode.child(PARENT).attribute(LINK).as_string();
+        if (parentName.empty()) {
+            os() << "Error: the sensor \"" << sensorName
+                 << "\" has no parent link name." << endl;
+            return false;
+        }
+
+        auto parentSearchResult = linkMap.find(parentName);
+        if (parentSearchResult == linkMap.end()) {
+            os() << "Error: the parent name \"" << parentName
+                 << "\" of the sensor \"" << sensorName << "\" is invalid."
+                 << endl;
+            return false;
+        }
+        parentLink = parentSearchResult->second;
+    }
+    // 'origin' tag (optional)
+    const xml_node& originNode = sensorNode.child(ORIGIN);
+    Vector3 translation = Vector3::Zero();
+    Matrix3 rotation = Matrix3::Identity();
+    if (!readOriginTag(originNode, translation, rotation)) {
+        os() << " in the sensor \"" << sensorName << "\" definition." << endl;
+        return false;
+    }
+
+    // creates a sensor
+    if (!sensorNode.child(CAMERA).empty()) {
+        // 'image' tag (required)
+        const xml_node& imageNode = sensorNode.child(CAMERA).child(IMAGE);
+        if (imageNode.empty()) {
+            os() << "Error: the camera \"" << sensorName
+                 << "\" has no image tag." << endl;
+            return false;
+        }
+
+        // 'width' attribute (required)
+        const int width = imageNode.attribute(WIDTH).as_int();
+        if (width <= 0) {
+            os() << "Error: image width of camera \"" << sensorName
+                 << "\" is invalid." << endl;
+            return false;
+        }
+
+        // 'height' attribute (required)
+        const int height = imageNode.attribute(HEIGHT).as_int();
+        if (height <= 0) {
+            os() << "Error: image height of camera \"" << sensorName
+                 << "\" is invalid." << endl;
+            return false;
+        }
+
+        // 'format' attribute (required) is currently ignored
+        // c.f. http://docs.ros.org/en/noetic/api/sensor_msgs/html/image__encodings_8h_source.html
+
+        // 'hfov' attribute (required)
+        const double hfov = imageNode.attribute(HFOV).as_double();
+        if (hfov <= 0.0) {
+            os() << "Error: the hfov of camera \"" << sensorName
+                 << "\" is invalid." << endl;
+            return false;
+        }
+
+        // 'near' attribute (required)
+        const double near = imageNode.attribute(NEAR).as_double();
+        if (near <= 0.0) {
+            os() << "Error: near clip distance of camera \"" << sensorName
+                 << "\" is invalid." << endl;
+            return false;
+        }
+
+        // 'far' attribute (required)
+        const double far = imageNode.attribute(FAR).as_double();
+        if (far <= 0.0) {
+            os() << "Error: far clip distance of camera \"" << sensorName
+                 << "\" is invalid." << endl;
+            return false;
+        } else if (far < near) {
+            os() << "Error: far clip distance must be larger than near one."
+                 << endl;
+        }
+
+        if (!imageNode.attribute(DEPTH_FORMAT).empty()) {
+            const std::string depthFormat = imageNode.attribute(DEPTH_FORMAT).as_string();
+            if (depthFormat == MONO8 || depthFormat == MONO16) {
+                // TODO: Support a depth-only camera
+
+                // constructs a range camera
+                RangeCameraPtr camera = new RangeCamera;
+                camera->setName(sensorName);
+                camera->setFrameRate(update_rate);
+                camera->setLocalRotation(rotation);
+                camera->setLocalTranslation(translation);
+                camera->setResolution(width, height);
+                camera->setHorizontalFieldOfView(hfov);
+                camera->setNearClipDistance(near);
+                camera->setFarClipDistance(far);
+                camera->setOpticalFrame(VisionSensor::OpticalFrameType::CV);
+
+                // set range camera parameters
+                camera->setMinDistance(near);
+                camera->setMaxDistance(far);
+                camera->setImageType(Camera::COLOR_IMAGE);
+
+                // registers the camera
+                return body->addDevice(camera, parentLink);
+            } else {
+                os() << "Error: depth_format of camera \"" << sensorName
+                     << "\" is invalid." << endl;
+                return false;
+            }
+        } else {
+            // constructs a camera
+            CameraPtr camera = new Camera;
+            camera->setName(sensorName);
+            camera->setFrameRate(update_rate);
+            camera->setLocalRotation(rotation);
+            camera->setLocalTranslation(translation);
+            camera->setResolution(width, height);
+            camera->setHorizontalFieldOfView(hfov);
+            camera->setNearClipDistance(near);
+            camera->setFarClipDistance(far);
+            camera->setOpticalFrame(VisionSensor::OpticalFrameType::CV);
+
+            // registers the camera
+            return body->addDevice(camera, parentLink);
+        }
+    } else if (!sensorNode.child(RAY).empty()) {
+        RangeSensorPtr rangeSensor = new RangeSensor;
+        rangeSensor->setName(sensorName);
+        rangeSensor->setScanRate(update_rate);
+        rangeSensor->setLocalRotation(rotation);
+        rangeSensor->setLocalTranslation(translation);
+
+        // 'horizontal' tag (optional)
+        const xml_node& horizontalNode = sensorNode.child(RAY).child(HORIZONTAL);
+        if (!horizontalNode.empty()) {
+            // 'samples' attribute (optional, default: 1)
+            const int horizontalSamples = horizontalNode.attribute(SAMPLES)
+                                              .as_int(1);
+            if (horizontalSamples < 1) {
+                os() << "Error: the number of horizontal samples is invalid "
+                        "(ray sensor \""
+                     << sensorName << "\")." << endl;
+                return false;
+            }
+
+            // 'resolution' attribute (optional, default: 1.0) is currently ignored
+
+            // 'min_angle' attribute (optional, default: 0.0)
+            const double horizontalMinAngle
+                = horizontalNode.attribute(MIN_ANGLE).as_double(0.0);
+            // 'max_angle' attribute (optional, default: 0.0)
+            const double horizontalMaxAngle
+                = horizontalNode.attribute(MAX_ANGLE).as_double(0.0);
+            if (horizontalMinAngle > horizontalMaxAngle) {
+                os() << "Error: horizontal max_angle < min_angle (ray sensor \""
+                     << sensorName << "\")." << endl;
+                return false;
+            }
+
+            rangeSensor->setYawRange(horizontalMaxAngle - horizontalMinAngle);
+            rangeSensor->setYawStep(rangeSensor->yawRange()
+                                    / static_cast<double>(horizontalSamples));
+        }
+
+        // 'vertical' tag (optional)
+        const xml_node& verticalNode = sensorNode.child(RAY).child(VERTICAL);
+        if (!verticalNode.empty()) {
+            // 'samples' attribute (optional, default: 1)
+            const int verticalSamples = verticalNode.attribute(SAMPLES).as_int(
+                1);
+            if (verticalSamples < 1) {
+                os() << "Error: the number of vertical samples is invalid (ray "
+                        "sensor \""
+                     << sensorName << "\")." << endl;
+                return false;
+            }
+
+            // 'resolution' attribute (optional, default: 1.0) is currently ignored
+
+            // 'min_angle' attribute (optional, default: 0.0)
+            const double verticalMinAngle = verticalNode.attribute(MIN_ANGLE)
+                                                .as_double();
+            // 'max_angle' attribute (optional, default: 0.0)
+            const double verticalMaxAngle = verticalNode.attribute(MAX_ANGLE)
+                                                .as_double();
+            if (verticalMinAngle > verticalMaxAngle) {
+                os() << "Error: vertical max_angle < min_angle (ray sensor \""
+                     << sensorName << "\")." << endl;
+                return false;
+            }
+
+            rangeSensor->setPitchRange(verticalMaxAngle - verticalMinAngle);
+            rangeSensor->setPitchStep(rangeSensor->pitchRange()
+                                      / static_cast<double>(verticalSamples));
+        }
+
+        // transforms the frame for the ROS-standard specification
+        Matrix3 R;
+        R << 1.0, 0.0, 0.0,
+             0.0, 0.0, 1.0,
+             0.0, -1.0, 0.0;
+        rangeSensor->setOpticalFrameRotation(R);
+
+        // registers the range sensor
+        body->addDevice(rangeSensor, parentLink);
+    }
+
     return true;
 }
