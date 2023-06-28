@@ -1,7 +1,3 @@
-/*!
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "../SimulatorItem.h"
 #include "../AISTSimulatorItem.h"
 #include "../SubSimulatorItem.h"
@@ -10,7 +6,8 @@
 #include "../SimulationBar.h"
 #include "../BodyItem.h"
 #include "../SimpleControllerItem.h"
-#include "../ControllerLogItem.h"
+#include "../BodyContactPointLoggerItem.h"
+#include "../BodyContactPointLogItem.h"
 #include <cnoid/PyBase>
 
 using namespace cnoid;
@@ -237,13 +234,25 @@ void exportSimulationClasses(py::module m)
         .def("setController", &SimpleControllerItem::setController)
         ;
 
-    py::class_<ControllerLogItem, ControllerLogItemPtr, ReferencedObjectSeqItem>(m, "ControllerLogItem")
+    py::class_<BodyContactPointLogItem, BodyContactPointLogItemPtr, ReferencedObjectSeqItem>
+        bodyContactPointLogItem(m, "BodyContactPointLogItem");
+
+    bodyContactPointLogItem
         .def(py::init<>())
-        .def_property_readonly("log", &ControllerLogItem::log)
-        .def("resetLog", &ControllerLogItem::resetLog)
+        .def("getLogFrame", [](BodyContactPointLogItem& self, int frameIndex){ return self.logFrame(frameIndex); })
         ;
 
-    PyItemList<ControllerLogItem>(m, "ControllerLogItemList");
+    py::class_<BodyContactPointLogItem::LogFrame, BodyContactPointLogItem::LogFramePtr>(bodyContactPointLogItem, "LogFrame")
+        .def_property_readonly("bodyContactPoints",
+            [](BodyContactPointLogItem::LogFrame& self){ return self.bodyContactPoints(); })
+        .def("getLinkContactPoints",
+            [](BodyContactPointLogItem::LogFrame& self, int linkIndex){ return self.linkContactPoints(linkIndex); })
+        ;
+
+    py::class_<BodyContactPointLoggerItem, BodyContactPointLoggerItemPtr, ControllerItem>(m, "BodyContactPointLoggerItem")
+        .def(py::init<>())
+        .def("setLogFrameToVisualize", &BodyContactPointLoggerItem::setLogFrameToVisualize)
+        ;
 }
 
 }
