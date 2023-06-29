@@ -1,6 +1,6 @@
 #include "ControllerItem.h"
-#include "ControllerLogItem.h"
 #include <cnoid/ItemManager>
+#include <cnoid/ReferencedObjectSeqItem>
 #include <cnoid/PutPropertyFunction>
 #include <cnoid/Archive>
 #include "gettext.h"
@@ -93,9 +93,9 @@ bool ControllerItem::initialize(ControllerIO* io)
 }
 
 
-ControllerLogItem* ControllerItem::createLogItem()
+ReferencedObjectSeqItem* ControllerItem::createLogItem()
 {
-    return new ControllerLogItem;
+    return new ReferencedObjectSeqItem;
 }
 
 
@@ -114,6 +114,12 @@ void ControllerItem::input()
 bool ControllerItem::control()
 {
     return false;
+}
+
+
+void ControllerItem::outputLogFrame()
+{
+    log(); // For backward compatibility
 }
 
 

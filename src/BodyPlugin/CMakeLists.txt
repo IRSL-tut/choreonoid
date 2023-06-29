@@ -23,8 +23,8 @@ set(sources
   BodyMotionControllerItem.cpp
   CollisionDetectionControllerItem.cpp
   RegionIntrusionDetectorItem.cpp
-  ControllerLogItem.cpp
   BodyContactPointLoggerItem.cpp
+  BodyContactPointLogItem.cpp
   SimulationScriptItem.cpp
   AISTSimulatorItem.cpp
   KinematicSimulatorItem.cpp
@@ -96,6 +96,7 @@ set(headers
   RegionIntrusionDetectorItem.h
   ControllerLogItem.h
   BodyContactPointLoggerItem.h
+  BodyContactPointLogItem.h
   SimulationScriptItem.h
   AISTSimulatorItem.h
   KinematicSimulatorItem.h
