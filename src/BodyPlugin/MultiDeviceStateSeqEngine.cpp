@@ -27,7 +27,7 @@ void MultiDeviceStateSeqEngineCore::updateBodyDeviceStates(double time, const Mu
 {
     int deviceIndex = 0;
     int n = deviceInfos.size();
-    int m = std::min(n, states.size());
+    int m = std::min(n, static_cast<int>(states.size()));
     
     while(deviceIndex < m){
         DeviceState* state = states[deviceIndex];
@@ -49,18 +49,17 @@ void MultiDeviceStateSeqEngineCore::updateBodyDeviceStates(double time, const Mu
 }
 
 
-static TimeSyncItemEngine* createMultiDeviceStateSeqEngine(BodyItem* bodyItem, AbstractSeqItem* seqItem)
-{
-    if(auto multiDeviceStateSeqItem = dynamic_cast<MultiDeviceStateSeqItem*>(seqItem)){
-        return new MultiDeviceStateSeqEngine(bodyItem, multiDeviceStateSeqItem);
-    }
-    return nullptr;
-}
-
-
 void MultiDeviceStateSeqEngine::initializeClass(ExtensionManager* /* ext */)
 {
-    BodyMotionEngine::addExtraSeqEngineFactory(MultiDeviceStateSeq::key(), createMultiDeviceStateSeqEngine);
+    BodyMotionEngine::registerExtraSeqEngineFactory(
+        MultiDeviceStateSeq::seqContentName(),
+        [](BodyItem* bodyItem, AbstractSeqItem* seqItem) -> TimeSyncItemEngine* {
+            MultiDeviceStateSeqEngine* engine = nullptr;
+            if(auto multiDeviceStateSeqItem = dynamic_cast<MultiDeviceStateSeqItem*>(seqItem)){
+                engine = new MultiDeviceStateSeqEngine(bodyItem, multiDeviceStateSeqItem);
+            }
+            return engine;
+        });
 }
 
 

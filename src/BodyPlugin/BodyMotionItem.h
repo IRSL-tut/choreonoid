@@ -13,8 +13,17 @@ class CNOID_EXPORT BodyMotionItem : public AbstractSeqItem
 public:
     static void initializeClass(ExtensionManager* ext);
 
+    static void registerExtraSeqType(
+        const std::string& typeName, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> itemFactory);
+
+    static void registerExtraSeqContent(
+        const std::string& contentName, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> itemFactory);
+
+    [[deprecated("Use registerExtraSeqContent")]]
     static void addExtraSeqItemFactory(
-        const std::string& key, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> factory);
+        const std::string& contentName, std::function<AbstractSeqItem*(std::shared_ptr<AbstractSeq> seq)> itemFactory) {
+        registerExtraSeqContent(contentName, itemFactory);
+    }
 
     BodyMotionItem();
     BodyMotionItem(std::shared_ptr<BodyMotion> bodyMotion);
@@ -26,7 +35,9 @@ public:
     std::shared_ptr<const BodyMotion> motion() const { return bodyMotion_; }
 
     int numExtraSeqItems() const;
-    const std::string& extraSeqKey(int index) const;
+    const std::string& extraSeqContentName(int index) const;
+    [[deprecated("Use extraSeqContentName.")]]
+    const std::string& extraSeqKey(int index) const { return extraSeqContentName(index); }
     AbstractSeqItem* extraSeqItem(int index);
     const AbstractSeqItem* extraSeqItem(int index) const;
     SignalProxy<void()> sigExtraSeqItemsChanged();
