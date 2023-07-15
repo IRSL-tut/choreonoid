@@ -1,8 +1,3 @@
-/**
-   @file
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_BODY_MULTI_DEVICE_STATE_SEQ_H
 #define CNOID_BODY_MULTI_DEVICE_STATE_SEQ_H
 
@@ -18,7 +13,7 @@ class CNOID_EXPORT MultiDeviceStateSeq : public MultiSeq<DeviceStatePtr>
     typedef MultiSeq<DeviceStatePtr> BaseSeqType;
             
 public:
-    static const std::string& key();
+    static const std::string& seqContentName();
 
     MultiDeviceStateSeq();
     MultiDeviceStateSeq(int numFrames, int numDevices = 1);
@@ -38,7 +33,7 @@ protected:
     virtual bool doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback) override;
 
 private:
-    void writeDeviceStateSeq(YAMLWriter& writer, int deviceIndex);
+    void writeDeviceStateSeq(YAMLWriter& writer, double formatVersion, int deviceIndex);
 
     std::vector<std::string> deviceNames;
 };

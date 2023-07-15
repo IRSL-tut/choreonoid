@@ -64,8 +64,14 @@ public:
     void updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq();
     void updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq();
 
-    static const std::string& linkPosSeqKey();
-    static const std::string& jointPosSeqKey();
+    static const std::string& linkPositionContentName();
+    [[deprecated("Use linkPosSeqContentName")]]
+    static const std::string& linkPosSeqKey() { return linkPositionContentName(); }
+    static const std::string& jointDisplacementContentName();
+    [[deprecated("Use jointPosSeqContentName")]]
+    static const std::string& jointPosSeqKey() { return jointDisplacementContentName(); }
+
+    static const std::string& jointEffortContentName();
 
     class CNOID_EXPORT Frame {
         BodyMotion& motion_;
@@ -111,37 +117,38 @@ public:
     ConstSeqIterator extraSeqEnd() const { return extraSeqs.end(); }
         
     template <class SeqType>
-    std::shared_ptr<SeqType> extraSeq(const std::string& name) const {
-        ExtraSeqMap::const_iterator p = extraSeqs.find(name);
+    std::shared_ptr<SeqType> extraSeq(const std::string& contentName) const {
+        ExtraSeqMap::const_iterator p = extraSeqs.find(contentName);
         return ((p != extraSeqs.end()) ?
                 std::dynamic_pointer_cast<SeqType>(p->second) : std::shared_ptr<SeqType>());
     }
 
-    void setExtraSeq(const std::string& name, std::shared_ptr<AbstractSeq> seq);
+    void setExtraSeq(std::shared_ptr<AbstractSeq> seq);
 
     template <class SeqType>
     std::shared_ptr<SeqType> getOrCreateExtraSeq(
-        const std::string& name, std::function<void(SeqType& seq)> initFunc = nullptr) {
-        std::shared_ptr<AbstractSeq>& base = extraSeqs[name];
+        const std::string& contentName, std::function<void(SeqType& seq)> initFunc = nullptr) {
+        std::shared_ptr<AbstractSeq>& base = extraSeqs[contentName];
         std::shared_ptr<SeqType> seq;
         if(base){
             seq = std::dynamic_pointer_cast<SeqType>(base);
         }
         if(!seq){
             seq = std::make_shared<SeqType>();
-            if(initFunc){
-                initFunc(*seq);
-            }
             base = seq;
+            seq->setSeqContentName(contentName);
             seq->setFrameRate(frameRate());
             seq->setNumFrames(numFrames());
             seq->setOffsetTime(offsetTime());
+            if(initFunc){
+                initFunc(*seq);
+            }
             sigExtraSeqsChanged_();
         }
         return seq;
     }
 
-    void clearExtraSeq(const std::string& name);
+    void clearExtraSeq(const std::string& contentName);
 
     SignalProxy<void()> sigExtraSeqsChanged() {
         return sigExtraSeqsChanged_;

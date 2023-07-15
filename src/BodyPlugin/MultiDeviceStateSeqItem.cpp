@@ -7,28 +7,20 @@
 using namespace std;
 using namespace cnoid;
 
-namespace {
-
-AbstractSeqItem* createMultiDeviceStateSeqItem(std::shared_ptr<AbstractSeq> seq)
-{
-    auto dseq = dynamic_pointer_cast<MultiDeviceStateSeq>(seq);
-    if(dseq){
-        auto item = new MultiDeviceStateSeqItem(dseq);
-        item->setName("Devices");
-        return item;
-    }
-    return nullptr;
-}
-
-}
-
 
 void MultiDeviceStateSeqItem::initializeClass(ExtensionManager* ext)
 {
     ext->itemManager().registerClass<MultiDeviceStateSeqItem, AbstractMultiSeqItem>(
         N_("MultiDeviceStateSeqItem"));
 
-    BodyMotionItem::addExtraSeqItemFactory(MultiDeviceStateSeq::key(), createMultiDeviceStateSeqItem);
+    BodyMotionItem::registerExtraSeqType(
+        "MultiDeviceStateSeq",
+        [](std::shared_ptr<AbstractSeq> seq) -> AbstractSeqItem* {
+            if(auto dseq = dynamic_pointer_cast<MultiDeviceStateSeq>(seq)){
+                return new MultiDeviceStateSeqItem(dseq);
+            }
+            return nullptr;
+        });
 }
 
         

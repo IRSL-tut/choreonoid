@@ -14,9 +14,28 @@ using fmt::format;
 
 namespace {
 
-static const string linkPosSeqKey_("MultiLinkPositionSeq");
-static const string jointPosSeqKey_("MultiJointDisplacementSeq");
+static const string linkPositionContentName_("LinkPosition");
+static const string jointDisplacementContentName_("JointDisplacement");
+static const string jointEffortContentName_("JointEffort");
 
+}
+
+
+const std::string& BodyMotion::linkPositionContentName()
+{
+    return linkPositionContentName_;
+}
+
+
+const std::string& BodyMotion::jointDisplacementContentName()
+{
+    return jointDisplacementContentName_;
+}
+
+
+const std::string& BodyMotion::jointEffortContentName()
+{
+    return jointEffortContentName_;
 }
 
 
@@ -113,9 +132,8 @@ void BodyMotion::setOffsetTime(double time)
 std::shared_ptr<MultiSE3Seq> BodyMotion::getOrCreateLinkPosSeq()
 {
     return getOrCreateExtraSeq<MultiSE3Seq>(
-        linkPosSeqKey_,
+        linkPositionContentName_,
         [this](MultiSE3Seq& seq){
-            seq.setSeqContentName(linkPosSeqKey_);
             seq.setNumParts(positionSeq_->numLinkPositionsHint());
         });
 }
@@ -124,9 +142,8 @@ std::shared_ptr<MultiSE3Seq> BodyMotion::getOrCreateLinkPosSeq()
 std::shared_ptr<MultiValueSeq> BodyMotion::getOrCreateJointPosSeq()
 {
     return getOrCreateExtraSeq<MultiValueSeq>(
-        jointPosSeqKey_,
+        jointDisplacementContentName_,
         [this](MultiValueSeq& seq){
-            seq.setSeqContentName(jointPosSeqKey_);
             seq.setNumParts(positionSeq_->numJointDisplacementsHint());
         });
 }
@@ -142,10 +159,10 @@ void BodyMotion::setDimension(int numFrames, int numJoints, int numLinks, bool f
         auto& seq = kv.second;
         bool done = false;
         if(auto multiSeq = dynamic_pointer_cast<AbstractMultiSeq>(seq)){
-            if(multiSeq->seqContentName() == linkPosSeqKey_){
+            if(multiSeq->seqContentName() == linkPositionContentName_){
                 multiSeq->setDimension(numFrames, numLinks, fillNewElements);
                 done = true;
-            } else if(multiSeq->seqContentName() == jointPosSeqKey_){
+            } else if(multiSeq->seqContentName() == jointDisplacementContentName_){
                 multiSeq->setDimension(numFrames, numJoints, fillNewElements);
                 done = true;
             }
@@ -160,7 +177,7 @@ void BodyMotion::setDimension(int numFrames, int numJoints, int numLinks, bool f
 void BodyMotion::setNumJoints(int numJoints, bool fillNewElements)
 {
     positionSeq_->setNumJointDisplacementsHint(numJoints);
-    if(auto seq = extraSeq<MultiValueSeq>(jointPosSeqKey_)){
+    if(auto seq = extraSeq<MultiValueSeq>(jointDisplacementContentName_)){
         seq->setNumParts(numJoints, fillNewElements);
     }
 }
@@ -187,18 +204,6 @@ std::shared_ptr<MultiValueSeq> BodyMotion::jointPosSeq()
 std::shared_ptr<const MultiValueSeq> BodyMotion::jointPosSeq() const
 {
     return const_cast<BodyMotion*>(this)->getOrCreateJointPosSeq();
-}
-
-
-const std::string& BodyMotion::linkPosSeqKey()
-{
-    return linkPosSeqKey_;
-}
-
-
-const std::string& BodyMotion::jointPosSeqKey()
-{
-    return jointPosSeqKey_;
 }
 
 
@@ -264,14 +269,14 @@ void BodyMotion::updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq()
     shared_ptr<AbstractSeq> srcSeq;
 
     int numLinkPosSeqParts = 0;
-    auto lseq = extraSeq<MultiSE3Seq>(linkPosSeqKey_);
+    auto lseq = extraSeq<MultiSE3Seq>(linkPositionContentName_);
     if(lseq){
         numLinkPosSeqParts = lseq->numParts();
         srcSeq = lseq;
     }
     
     int numJointPosSeqParts = 0;
-    auto jseq = extraSeq<MultiValueSeq>(jointPosSeqKey_);
+    auto jseq = extraSeq<MultiValueSeq>(jointDisplacementContentName_);
     if(jseq){
         numJointPosSeqParts = jseq->numParts();
         if(!srcSeq){
@@ -307,16 +312,19 @@ void BodyMotion::updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq()
 }
 
 
-void BodyMotion::setExtraSeq(const std::string& name, std::shared_ptr<AbstractSeq> seq)
+void BodyMotion::setExtraSeq(std::shared_ptr<AbstractSeq> seq)
 {
-    extraSeqs[name] = seq;
-    sigExtraSeqsChanged_();
+    auto& contentName = seq->seqContentName();
+    if(!contentName.empty()){
+        extraSeqs[contentName] = seq;
+        sigExtraSeqsChanged_();
+    }
 }
 
 
-void BodyMotion::clearExtraSeq(const std::string& name)
+void BodyMotion::clearExtraSeq(const std::string& contentName)
 {
-    if(extraSeqs.erase(name) > 0){
+    if(extraSeqs.erase(contentName) > 0){
         sigExtraSeqsChanged_();
     }
 }
@@ -420,13 +428,11 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
 {
     setDimension(0, 1, 1);
 
-    bool loaded = false;
-    
     double version;
-    if(!archive->read("formatVersion", version)){
+    if(!archive->read({ "format_version", "formatVersion" }, version)){
         version = 1.0;
     }
-    if(version >= 4.0){
+    if(version >= 5.0){
         os << format(_("Format version {} is not supported"), version) << endl;
         return false;
     }
@@ -437,7 +443,7 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
     std::function<string(Mapping* mapping)> readContent;
     if(version >= 2.0){
         type = seqType();
-        if(version >= 3.0){
+        if(version >= 3.0 && version < 4.0){
             jointContent = "MultiJointDisplacementSeq";
             linkContent = "MultiLinkPositionSeq";
         } else {
@@ -455,12 +461,12 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
         linkContent = "LinkPosition";
         readContent = [](Mapping* mapping){
             string content;
-            if(!mapping->read("content", content)){
-                mapping->read("purpose", content);
-            }
+            mapping->read({ "content", "purpose" }, content);
             return content;
         };
     }
+
+    bool isError = false;
     
     if(archive->get<string>("type") == type){
         
@@ -478,38 +484,53 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
             
             if((type == "MultiSE3Seq" || (version < 2.0 && (type == "MultiSe3Seq" || type == "MultiAffine3Seq")))){
                 if(content == linkContent){
-                    loaded = linkPosSeq()->readSeq(component, os);
-                    if(!loaded) break;
-                    linkPosSeq()->setSeqContentName("MultiLinkPositionSeq");
+                    if(linkPosSeq()->readSeq(component, os)){
+                        linkPosSeq()->setSeqContentName(linkPositionContentName_);
+                    } else {
+                        isError = true;
+                        break;
+                    }
                 } else {
-                    os << format(_("Unknown content \"{0}\" of type \"{1}\"."), content, type) << endl;
+                    auto seq = getOrCreateExtraSeq<MultiSE3Seq>(content);
+                    if(!seq->readSeq(component, os)){
+                        isError = true;
+                        break;
+                    }
                 }
             } else if(type == "MultiValueSeq"){
                 if(content == jointContent){
                     auto jseq = jointPosSeq();
-                    loaded = jseq->readSeq(component, os);
-                    if(!loaded) break;
-                    jseq->setSeqContentName("MultiJointDisplacementSeq");
+                    if(jseq->readSeq(component, os)){
+                        jseq->setSeqContentName(jointDisplacementContentName_);
+                    } else {
+                        isError = true;
+                        break;
+                    }
                 } else {
-                    os << format(_("Unknown content \"{0}\" of type \"{1}\"."), content, type) << endl;
+                    auto seq = getOrCreateExtraSeq<MultiValueSeq>(content);
+                    if(!seq->readSeq(component, os)){
+                        isError = true;
+                        break;
+                    }
                 }
             } else if(type == "Vector3Seq") {
-                if((version >= 3.0 && content == "ZMPSeq") ||
+                if((version >= 4.0 && content == "ZMP") ||
+                   (version >= 3.0 && content == "ZMPSeq") ||
                    (version < 3.0 && content == "ZMP") ||
                    ((version < 2.0) && (content == "RelativeZMP" || content == "RelativeZmp"))){
                     auto zmpSeq = getOrCreateZMPSeq(*this);
-                    loaded = zmpSeq->readSeq(component, os);
-                    if(!loaded){
+                    if(zmpSeq->readSeq(component, os)){
+                        if(version < 2.0){
+                            zmpSeq->setRootRelative(content != "ZMP");
+                        }
+                    } else {
+                        isError = true;
                         break;
                     }
-                    if(version < 2.0){
-                        zmpSeq->setRootRelative(content != "ZMP");
-                    }
                 } else {
-                    //----------- user defined Vector3 data --------- 
-                    auto userVec3 = getOrCreateExtraSeq<Vector3Seq>(content);
-                    loaded = userVec3->readSeq(component, os);
-                    if(!loaded){
+                    auto seq = getOrCreateExtraSeq<Vector3Seq>(content);
+                    if(!seq->readSeq(component, os)){
+                        isError = true;
                         break;
                     }
                 }
@@ -519,26 +540,27 @@ bool BodyMotion::doReadSeq(const Mapping* archive, std::ostream& os)
         }
     }
     
-    if(loaded){
-        updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq();
-    } else {
+    if(isError){
         setDimension(0, 1, 1);
+    } else {
+        updateBodyPositionSeqWithLinkPosSeqAndJointPosSeq();
     }
-    clearExtraSeq(linkPosSeqKey_);
-    clearExtraSeq(jointPosSeqKey_);
+
+    clearExtraSeq(linkPositionContentName_);
+    clearExtraSeq(jointDisplacementContentName_);
     
-    return loaded;
+    return !isError;
 }
 
 
 bool BodyMotion::doWriteSeq(YAMLWriter& writer, std::function<void()> additionalPartCallback)
 {
-    bool doClearLinkPosSeq = extraSeqs.find(linkPosSeqKey_) == extraSeqs.end();
-    bool doClearJointPosSeq = extraSeqs.find(jointPosSeqKey_) == extraSeqs.end();
+    bool doClearLinkPosSeq = extraSeqs.find(linkPositionContentName_) == extraSeqs.end();
+    bool doClearJointPosSeq = extraSeqs.find(jointDisplacementContentName_) == extraSeqs.end();
     
     updateLinkPosSeqAndJointPosSeqWithBodyPositionSeq();
     
-    double version = writer.getOrCreateInfo("formatVersion", 3.0);
+    double version = writer.getOrCreateInfo("format_version", 4.0);
 
     if(version < 2.0){
         writer.putComment("Body motion data set format version 1.0 defined by Choreonoid\n");
@@ -553,34 +575,41 @@ bool BodyMotion::doWriteSeq(YAMLWriter& writer, std::function<void()> additional
             if(additionalPartCallback) additionalPartCallback();
 
             writer.putKey("components");
-            writer.setInfo("isComponent", true);
+            writer.setInfo("is_component", true);
 
             writer.startListing();
 
             auto lseq = linkPosSeq();
             if(lseq->numFrames() > 0 && lseq->numParts() > 0){
+                string orgContentName;
+                if(version >= 3.0 && version < 4.0){
+                    orgContentName = lseq->seqContentName();
+                    lseq->setSeqContentName("MultiLinkPositionSeq");
+                }
                 lseq->writeSeq(writer);
+                if(!orgContentName.empty()){
+                    lseq->setSeqContentName(orgContentName);
+                }
             }
 
             auto jseq = jointPosSeq();
             if(jseq->numFrames() > 0 && jseq->numParts() > 0){
                 string orgContentName;
-                if(version < 3.0){
+                if(version < 2.0){
                     orgContentName = jseq->seqContentName();
-                    if(version >= 2.0){
-                        jseq->setSeqContentName("JointDisplacement");
-                    } else {
-                        jseq->setSeqContentName("JointPosition");
-                    }
+                    jseq->setSeqContentName("JointPosition");
+                } else if(version >= 3.0 && version < 4.0){
+                    orgContentName = jseq->seqContentName();
+                    jseq->setSeqContentName("MultiJointDisplacementSeq");
                 }
                 jseq->writeSeq(writer);
-                if(version < 3.0){
+                if(!orgContentName.empty()){
                     jseq->setSeqContentName(orgContentName);
                 }
             }
             
             for(auto& kv : extraSeqs){
-                if(kv.first != linkPosSeqKey_ && kv.first != jointPosSeqKey_){
+                if(kv.first != linkPositionContentName_ && kv.first != jointDisplacementContentName_){
                     kv.second->writeSeq(writer);
                 }
             }
@@ -593,10 +622,10 @@ bool BodyMotion::doWriteSeq(YAMLWriter& writer, std::function<void()> additional
     }
 
     if(doClearLinkPosSeq){
-        clearExtraSeq(linkPosSeqKey_);
+        clearExtraSeq(linkPositionContentName_);
     }
     if(doClearJointPosSeq){
-        clearExtraSeq(jointPosSeqKey_);
+        clearExtraSeq(jointDisplacementContentName_);
     }
 
     return result;
@@ -613,7 +642,7 @@ bool BodyMotion::save(const std::string& filename, double version, std::ostream&
 {
     YAMLWriter writer(filename);
     if(version > 0.0){
-        writer.setInfo("formatVersion", version);
+        writer.setInfo("format_version", version);
     }
 
     writer.setMessageSink(os);

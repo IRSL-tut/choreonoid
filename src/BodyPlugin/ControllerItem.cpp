@@ -93,12 +93,6 @@ bool ControllerItem::initialize(ControllerIO* io)
 }
 
 
-ReferencedObjectSeqItem* ControllerItem::createLogItem()
-{
-    return new ReferencedObjectSeqItem;
-}
-
-
 bool ControllerItem::start()
 {
     return true;
@@ -117,18 +111,6 @@ bool ControllerItem::control()
 }
 
 
-void ControllerItem::outputLogFrame()
-{
-    log(); // For backward compatibility
-}
-
-
-void ControllerItem::log()
-{
-
-}
-
-
 void ControllerItem::output()
 {
 
@@ -138,6 +120,12 @@ void ControllerItem::output()
 void ControllerItem::stop()
 {
 
+}
+
+
+ReferencedObjectSeqItem* ControllerItem::createLogItem()
+{
+    return new ReferencedObjectSeqItem;
 }
 
 
