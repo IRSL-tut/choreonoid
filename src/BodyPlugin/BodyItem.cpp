@@ -804,7 +804,7 @@ void BodyItem::Impl::setPresetPose(BodyItem::PresetPoseID id)
 
     if(id == BodyItem::STANDARD_POSE){
         auto info = body->info();
-        const Listing& pose = *info->findListing("standardPose");
+        const Listing& pose = *info->findListing({ "standard_pose", "standardPose" });
         if(pose.isValid()){
             const int n = std::min(pose.size(), body->numJoints());
             while(jointIndex < n){
@@ -1670,6 +1670,7 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Root link"), body->rootLink()->name());
     putProperty(_("Base link"), currentBaseLink ? currentBaseLink->name() : "none");
     putProperty.decimals(3)(_("Mass"), body->mass());
+    putProperty(_("Center of mass"), str(self->centerOfMass()));
     putProperty(_("Model type"), body->isStaticModel() ? _("Static") : _("Dynamic"));
 
     putProperty(_("Root fixed"), body->isFixedRootModel(),
