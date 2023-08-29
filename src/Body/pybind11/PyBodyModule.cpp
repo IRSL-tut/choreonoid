@@ -7,6 +7,7 @@
 #include "../LeggedBodyHelper.h"
 #include <cnoid/PyUtil>
 #include <pybind11/operators.h>
+#include <iostream>
 
 using namespace std;
 using namespace cnoid;
@@ -44,6 +45,9 @@ PYBIND11_MODULE(Body, m)
         .def("setDefaultDivisionNumber", &AbstractBodyLoader::setDefaultDivisionNumber)
         .def("setDefaultCreaseAngle", &AbstractBodyLoader::setDefaultCreaseAngle)
         .def("load", &AbstractBodyLoader::load)
+        .def("setMessageSinkStdErr", [](AbstractBodyLoader &self) {
+            self.setMessageSink(std::cerr);
+        })
         ;
 
     py::class_<BodyLoader, AbstractBodyLoader>(m, "BodyLoader")
