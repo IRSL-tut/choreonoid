@@ -5,6 +5,7 @@
 #include "../InverseKinematics.h"
 #include "../JointPath.h"
 #include "../LeggedBodyHelper.h"
+#include "../StdBodyWriter.h"
 #include <cnoid/PyUtil>
 #include <pybind11/operators.h>
 #include <iostream>
@@ -169,4 +170,14 @@ PYBIND11_MODULE(Body, m)
         .def_property_readonly("numFeet", &LeggedBodyHelper::numFeet)
         .def("footLink", &LeggedBodyHelper::footLink)
         ;
+
+    py::class_<StdBodyWriter>(m, "StdBodyWriter")
+    .def(py::init<>())
+    .def("writeBody", &StdBodyWriter::writeBody)
+    .def("setMessageSinkStdErr", [](StdBodyWriter &self) {
+            self.setMessageSink(std::cerr);
+        })
+    .def("setExtModelFileMode", &StdBodyWriter::setExtModelFileMode)
+    .def("extModelFileMode", &StdBodyWriter::extModelFileMode)
+    ;
 }
