@@ -7,6 +7,9 @@ namespace py = pybind11;
 
 namespace cnoid {
 
+typedef Eigen::Matrix<float, -1, -1, Eigen::RowMajor> MatrixfRM;
+typedef Eigen::Ref<Eigen::Matrix<float, -1, -1, Eigen::RowMajor>> RefMatrixfRM;
+
 void exportPySceneDrawables(py::module& m)
 {
     py::class_<SgMaterial, SgMaterialPtr, SgObject>(m, "SgMaterial")
@@ -195,16 +198,80 @@ void exportPySceneDrawables(py::module& m)
         .def("setMaterial", &SgShape::setMaterial)
         .def("getOrCreateMaterial", &SgShape::getOrCreateMaterial)
         ;
+
+    py::class_<SgPlot, SgPlotPtr, SgNode>(m, "SgPlot")
+        .def_property("material", (SgMaterial* (SgPlot::*)()) &SgPlot::material, &SgPlot::setMaterial)
+        .def("setMaterial", &SgPlot::setMaterial)
+        .def("getOrCreateMaterial", &SgPlot::getOrCreateMaterial)
+        .def("hasVertices", &SgPlot::hasVertices)
+        .def("setVertices", [](SgPlot &self, RefMatrixfRM mat) {
+            // mat.cols() == 3
+            int size = mat.rows();
+            SgVertexArray *va_ = self.getOrCreateVertices(size);
+            for(int i = 0; i < size; i++) va_->at(i) = mat.row(i);  })
+        .def_property_readonly("vertices",  [](SgPlot &self) {
+            SgVertexArray *va_ = self.vertices();
+            if (!va_) { MatrixfRM mat(0, 3); return mat; }
+            MatrixfRM mat(va_->size(), 3);
+            for(int i = 0; i < va_->size(); i ++) mat.row(i) = va_->at(i);
+            return mat; })
+        .def("hasColors", &SgPlot::hasColors)
+        .def("setColors", [](SgPlot &self, RefMatrixfRM mat) {
+            // mat.cols() == 3
+            int size = mat.rows();
+            SgVertexArray *va_ = self.getOrCreateColors(size);
+            for(int i = 0; i < size; i++) va_->at(i) = mat.row(i);  })
+        .def_property_readonly("colors",  [](SgPlot &self) {
+            SgVertexArray *va_ = self.colors();
+            if (!va_) { MatrixfRM mat(0, 3); return mat; }
+            MatrixfRM mat(va_->size(), 3);
+            for(int i = 0; i < va_->size(); i ++) mat.row(i) = va_->at(i);
+            return mat; })
+        .def("hasColorIndices", [](SgPlot &self) { return !self.colorIndices().empty(); })
+        .def_property("colorIndices", (SgIndexArray&(SgPlot::*)())&SgPlot::colorIndices,
+                      [](SgPlot &self, std::vector<int> &_ind) { self.colorIndices() = _ind; })
+        .def("hasNormals", &SgPlot::hasNormals)
+        .def("setNormals", [](SgPlot &self, RefMatrixfRM mat) {
+            // mat.cols() == 3
+            int size = mat.rows();
+            SgVertexArray *va_ = self.getOrCreateNormals();
+            va_->resize(size);
+            for(int i = 0; i < size; i++) va_->at(i) = mat.row(i);  })
+        .def_property_readonly("normals",  [](SgPlot &self) {
+            SgVertexArray *va_ = self.normals();
+            if (!va_) { MatrixfRM mat(0, 3); return mat; }
+            MatrixfRM mat(va_->size(), 3);
+            for(int i = 0; i < va_->size(); i ++) mat.row(i) = va_->at(i);
+            return mat; })
+        .def("hasNormalIndices", [](SgPlot &self) { return !self.normalIndices().empty(); })
+        .def_property("normalIndices", (SgIndexArray&(SgPlot::*)())&SgPlot::normalIndices,
+                      [](SgPlot &self, std::vector<int> &_ind) { self.normalIndices() = _ind; })
+        ;
+
+    py::class_<SgPointSet, SgPointSetPtr, SgPlot>(m, "SgPointSet")
+        .def(py::init<>())
+        .def_property("pointSize", &SgPointSet::pointSize, &SgPointSet::setPointSize)
+        ;
+
+    py::class_<SgLineSet, SgLineSetPtr, SgPlot>(m, "SgLineSet")
+        .def(py::init<>())
+        .def_property("lineVertexIndices", (SgIndexArray&(SgLineSet::*)())&SgLineSet::lineVertexIndices,
+                      [](SgLineSet &self, std::vector<int> &_ind) { self.lineVertexIndices() = _ind; })
+        .def_property("numLines", &SgLineSet::numLines, &SgLineSet::setNumLines)
+        .def_property("lineWidth", &SgLineSet::lineWidth, &SgLineSet::setLineWidth)
+        .def("reserveNumLines", &SgLineSet::reserveNumLines)
+        .def("clearLines", &SgLineSet::reserveNumLines)
+        .def("line", [](SgLineSet &self, int index) {
+            SgLineSet::LineRef r = self.line(index);
+            std::vector<int> res(2); res[0] = r[0]; res[1] = r[1];
+            return res; })
+        .def("setLine", &SgLineSet::setLine)
+        .def("addLine", (void (SgLineSet::*)(int, int))&SgLineSet::addLine)
+        .def("addLine", [](SgLineSet &self, std::vector<int> &in) {
+            if (in.size() > 1) self.addLine(in[0], in[1]); })
+        .def("resizeColorIndicesForNumLines", &SgLineSet::resizeColorIndicesForNumLines)
+        .def("setLineColor", &SgLineSet::setLineColor)
+        ;
 }
 
 }
-
-        
-    
-    
-
-        
-        
-
-
-
