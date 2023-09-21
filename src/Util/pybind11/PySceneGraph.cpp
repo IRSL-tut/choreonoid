@@ -84,7 +84,11 @@ void exportPySceneGraph(py::module& m)
         .def("addChild",
              (void(SgGroup::*)(SgNode*, SgUpdateRef)) &SgGroup::addChild,
              py::arg("node"), py::arg("update") = false)
-
+        .def("contains", &SgGroup::contains)
+        .def("findChildIndex", &SgGroup::findChildIndex)
+        .def("removeChild", (bool (SgGroup::*)(SgNode*, SgUpdateRef)) &SgGroup::removeChild,
+             py::arg("node"), py::arg("update") = false)
+        .def("removeChildAt", &SgGroup::removeChildAt)
         // deprecated
         .def("isEmpty", &SgGroup::empty)
         .def("getNumChildren", &SgGroup::numChildren)
