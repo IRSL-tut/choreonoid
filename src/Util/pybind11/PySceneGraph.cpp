@@ -131,6 +131,15 @@ void exportPySceneGraph(py::module& m)
         .def("getRotation", (Isometry3::LinearPart (SgPosTransform::*)()) &SgPosTransform::rotation)
         ;
 
+    py::class_<SgScaleTransform, SgScaleTransformPtr, SgTransform>(m, "SgScaleTransform")
+        .def(py::init<>())
+        .def(py::init<double>())
+        .def(py::init<Vector3 &>())
+        .def("setScale", (void (SgScaleTransform::*)(double s)) &SgScaleTransform::setScale)
+        .def("setScale", [](SgScaleTransform &self, Vector3 &_in) {  self.setScale(_in); })
+        .def_property("scale", (Vector3 & (SgScaleTransform::*)()) &SgScaleTransform::scale, [](SgScaleTransform &self, Vector3 &_in) {  self.setScale(_in); })
+        ;
+
     py::class_<SgPreprocessed, SgPreprocessedPtr, SgNode>(m, "SgPreprocessed")
         ;
     
@@ -165,6 +174,20 @@ void exportPySceneGraph(py::module& m)
         .def(py::init<>())
         .def_property("height", &SgOrthographicCamera::height, &SgOrthographicCamera::setHeight)
         .def("setHeight", &SgOrthographicCamera::setHeight)
+        ;
+
+    py::class_<SgSwitch, SgSwitchPtr, SgObject>(m, "SgSwitch")
+        .def(py::init<bool>())
+        .def_property("turnedOn", &SgSwitch::isTurnedOn, &SgSwitch::setTurnedOn)
+        ;
+
+    py::class_<SgSwitchableGroup, SgSwitchableGroupPtr, SgGroup>(m, "SgSwitchableGroup")
+        .def(py::init<>())
+        .def(py::init<SgSwitch*>())
+        .def("setSwitch", &SgSwitchableGroup::setSwitch)
+        .def("setTurnedOn", &SgSwitchableGroup::setTurnedOn)
+        .def_property("turnedOn", &SgSwitchableGroup::isTurnedOn,
+                      [](SgSwitchableGroup &self, bool on) { self.setTurnedOn(on); })
         ;
 }
 
