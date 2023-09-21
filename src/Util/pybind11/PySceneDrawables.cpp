@@ -105,10 +105,87 @@ void exportPySceneDrawables(py::module& m)
         .def("hasTriangles", &SgMesh::hasTriangles)
         .def("numTriangles", &SgMesh::numTriangles)
         .def("triangle", [](SgMesh &self, int index) { Array3i ret = self.triangle(index); return ret; })
-        .def("primitiveType", &SgMesh::primitiveType)
-        //.def("primitive", &SgMesh::primitive)
+        .def_property("divisionNumber", &SgMesh::divisionNumber, &SgMesh::setDivisionNumber)
+        .def_property("extraDivisionNumber", &SgMesh::extraDivisionNumber, &SgMesh::setExtraDivisionNumber)
+        .def_property("extraDivisionMode", &SgMesh::extraDivisionMode, &SgMesh::setExtraDivisionMode)
+        .def_property_readonly("primitiveType", &SgMesh::primitiveType)
+        .def_property_readonly("primitive", [](SgMesh  &self) {
+            int tp = self.primitiveType();
+            if (tp == 1) {
+                SgMesh::Box *pri = new SgMesh::Box(self.primitive<SgMesh::Box>());
+                return py::cast(pri);
+            } else if (tp == 2) {
+                SgMesh::Sphere *pri = new SgMesh::Sphere(self.primitive<SgMesh::Sphere>());
+                return py::cast(pri);
+            } else if (tp == 3) {
+                SgMesh::Cylinder *pri = new SgMesh::Cylinder(self.primitive<SgMesh::Cylinder>());
+                return py::cast(pri);
+            } else if (tp == 4) {
+                SgMesh::Cone *pri = new SgMesh::Cone(self.primitive<SgMesh::Cone>());
+                return py::cast(pri);
+            } else if (tp == 5) {
+                SgMesh::Capsule *pri = new SgMesh::Capsule(self.primitive<SgMesh::Capsule>());
+                return py::cast(pri);
+            }
+            return py::cast(nullptr); })
         ;
-    
+
+    //// PrimitiveTypes
+    py::class_<SgMesh::Box> (m, "SgMeshBox")
+        .def_property_readonly("volume", [](SgMesh::Box &self) { return self.size[0] * self.size[1] * self.size[2]; })
+        .def_property_readonly("COM", [](SgMesh::Box &self) { return Vector3::Zero(); })
+        .def_property_readonly("inertia", [](SgMesh::Box &self) { Matrix3 ret = Matrix3::Zero();
+                ret(0, 0) = (self.size[1] * self.size[1] + self.size[2] * self.size[2] ) / 12.0;
+                ret(1, 1) = (self.size[0] * self.size[0] + self.size[2] * self.size[2] ) / 12.0;
+                ret(2, 2) = (self.size[0] * self.size[0] + self.size[1] * self.size[2] ) / 12.0;
+                return ret; })
+        .def_property_readonly("size", [](SgMesh::Box &self) { return self.size; })
+        ;
+    py::class_<SgMesh::Sphere> (m, "SgMeshSphere")
+        .def_property_readonly("volume", [](SgMesh::Sphere &self) { return 4.0 * M_PI * self.radius * self.radius * self.radius / 3.0; })
+        .def_property_readonly("COM", [](SgMesh::Sphere &self) { return Vector3::Zero(); })
+        .def_property_readonly("inertia", [](SgMesh::Sphere &self) { Matrix3 ret = Matrix3::Zero();
+                ret(0, 0) = ret(1, 1) = ret(2, 2) = 2.0 * (self.radius * self.radius) / 5.0;
+                return ret; })
+        .def_property_readonly("radius", [](SgMesh::Sphere &self) { return self.radius; })
+        ;
+    py::class_<SgMesh::Cylinder> (m, "SgMeshCylinder") // bottom/top circle on xz-plane / height: y-direction
+        .def_property_readonly("volume", [](SgMesh::Cylinder &self) { return M_PI * self.radius * self.radius * self.height; })
+        .def_property_readonly("COM", [](SgMesh::Cylinder &self) { return Vector3::Zero(); })
+        .def_property_readonly("inertia", [](SgMesh::Cylinder &self) { Matrix3 ret = Matrix3::Zero();
+                ret(1, 1) = (self.radius * self.radius) / 2.0;
+                ret(0, 0) = ret(2, 2) = ((self.radius * self.radius) / 4.0) + ((self.height * self.height) / 12.0);
+                return ret; })
+        .def_property_readonly("radius", [](SgMesh::Cylinder &self) { return self.radius; })
+        .def_property_readonly("height", [](SgMesh::Cylinder &self) { return self.height; })
+        ;
+    py::class_<SgMesh::Cone> (m, "SgMeshCone") // bottom circle on xz-plane (y = -height/2) / height: y-direction
+        .def_property_readonly("volume", [](SgMesh::Cone &self) { return M_PI * self.radius * self.radius * self.height / 3.0; })
+        .def_property_readonly("COM", [](SgMesh::Cone &self) { Vector3 ret = Vector3::Zero(); ret[1] = - self.height/2.0; return ret; })
+        .def_property_readonly("inertia", [](SgMesh::Cone &self) { Matrix3 ret = Matrix3::Zero();
+                ret(1, 1) = 0.3 * (self.radius * self.radius);
+                ret(0, 0) = ret(2, 2) = 0.15 * (self.radius * self.radius) + 3.0 / 80.0 * (self.height * self.height);
+                return ret; })
+        .def_property_readonly("radius", [](SgMesh::Cone &self) { return self.radius; })
+        .def_property_readonly("height", [](SgMesh::Cone &self) { return self.height; })
+        ;
+    py::class_<SgMesh::Capsule> (m, "SgMeshCapsule") // circle on xz-plane / height: y-direction
+        .def_property_readonly("volume", [](SgMesh::Capsule &self) {
+            // return (4.0 * M_PI * self.radius * self.radius * self.radius / 3.0) + (M_PI * self.radius * self.radius * self.height);
+            return M_PI * self.radius * self.radius * ((4.0 * self.radius / 3.0) + self.height); })
+        .def_property_readonly("COM", [](SgMesh::Capsule &self) { return Vector3::Zero(); })
+        .def_property_readonly("inertia", [](SgMesh::Capsule &self) { Matrix3 ret = Matrix3::Zero();
+                double ratio_cyl = self.height / ((4.0 * self.radius / 3.0) + self.height);
+                double ratio_sph = 1 - ratio_cyl;
+                double sph_i = ratio_sph * 2.0 * (self.radius * self.radius) / 5.0;
+                ret(1, 1) = (ratio_cyl * (self.radius * self.radius) / 2.0) + sph_i;
+                ret(0, 0) = ret(2, 2) = ratio_cyl * (((self.radius * self.radius) / 4.0) + ((self.height * self.height) / 12.0))
+                                        + sph_i + ratio_sph * self.height * self.height / 4.0;
+                return ret; })
+        .def_property_readonly("radius", [](SgMesh::Capsule &self) { return self.radius; })
+        .def_property_readonly("height", [](SgMesh::Capsule &self) { return self.height; })
+        ;
+
     py::class_<SgShape, SgShapePtr, SgNode>(m, "SgShape")
         .def(py::init<>())
         .def_property("mesh", (SgMesh* (SgShape::*)()) &SgShape::mesh, &SgShape::setMesh)
