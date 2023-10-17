@@ -44,6 +44,7 @@ public:
 
     std::string output_type;
     bool generate_primitive_mesh;
+    bool ignore_urdf_primitive;
     bool verbose;
     std::vector<aiMesh*> vec_mesh;
     std::vector<aiMaterial*> vec_material;
@@ -99,6 +100,10 @@ void AssimpSceneWriter::generatePrimitiveMesh(bool on)
 {
     impl->generate_primitive_mesh = on;
 }
+void AssimpSceneWriter::ignoreURDFPrimitive(bool on)
+{
+    impl->ignore_urdf_primitive = on;
+}
 void AssimpSceneWriter::setMessageSinkStdErr()
 {
     setMessageSink(std::cerr);
@@ -119,6 +124,7 @@ bool AssimpSceneWriter::writeScene(const std::string& filename, SgNode* node)
 AssimpSceneWriter::Impl::Impl(AssimpSceneWriter *_self) : self(_self)
 {
     generate_primitive_mesh = false;
+    ignore_urdf_primitive = false;
     verbose = false;
     material_counter = 0;
 }
@@ -126,11 +132,19 @@ void AssimpSceneWriter::Impl::copyConfigurations(const Impl* org)
 {
     output_type = org->output_type;
     generate_primitive_mesh = org->generate_primitive_mesh;
+    ignore_urdf_primitive = org->ignore_urdf_primitive;
     verbose = org->verbose;
 }
 void AssimpSceneWriter::Impl::callbackMesh()
 {
     SgMesh* mesh = meshExtractor.currentMesh();
+    if(ignore_urdf_primitive &&
+       (mesh->primitiveType() == SgMesh::BoxType ||
+        mesh->primitiveType() == SgMesh::CylinderType ||
+        mesh->primitiveType() == SgMesh::SphereType )) {
+        DEBUG_STREAM(" URDF Primitive - ignored");
+        return;
+    }
     if(mesh->primitiveType() == SgMesh::MeshType && mesh->hasTriangles()) {
         addMesh(mesh);
     } else if (!generate_primitive_mesh && mesh->hasTriangles()) {
