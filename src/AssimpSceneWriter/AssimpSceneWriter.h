@@ -24,6 +24,7 @@ public:
     const std::string &getOutputType();
     void setVerbose(bool on);
     void generatePrimitiveMesh(bool on);
+    void ignoreURDFPrimitive(bool on);
     void setMessageSinkStdErr();
 
 protected:

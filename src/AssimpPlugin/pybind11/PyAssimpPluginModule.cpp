@@ -66,6 +66,12 @@ Setting for generating meshes for primitives
 Args:
     on (boolean) : If True, this scene writer generates a mesh file including meshes converted from primitive type
 )__CNOID__")
+        .def("ignoreURDFPrimitive", &AssimpSceneWriter::ignoreURDFPrimitive, R"__CNOID__(
+Setting for ignoring primitives used in URDF
+
+Args:
+    on (boolean) : If True, this scene writer ignore primitive type in URDF(Box, Cylinder, Sphere)
+)__CNOID__")
         .def("setMessageSinkStdErr", &AssimpSceneWriter::setMessageSinkStdErr, R"__CNOID__(
 Setting MessageSkin to stderr. It is required to read error messages in console
 
