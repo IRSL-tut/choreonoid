@@ -17,13 +17,13 @@ using namespace cnoid;
 //using fmt::format;
 //namespace filesystem = cnoid::stdx::filesystem;
 
-#if 0
-#define DEBUG_STREAM(args) \
-    std::cerr << "[" << __PRETTY_FUNCTION__ << "]" << args << std::endl
-#else
+#ifdef _WIN32
+#define __PRETTY_FUNCTION__  __FUNCSIG__
+#endif
+//#define DEBUG_STREAM(args) \
+//    std::cerr << "[" << __PRETTY_FUNCTION__ << "]" << args << std::endl
 #define DEBUG_STREAM(args) \
     if(verbose) { self->os() << "[" << __PRETTY_FUNCTION__ << "]" << args << std::endl; }
-#endif
 
 namespace {
 
