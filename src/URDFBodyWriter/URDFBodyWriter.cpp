@@ -52,6 +52,7 @@ public:
     bool add_offset;
     bool verbose;
     bool export_devices;
+    bool use_urdf_primitive;
 
     std::string robot_name;
     std::string mesh_file_prefix;
@@ -75,9 +76,9 @@ URDFBodyWriter::Impl::Impl()
     use_xacro = true;
     add_geometry = true;
     add_offset = true;
-
+    verbose = false;
     export_devices = false;
-
+    use_urdf_primitive = true;
     material_counter = 0;
 }
 void URDFBodyWriter::Impl::addXacroScripts(pugi::xml_node &_root)
@@ -162,9 +163,11 @@ void URDFBodyWriter::Impl::addXacroScripts(pugi::xml_node &_root)
 void URDFBodyWriter::Impl::addGeometry(pugi::xml_node &_node, const cnoid::Link *_lk, bool isVisual)
 {
     if(isVisual) {
-        //// for primitive
-        MeshExtractor me_;
-        me_.extract(_lk->visualShape(), [this, &me_, &_node](){ extractPrimitiveGeometry(me_, _node, true); });
+        if(use_urdf_primitive) {
+            //// for primitive
+            MeshExtractor me_;
+            me_.extract(_lk->visualShape(), [this, &me_, &_node](){ extractPrimitiveGeometry(me_, _node, true); });
+        }
         //// for mesh
         std::ostringstream oss_fname;
         std::ostringstream oss_url;
@@ -174,16 +177,24 @@ void URDFBodyWriter::Impl::addGeometry(pugi::xml_node &_node, const cnoid::Link 
         if (verbose) {
             asw.setMessageSink(std::cerr);
             asw.setVerbose(true);
+            if (use_urdf_primitive) {
+                asw.ignoreURDFPrimitive(true);
+            }
         }
         bool res_ =  asw.writeScene(oss_fname.str(), _lk->visualShape());
         if (res_) {
+            if(verbose) {
+                std::cerr << "file: " << oss_fname.str() << " / " << res_ << std::endl;
+            }
             _node.append_child("visual").append_child("geometry")
                  .append_child("mesh").append_attribute("filename") = oss_url.str().c_str();
         }
     } else {
-        //// for primitive
-        MeshExtractor me_;
-        me_.extract(_lk->collisionShape(), [this, &me_, &_node](){ extractPrimitiveGeometry(me_, _node, false); });
+        if(use_urdf_primitive) {
+            //// for primitive
+            MeshExtractor me_;
+            me_.extract(_lk->collisionShape(), [this, &me_, &_node](){ extractPrimitiveGeometry(me_, _node, false); });
+        }
         //// for mesh
         std::ostringstream oss_fname;
         std::ostringstream oss_url;
@@ -193,10 +204,16 @@ void URDFBodyWriter::Impl::addGeometry(pugi::xml_node &_node, const cnoid::Link 
         if (verbose) {
             asw.setMessageSink(std::cerr);
             asw.setVerbose(true);
+            if (use_urdf_primitive) {
+                asw.ignoreURDFPrimitive(true);
+            }
         }
         asw.setOutputType("stlb");
         bool res_ =  asw.writeScene(oss_fname.str(), _lk->collisionShape());
         if (res_) {
+            if(verbose) {
+                std::cerr << "file: " << oss_fname.str() << " / " << res_ << std::endl;
+            }
             _node.append_child("collision").append_child("geometry")
                  .append_child("mesh").append_attribute("filename") = oss_url.str().c_str();
         }
@@ -384,6 +401,9 @@ pugi::xml_document URDFBodyWriter::Impl::createBodyNode(Body* _body)
         case cnoid::Link::FreeJoint:
             _jtype = "floating";
             break;
+        case cnoid::Link::FixedJoint:
+            // default value
+            break;
         default:
             if (verbose) {
                 std::cerr << "jointType : " << cur_lk->jointType() << " / joint : " << cur_lk->jointName() << std::endl;
@@ -521,6 +541,7 @@ void URDFBodyWriter::setUseXacro(bool _on) { impl->use_xacro = _on; }
 void URDFBodyWriter::setAddGeometry(bool _on) { impl->add_geometry = _on; }
 void URDFBodyWriter::setAddOffset(bool _on) { impl->add_offset = _on; }
 void URDFBodyWriter::setExportDevices(bool _on) { impl->export_devices = _on; }
+void URDFBodyWriter::setUseURDFPrimitiveGeometry(bool _on) {  impl->use_urdf_primitive = _on; }
 void URDFBodyWriter::setRobotName(const std::string &_name) { impl->robot_name = _name; }
 void URDFBodyWriter::setMeshFilePrefix(const std::string &_pref) { impl->mesh_file_prefix = _pref; }
 void URDFBodyWriter::setMeshURLPrefix(const std::string &_pref)  { impl->mesh_url_prefix  = _pref; }

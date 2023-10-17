@@ -21,12 +21,14 @@ public:
     void setUseXacro(bool _on);
     void setAddGeometry(bool _on);
     void setAddOffset(bool _on);
-
+    void setUseURDFPrimitiveGeometry(bool _on);
     void setExportDevices(bool _on);
 
     void setRobotName(const std::string &_name);
     void setMeshFilePrefix(const std::string &_pref);
     void setMeshURLPrefix(const std::string &_pref);
+
+
 private:
     class Impl;
     Impl* impl;
