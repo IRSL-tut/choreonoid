@@ -338,15 +338,23 @@ void AssimpSceneWriter::Impl::addMesh(SgMesh *mesh)
     vec_mesh.push_back(pMesh);
     { // Material
         SgMaterial *material_ = shape->material();
+        if (!material_) {
+            if (vec_material.size() > 0) {
+                pMesh->mMaterialIndex = vec_material.size() - 1;
+            } else {
+                pMesh->mMaterialIndex = 0;
+            }
+            return;
+        }
         aiMaterial* pcMat = new aiMaterial();
         aiString s;
-	if(material_->name().empty()) {
-	  std::ostringstream oss;
-	  oss << AI_DEFAULT_MATERIAL_NAME << material_counter++;
-	  s.Set (oss.str().c_str());
-	} else {
-	  s.Set (material_->name().c_str());
-	}
+        if(material_->name().empty()) {
+            std::ostringstream oss;
+            oss << AI_DEFAULT_MATERIAL_NAME << material_counter++;
+            s.Set (oss.str().c_str());
+        } else {
+            s.Set (material_->name().c_str());
+        }
         pcMat->AddProperty (&s, AI_MATKEY_NAME);
         const Vector3f &col_dif = material_->diffuseColor();
         aiColor4D colorDiffuse(col_dif[0], col_dif[1], col_dif[2], 1.0f);
