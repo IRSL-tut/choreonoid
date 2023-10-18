@@ -21,6 +21,7 @@ int main(int argc, char **argv)
     ("no-offset", "surpress output about link position ")
     ("no-geometry", "suppress output about geometry-info")
     ("no-xacro", "do not use xacro")
+    ("no-primitive", "do not use primitive type of geometry")
     ("export-devices", "export devices as link")
     ("verbose,v", "verbose message")
     ("help,h", "help")
@@ -53,6 +54,7 @@ int main(int argc, char **argv)
     bool no_xacro  = false;
     bool verbose   = false;
     bool export_devices = false;
+    bool use_primitive = true;
     if (vm.count("output") > 0) {
         outputf = vm["option"].as<std::string>();
     }
@@ -67,6 +69,9 @@ int main(int argc, char **argv)
     }
     if (vm.count("no-xacro") > 0) {
         no_xacro = true;
+    }
+    if (vm.count("no-primitive") > 0) {
+        use_primitive = false;
     }
     if (vm.count("verbose") > 0) {
         verbose = true;
@@ -108,6 +113,7 @@ int main(int argc, char **argv)
     ubw.setAddGeometry(!no_geom);
     ubw.setAddOffset(!no_offset);
     ubw.setExportDevices(export_devices);
+    ubw.setUseURDFPrimitiveGeometry(use_primitive);
 
     std::string fp_ = vm["mesh-file-prefix"].as<std::string>();
     ubw.setMeshFilePrefix(fp_);
