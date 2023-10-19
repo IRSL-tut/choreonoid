@@ -1,5 +1,6 @@
 #include "PyUtil.h"
 #include "../MeshGenerator.h"
+#include "../MeshFilter.h"
 
 using namespace cnoid;
 namespace py = pybind11;
@@ -84,6 +85,21 @@ void exportPyMeshUtils(py::module& m)
         .def_readwrite("ccw", &MeshGenerator::ElevationGrid::ccw)
         .def_readwrite("creaseAngle", &MeshGenerator::ElevationGrid::creaseAngle)
         ;
+
+    py::class_<MeshFilter>(m, "MeshFilter")
+    .def(py::init<>())
+    .def("integrateMeshes", &MeshFilter::integrateMeshes)
+    .def("removeRedundantVertices", (void(MeshFilter::*)(SgNode *))&MeshFilter::removeRedundantVertices)
+    .def("removeRedundantVertices", (void(MeshFilter::*)(SgMesh *))&MeshFilter::removeRedundantVertices)
+    .def("removeRedundantFaces", (void(MeshFilter::*)(SgNode *, int))&MeshFilter::removeRedundantFaces)
+    .def("removeRedundantFaces", (void(MeshFilter::*)(SgMesh *, int))&MeshFilter::removeRedundantFaces)
+    .def("removeRedundantNormals", (void(MeshFilter::*)(SgNode *))&MeshFilter::removeRedundantNormals)
+    .def("removeRedundantNormals", (void(MeshFilter::*)(SgMesh *))&MeshFilter::removeRedundantNormals)
+    .def("generateNormals", &MeshFilter::generateNormals)
+    .def("setNormalOverwritingEnabled", &MeshFilter::setNormalOverwritingEnabled)
+    .def("setMinCreaseAngle", &MeshFilter::setMinCreaseAngle)
+    .def("setMaxCreaseAngle", &MeshFilter::setMaxCreaseAngle)
+    ;
 }
 
 }
