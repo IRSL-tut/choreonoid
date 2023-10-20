@@ -287,6 +287,7 @@ void exportPySceneDrawables(py::module& m)
     py::class_<SgPlot, SgPlotPtr, SgNode>(m, "SgPlot")
         .def_property("material", (SgMaterial* (SgPlot::*)()) &SgPlot::material, &SgPlot::setMaterial)
         .def("setMaterial", &SgPlot::setMaterial)
+        .def("updateBoundingBox", &SgPlot::updateBoundingBox)
         .def("getOrCreateMaterial", &SgPlot::getOrCreateMaterial)
         // <VectorArray> vertex, vertices
         .def("hasVertices", &SgPlot::hasVertices)
