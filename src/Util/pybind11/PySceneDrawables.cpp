@@ -10,6 +10,19 @@ namespace cnoid {
 typedef Eigen::Matrix<float, -1, -1, Eigen::RowMajor> MatrixfRM;
 typedef Eigen::Ref<Eigen::Matrix<float, -1, -1, Eigen::RowMajor>> RefMatrixfRM;
 
+void setTextureImage(SgShape &shape, const std::string &name)
+{
+    SgTexture *tex = new SgTexture();
+    SgImage *sgimg = tex->getOrCreateImage();
+    sgimg->setUri(name, name);
+    bool res = sgimg->image().load(name);
+    if (res) {
+        shape.setTexture(tex);
+    } else {
+        delete tex;
+    }
+}
+
 void exportPySceneDrawables(py::module& m)
 {
     py::class_<SgMaterial, SgMaterialPtr, SgObject>(m, "SgMaterial")
@@ -282,6 +295,7 @@ void exportPySceneDrawables(py::module& m)
         .def_property("material", (SgMaterial* (SgShape::*)()) &SgShape::material, &SgShape::setMaterial)
         .def("setMaterial", &SgShape::setMaterial)
         .def("getOrCreateMaterial", &SgShape::getOrCreateMaterial)
+        .def("setTextureImage", [](SgShape &self, const std::string &name) { setTextureImage(self, name); })
         ;
 
     py::class_<SgPlot, SgPlotPtr, SgNode>(m, "SgPlot")
