@@ -61,7 +61,24 @@ void exportPySceneGraph(py::module& m)
         .def("setName", &SgObject::setName)
         .def("notifyUpdate",(void(SgObject::*)(SgUpdate&)) &SgObject::notifyUpdate)
         .def("notifyUpdate",(void(SgObject::*)(int)) &SgObject::notifyUpdate, py::arg("action") = SgUpdate::Modified)
-
+        //
+        .def("hasUri", &SgObject::hasUri)
+        .def("hasAbsoluteUri", &SgObject::hasAbsoluteUri)
+        .def("hasUriFragment", &SgObject::hasUriFragment)
+        .def("hasUriMetadataString", &SgObject::hasUriMetadataString)
+        .def_property_readonly("uri", &SgObject::uri)
+        .def_property_readonly("absoluteUri", &SgObject::absoluteUri)
+        .def_property_readonly("localFilePath", &SgObject::localFilePath)
+        .def_property_readonly("localFileAbsolutePath", &SgObject::localFileAbsolutePath)
+        .def_property_readonly("uriFragment", &SgObject::uriFragment)
+        .def_property_readonly("uriMetadataString", &SgObject::uriMetadataString)
+        //
+        .def("setUriWithFilePathAndBaseDirectory", &SgObject::setUriWithFilePathAndBaseDirectory)
+        .def("setUriWithFilePathAndCurrentDirectory", &SgObject::setUriWithFilePathAndCurrentDirectory)
+        .def("setUri", &SgObject::setUri)
+        .def("setUriFragment", &SgObject::setUriFragment)
+        .def("setUriMetadataString", &SgObject::setUriMetadataString)
+        .def("clearUri", &SgObject::clearUri)
         // deprecated
         .def("getName", &SgObject::name)
         ;
