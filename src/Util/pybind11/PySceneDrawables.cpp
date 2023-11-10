@@ -10,6 +10,9 @@ namespace cnoid {
 typedef Eigen::Matrix<float, -1, -1, Eigen::RowMajor> MatrixfRM;
 typedef Eigen::Ref<Eigen::Matrix<float, -1, -1, Eigen::RowMajor>> RefMatrixfRM;
 
+typedef Eigen::Matrix<double, 4, 4, Eigen::RowMajor> Matrix4RM;
+typedef Eigen::Matrix<double, 3, 3, Eigen::RowMajor> Matrix3RM;
+
 void setTextureImage(SgShape &shape, const std::string &name)
 {
     SgTexture *tex = new SgTexture();
@@ -206,9 +209,16 @@ void exportPySceneDrawables(py::module& m)
         .def("addTriangle", (void(SgMesh::*)(int, int, int))&SgMesh::addTriangle)
         .def("setNumTriangles", &SgMesh::setNumTriangles)
         .def("clearTriangles", &SgMesh::clearTriangles)
+        .def("transform", [](SgMesh &self, Eigen::Ref<Matrix4RM> T) {
+                              Isometry3 iso(T); self.transform(iso); })
+        .def("translate", [](SgMesh &self, const Vector3 &trs) {
+                              Vector3f tf = trs.cast<float>(); self.translate(tf); })
+        .def("rotate", [](SgMesh &self, Eigen::Ref<Matrix3RM> rot) {
+                           Matrix3f rf(rot.cast<float>()); self.rotate(rf); })
         .def_property("divisionNumber", &SgMesh::divisionNumber, &SgMesh::setDivisionNumber)
         .def_property("extraDivisionNumber", &SgMesh::extraDivisionNumber, &SgMesh::setExtraDivisionNumber)
         .def_property("extraDivisionMode", &SgMesh::extraDivisionMode, &SgMesh::setExtraDivisionMode)
+        .def("setMeshType", [] (SgMesh &self) {  self.setPrimitive(SgMesh::Mesh()); })
         .def_property_readonly("primitiveType", &SgMesh::primitiveType)
         .def_property_readonly("primitive", [](SgMesh  &self) {
             int tp = self.primitiveType();
