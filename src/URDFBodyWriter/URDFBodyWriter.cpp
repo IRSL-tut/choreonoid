@@ -174,12 +174,12 @@ void URDFBodyWriter::Impl::addGeometry(pugi::xml_node &_node, const cnoid::Link 
         oss_fname << mesh_file_prefix << robot_name << "_" << _lk->name() << ".dae";
         oss_url << mesh_url_prefix << robot_name << "_" << _lk->name() << ".dae";
         AssimpSceneWriter asw;
+        if (use_urdf_primitive) {
+            asw.ignoreURDFPrimitive(true);
+        }
         if (verbose) {
             asw.setMessageSink(std::cerr);
             asw.setVerbose(true);
-            if (use_urdf_primitive) {
-                asw.ignoreURDFPrimitive(true);
-            }
         }
         bool res_ =  asw.writeScene(oss_fname.str(), _lk->visualShape());
         if (res_) {
@@ -201,12 +201,12 @@ void URDFBodyWriter::Impl::addGeometry(pugi::xml_node &_node, const cnoid::Link 
         oss_fname << mesh_file_prefix << robot_name << "_" << _lk->name() << ".stl";
         oss_url << mesh_url_prefix << robot_name << "_" << _lk->name() << ".stl";
         AssimpSceneWriter asw;
+        if (use_urdf_primitive) {
+            asw.ignoreURDFPrimitive(true);
+        }
         if (verbose) {
             asw.setMessageSink(std::cerr);
             asw.setVerbose(true);
-            if (use_urdf_primitive) {
-                asw.ignoreURDFPrimitive(true);
-            }
         }
         asw.setOutputType("stlb");
         bool res_ =  asw.writeScene(oss_fname.str(), _lk->collisionShape());
