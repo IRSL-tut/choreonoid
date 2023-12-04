@@ -1013,6 +1013,10 @@ void App::updateGui(bool allEvents)
     AppUtil::updateGui(allEvents);
 }
 
+void App::processEvents()
+{
+    QCoreApplication::processEvents();
+}
 
 bool App::isNestedEventLoopActive()
 {

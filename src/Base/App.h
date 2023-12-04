@@ -42,6 +42,7 @@ public:
     const std::string& errorMessage() const;
 
     static ExtensionManager* baseModule();
+    static void processEvents();
     static void exit(int returnCode = 0);
 
     [[deprecated("Use AppUtil::isAppInitializing")]]
