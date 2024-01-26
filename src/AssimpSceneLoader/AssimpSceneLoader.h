@@ -16,6 +16,8 @@ public:
     void setMessageSink(std::ostream& os) override;
     virtual SgNode* load(const std::string& filename) override;
 
+    void setCreaseAngle(float angle);
+    void setForceGenerateNormals(bool on);
     void setMessageSinkStdErr();
 private:
     class Impl;
