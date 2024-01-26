@@ -32,6 +32,18 @@ Args:
 Returns:
     cnoid.Util.SgGroup : Root object of loaded mesh
 )__CNOID__")
+        .def("setCreaseAngle", &AssimpSceneLoader::setCreaseAngle, R"__CNOID__(
+Setting creaseAngle
+
+Args:
+    angle (float) : Set creaseAngle
+)__CNOID__")
+       .def("setForceGenerateNormals", &AssimpSceneLoader::setForceGenerateNormals, R"__CNOID__(
+Setting flag for generating normals, even if the original mesh has normals
+
+Args:
+    on (boolean) : If True, forcing to generate normals
+)__CNOID__")
         .def("setMessageSinkStdErr", &AssimpSceneLoader::setMessageSinkStdErr, R"__CNOID__(
 Setting MessageSkin to stderr. It is required to read error messages in console
 
@@ -77,6 +89,12 @@ Setting MessageSkin to stderr. It is required to read error messages in console
 
 Args:
     None
+)__CNOID__")
+        .def("setExpandVertices", &AssimpSceneWriter::setExpandVertices, R"__CNOID__(
+Expanding vertices to represent that each vertices has a normal
+
+Args:
+    on (boolean) : If True, expanding vertices
 )__CNOID__")
         .def_property("outputType", &AssimpSceneWriter::getOutputType, &AssimpSceneWriter::setOutputType,
                   R"__CNOID__(

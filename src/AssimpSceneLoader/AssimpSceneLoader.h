@@ -50,6 +50,8 @@ public:
     void clearImageSearchDirectories() override;
 
 
+    void setCreaseAngle(float angle);
+    void setForceGenerateNormals(bool on);
     void setMessageSinkStdErr();
 
 private:

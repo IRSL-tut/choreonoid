@@ -26,7 +26,7 @@ public:
     void generatePrimitiveMesh(bool on);
     void ignoreURDFPrimitive(bool on);
     void setMessageSinkStdErr();
-
+    void setExpandVertices(bool on);
 protected:
     using AbstractSceneWriter::os;
 
