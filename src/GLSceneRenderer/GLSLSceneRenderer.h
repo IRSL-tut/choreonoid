@@ -94,6 +94,9 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     class Impl;
 
+    //
+    bool makeBuffer(unsigned int nWidth, unsigned int nHeight,
+                    unsigned int *pResolveTextureId, unsigned int *pResolveFramebufferId);
 protected:
     virtual void doRender() override;
     virtual bool doPick(int x, int y) override;
