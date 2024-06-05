@@ -38,37 +38,36 @@ public:
     OffscreenGL offGL;
 
     vr::IVRSystem *m_pHMD;
-    //GLSLSceneRenderer *slsr;
+
     unsigned int nWidth, nHeight;
     unsigned int ui_L_TextureId;
     unsigned int ui_L_FramebufferId;
     unsigned int ui_R_TextureId;
     unsigned int ui_R_FramebufferId;
 
-    std::ostream *os_;
 
     vr::TrackedDevicePose_t TrackedDevicePoses[ vr::k_unMaxTrackedDeviceCount ];
     // Eigen // devicePoses
     //std::vector<> devicePoses
     std::vector<std::string> deviceNames;
     std::vector<int> deviceClasses;
+
+    //
+    std::ostream *os_;
 };
 
 //// >>>> Impl
 TestPlugin::Impl::Impl()
 {
     m_pHMD = nullptr;
-    slsr = nullptr;
     os_ = nullptr;
+    deviceNames.resize(vr::k_unMaxTrackedDeviceCount);
+    deviceClasses.resize(vr::k_unMaxTrackedDeviceCount);
     counter = 0;
 }
 void TestPlugin::Impl::initialize()
 {
     os_ = &(MessageView::instance()->cout(false));
-
-    //SceneWidget *sw = SceneView::instance()->sceneWidget();
-    //GLSceneRenderer *sr = sw->renderer<GLSceneRenderer>();
-    //slsr = static_cast<GLSLSceneRenderer *>(sr);
 
     vr::EVRInitError eError = vr::VRInitError_None;
     m_pHMD = vr::VR_Init( &eError, vr::VRApplication_Scene );
@@ -119,7 +118,7 @@ void TestPlugin::Impl::initialize()
 
 void TestPlugin::Impl::singleLoop()
 {
-    DEBUG_PRINT();
+    // DEBUG_PRINT();
     if (!!m_pHMD) {
         std::vector<unsigned char> img_R(nWidth * nHeight * 3);
         std::vector<unsigned char> img_L(nWidth * nHeight * 3);
@@ -137,6 +136,8 @@ void TestPlugin::Impl::singleLoop()
                 ptr_L[3*(i*nWidth + j)+2] = col_L;
             }
         }
+        ////
+        *os_ << "up: " << counter << std::endl;
         ////
         offGL.makeCurrent();
         offGL.writeTexture(ui_R_TextureId, ptr_R, nWidth, nHeight, 0, 0);
@@ -172,7 +173,7 @@ bool TestPlugin::Impl::getDeviceString(std::string &_res, int index, vr::Tracked
     }
     char *buf_ = new char[ len ];
     len = m_pHMD->GetStringTrackedDeviceProperty( index, prop, buf_, len, &p_error );
-    _res = buf;
+    _res = buf_;
     delete [] buf_;
     return true;
 }
@@ -188,7 +189,7 @@ void TestPlugin::Impl::updatePoses()
     int validPoseCount = 0;
     for ( int idx = 0; idx < vr::k_unMaxTrackedDeviceCount; idx++ ) {
         int cls = m_pHMD->GetTrackedDeviceClass(idx);
-        if ( m_rTrackedDevicePose[idx].bPoseIsValid ) {
+        if ( TrackedDevicePoses[idx].bPoseIsValid ) {
             validPoseCount++;
             deviceClasses[idx] = cls;
 #if 0
@@ -226,7 +227,7 @@ void TestPlugin::Impl::updatePoses()
     }
 
 #if 0
-    if ( m_rTrackedDevicePose[ vr::k_unTrackedDeviceIndex_Hmd ].bPoseIsValid ) {
+    if ( TrackedDevicePose[ vr::k_unTrackedDeviceIndex_Hmd ].bPoseIsValid ) {
         //m_mat4HMDPose = m_rmat4DevicePose[ vr::k_unTrackedDeviceIndex_Hmd ];
         //m_mat4HMDPose.invert();
     }
