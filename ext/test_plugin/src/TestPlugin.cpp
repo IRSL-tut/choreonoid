@@ -27,6 +27,8 @@ public:
     Impl();
     void initialize();
     void singleLoop();
+    void updatePoses();
+    bool getDeviceString(std::string &_res, int index, vr::TrackedDeviceProperty prop);
 
 public:
     Timer tm;
@@ -36,14 +38,23 @@ public:
     OffscreenGL offGL;
 
     vr::IVRSystem *m_pHMD;
-    GLSLSceneRenderer *slsr;
+    //GLSLSceneRenderer *slsr;
     unsigned int nWidth, nHeight;
-    unsigned int uiResolveTextureId;
-    unsigned int uiResolveFramebufferId;
+    unsigned int ui_L_TextureId;
+    unsigned int ui_L_FramebufferId;
+    unsigned int ui_R_TextureId;
+    unsigned int ui_R_FramebufferId;
 
     std::ostream *os_;
+
+    vr::TrackedDevicePose_t TrackedDevicePoses[ vr::k_unMaxTrackedDeviceCount ];
+    // Eigen // devicePoses
+    //std::vector<> devicePoses
+    std::vector<std::string> deviceNames;
+    std::vector<int> deviceClasses;
 };
 
+//// >>>> Impl
 TestPlugin::Impl::Impl()
 {
     m_pHMD = nullptr;
@@ -80,7 +91,9 @@ void TestPlugin::Impl::initialize()
         *os_ << "offGL: create: " << glres << std::endl;
         glres = offGL.makeCurrent();
         *os_ << "offGL: current: " << glres << std::endl;
-        glres = offGL.makeBuffer(nWidth, nHeight, &uiResolveTextureId, &uiResolveFramebufferId);
+        glres = offGL.makeBuffer(nWidth, nHeight, &ui_R_TextureId, &ui_R_FramebufferId);
+        *os_ << "offGL: buffer: " << glres << std::endl;
+        glres = offGL.makeBuffer(nWidth, nHeight, &ui_L_TextureId, &ui_L_FramebufferId);
         *os_ << "offGL: buffer: " << glres << std::endl;
         offGL.glFinish();
         offGL.glFlush();
@@ -103,27 +116,34 @@ void TestPlugin::Impl::initialize()
 
     tm.start(interval_ms);
 }
+
 void TestPlugin::Impl::singleLoop()
 {
     DEBUG_PRINT();
     if (!!m_pHMD) {
-        std::vector<unsigned char> img(nWidth * nHeight * 3);
-        unsigned char *ptr = img.data();
-        unsigned char ret = counter++ % 0xFF;
-
+        std::vector<unsigned char> img_R(nWidth * nHeight * 3);
+        std::vector<unsigned char> img_L(nWidth * nHeight * 3);
+        unsigned char *ptr_R = img_R.data();
+        unsigned char *ptr_L = img_L.data();
+        unsigned char col_R = counter++ % 0xFF;
+        unsigned char col_L = 0xFF - col_R;
         for(int i = 0; i < nHeight; i++) {
             for(int j = 0; j < nWidth; j++) {
-                ptr[3*(i*nWidth + j)] = ret;
-                ptr[3*(i*nWidth + j)+1] = 0;
-                ptr[3*(i*nWidth + j)+2] = 0;
+                ptr_R[3*(i*nWidth + j)]   = col_R;
+                ptr_R[3*(i*nWidth + j)+1] = 0;
+                ptr_R[3*(i*nWidth + j)+2] = 0;
+                ptr_L[3*(i*nWidth + j)]   = 0;
+                ptr_L[3*(i*nWidth + j)+1] = 0;
+                ptr_L[3*(i*nWidth + j)+2] = col_L;
             }
         }
         ////
         offGL.makeCurrent();
-        offGL.writeTexture(uiResolveTextureId, ptr, nWidth, nHeight, 0, 0);
-        vr::Texture_t leftEyeTexture =  {(void*)(uintptr_t)uiResolveTextureId, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
+        offGL.writeTexture(ui_R_TextureId, ptr_R, nWidth, nHeight, 0, 0);
+        offGL.writeTexture(ui_L_TextureId, ptr_L, nWidth, nHeight, 0, 0);
+        vr::Texture_t leftEyeTexture =  {(void*)(uintptr_t)ui_L_TextureId, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
         auto resL = vr::VRCompositor()->Submit(vr::Eye_Left,  &leftEyeTexture );
-        vr::Texture_t rightEyeTexture = {(void*)(uintptr_t)uiResolveTextureId, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
+        vr::Texture_t rightEyeTexture = {(void*)(uintptr_t)ui_R_TextureId, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
         auto resR = vr::VRCompositor()->Submit(vr::Eye_Right, &rightEyeTexture );
         if (resL != 0) {
             *os_ << "L: " << resL << std::endl;
@@ -131,14 +151,100 @@ void TestPlugin::Impl::singleLoop()
         if (resR != 0) {
             *os_ << "R: " << resR << std::endl;
         }
-        vr::TrackedDevicePose_t m_rTrackedDevicePose[ vr::k_unMaxTrackedDeviceCount ];
-        vr::VRCompositor()->WaitGetPoses(m_rTrackedDevicePose, vr::k_unMaxTrackedDeviceCount, NULL, 0 );
-
+        updatePoses();
+        //vr::TrackedDevicePose_t m_rTrackedDevicePose[ vr::k_unMaxTrackedDeviceCount ];
+        //vr::VRCompositor()->WaitGetPoses(m_rTrackedDevicePose, vr::k_unMaxTrackedDeviceCount, NULL, 0 );
         //vr::Compositor_FrameTiming tmg;
         //bool tm_q = vr::VRCompositor()->GetFrameTiming(&tmg);
     }
 }
 
+bool TestPlugin::Impl::getDeviceString(std::string &_res, int index, vr::TrackedDeviceProperty prop)
+{
+    // prop
+    //vr::Prop_RenderModelName_String
+    //vr::Prop_TrackingSystemName_String
+    //vr::Prop_SerialNumber_String
+    vr::TrackedPropertyError p_error;
+    uint32_t len = m_pHMD->GetStringTrackedDeviceProperty( index, prop, NULL, 0, &p_error );
+    if( len == 0 ) {
+        return false;
+    }
+    char *buf_ = new char[ len ];
+    len = m_pHMD->GetStringTrackedDeviceProperty( index, prop, buf_, len, &p_error );
+    _res = buf;
+    delete [] buf_;
+    return true;
+}
+
+void TestPlugin::Impl::updatePoses()
+{
+    if ( !m_pHMD ) {
+        return;
+    }
+
+    vr::VRCompositor()->WaitGetPoses(TrackedDevicePoses, vr::k_unMaxTrackedDeviceCount, NULL, 0 );
+
+    int validPoseCount = 0;
+    for ( int idx = 0; idx < vr::k_unMaxTrackedDeviceCount; idx++ ) {
+        int cls = m_pHMD->GetTrackedDeviceClass(idx);
+        if ( m_rTrackedDevicePose[idx].bPoseIsValid ) {
+            validPoseCount++;
+            deviceClasses[idx] = cls;
+#if 0
+            // store poses
+            if (device_poses_[index].bDeviceIsConnected &&
+                device_poses_[index].eTrackingResult == vr::TrackingResult_Running_OK) {
+                ///
+            }
+#endif
+
+        }
+        if(cls == 0) {
+            // do nothing
+            break;
+        }
+        if(cls == vr::TrackedDeviceClass_HMD) {
+            // update HMD pose
+            break;
+        }
+        if(cls == vr::TrackedDeviceClass_Controller) {
+            // update controller pose
+
+            // update controller state(button etc.)
+            vr::VRControllerState_t state;
+            m_pHMD->GetControllerState(idx, &state, sizeof(vr::VRControllerState_t));
+
+            break;
+        }
+        if(cls == vr::TrackedDeviceClass_GenericTracker) {
+            break;
+        }
+        if(cls == vr::TrackedDeviceClass_TrackingReference) {
+            break;
+        }
+    }
+
+#if 0
+    if ( m_rTrackedDevicePose[ vr::k_unTrackedDeviceIndex_Hmd ].bPoseIsValid ) {
+        //m_mat4HMDPose = m_rmat4DevicePose[ vr::k_unTrackedDeviceIndex_Hmd ];
+        //m_mat4HMDPose.invert();
+    }
+#endif
+
+    vr::VREvent_t event;
+    while( m_pHMD->PollNextEvent( &event, sizeof( event ) ) ) {
+        switch( event.eventType ) {
+        case vr::VREvent_TrackedDeviceDeactivated:
+            break;
+        case vr::VREvent_TrackedDeviceUpdated:
+            break;
+        }
+    }
+}
+//// <<<< Impl
+
+////
 TestPlugin* TestPlugin::instance()
 {
     return instance_;
