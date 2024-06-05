@@ -2,9 +2,10 @@
 #define IRSL_DEBUG
 #include "irsl_debug.h"
 
+//#include <cnoid/GLSLSceneRenderer>
 #include <cnoid/SceneWidget>
 #include <cnoid/SceneView>
-#include <cnoid/GLSLSceneRenderer>
+#include <cnoid/SceneCameras>
 #include <cnoid/MessageView>
 #include <cnoid/App>
 #include <cnoid/Timer>
@@ -45,10 +46,9 @@ public:
     unsigned int ui_R_TextureId;
     unsigned int ui_R_FramebufferId;
 
-
     vr::TrackedDevicePose_t TrackedDevicePoses[ vr::k_unMaxTrackedDeviceCount ];
     // Eigen // devicePoses
-    //std::vector<> devicePoses
+    std::vector<Isometry3d> devicePoses;
     std::vector<std::string> deviceNames;
     std::vector<int> deviceClasses;
 
@@ -61,6 +61,7 @@ TestPlugin::Impl::Impl()
 {
     m_pHMD = nullptr;
     os_ = nullptr;
+    devicePoses.resize(vr::k_unMaxTrackedDeviceCount);
     deviceNames.resize(vr::k_unMaxTrackedDeviceCount);
     deviceClasses.resize(vr::k_unMaxTrackedDeviceCount);
     counter = 0;
@@ -79,7 +80,6 @@ void TestPlugin::Impl::initialize()
     }
     m_pHMD->GetRecommendedRenderTargetSize( &nWidth, &nHeight );
     *os_ << "width x height = " << nWidth << " x  " << nHeight << std::endl;
-
     vr::HmdMatrix44_t l_mat = m_pHMD->GetProjectionMatrix( vr::Eye_Left,  0.01f, 15.0f );
     vr::HmdMatrix44_t r_mat = m_pHMD->GetProjectionMatrix( vr::Eye_Right, 0.01f, 15.0f );
     vr::HmdMatrix34_t l_eye = m_pHMD->GetEyeToHeadTransform( vr::Eye_Left );
@@ -109,6 +109,13 @@ void TestPlugin::Impl::initialize()
     offGL.glFlush();
     offGL.context->doneCurrent();
 
+    //// choreonoid settings
+    std::vector<SceneView *> view_instances = SceneView::instances();
+    if (view_instances.size() > 2) {
+        view_instances.at(1)->sceneWidget()->setScreenSize(nWidth, nHeight);
+        view_instances.at(2)->sceneWidget()->setScreenSize(nWidth, nHeight);
+    }
+
     tm.sigTimeout().connect( [this]() { this->singleLoop(); });
 
     int interval_ms = 1000/30;
@@ -120,6 +127,7 @@ void TestPlugin::Impl::singleLoop()
 {
     // DEBUG_PRINT();
     if (!!m_pHMD) {
+#if 0
         std::vector<unsigned char> img_R(nWidth * nHeight * 3);
         std::vector<unsigned char> img_L(nWidth * nHeight * 3);
         unsigned char *ptr_R = img_R.data();
@@ -136,12 +144,32 @@ void TestPlugin::Impl::singleLoop()
                 ptr_L[3*(i*nWidth + j)+2] = col_L;
             }
         }
+#endif
+        std::vector<SceneView *> view_instances = SceneView::instances();
+        if (view_instances.size() < 2) {
+            *os_ << "scene less than 3" << std::endl;
+            return;
+        }
+        /// update camera pose
+        // set_camera
+        //view_instances.at(1)->sceneWidget()->builtinPerspectiveCamera()->setFieldOfView(fov_);
+        //view_instances.at(1)->sceneWidget()->builtinCameraTransform()->setPosition(cur);
+        // set_camera
+        //view_instances.at(2)->sceneWidget()->builtinPerspectiveCamera()->setFieldOfView(fov_);
+        //view_instances.at(2)->sceneWidget()->builtinCameraTransform()->setPosition(cur);
+        view_instances.at(1)->sceneWidget()->renderScene(true);//
+        view_instances.at(2)->sceneWidget()->renderScene(true);//
+
+        QImage im_l = view_instances.at(1)->sceneWidget()->getImage();
+        QImage im_r = view_instances.at(2)->sceneWidget()->getImage();
+        im_r.convertTo(QImage::Format_RGB888);
+        im_l.convertTo(QImage::Format_RGB888);
         ////
         *os_ << "up: " << counter << std::endl;
         ////
         offGL.makeCurrent();
-        offGL.writeTexture(ui_R_TextureId, ptr_R, nWidth, nHeight, 0, 0);
-        offGL.writeTexture(ui_L_TextureId, ptr_L, nWidth, nHeight, 0, 0);
+        offGL.writeTexture(ui_R_TextureId, im_r.bits(), nWidth, nHeight, 0, 0);
+        offGL.writeTexture(ui_L_TextureId, im_l.bits(), nWidth, nHeight, 0, 0);
         vr::Texture_t leftEyeTexture =  {(void*)(uintptr_t)ui_L_TextureId, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
         auto resL = vr::VRCompositor()->Submit(vr::Eye_Left,  &leftEyeTexture );
         vr::Texture_t rightEyeTexture = {(void*)(uintptr_t)ui_R_TextureId, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
@@ -153,8 +181,6 @@ void TestPlugin::Impl::singleLoop()
             *os_ << "R: " << resR << std::endl;
         }
         updatePoses();
-        //vr::TrackedDevicePose_t m_rTrackedDevicePose[ vr::k_unMaxTrackedDeviceCount ];
-        //vr::VRCompositor()->WaitGetPoses(m_rTrackedDevicePose, vr::k_unMaxTrackedDeviceCount, NULL, 0 );
         //vr::Compositor_FrameTiming tmg;
         //bool tm_q = vr::VRCompositor()->GetFrameTiming(&tmg);
     }
@@ -192,8 +218,14 @@ void TestPlugin::Impl::updatePoses()
         if ( TrackedDevicePoses[idx].bPoseIsValid ) {
             validPoseCount++;
             deviceClasses[idx] = cls;
+            const vr::HmdMatrix34_t &mat = TrackedDevicePoses[idx].mDeviceToAbsoluteTracking;
+            Matrix4d eMat << mat.m[0][0], mat.m[1][0], mat.m[2][0], 0.0,
+                             mat.m[0][1], mat.m[1][1], mat.m[2][1], 0.0,
+                             mat.m[0][2], mat.m[1][2], mat.m[2][2], 0.0,
+                             mat.m[0][3], mat.m[1][3], mat.m[2][3], 1.0;
+            //Matrix3d, linear
+            devicePoses[idx].matrix() = eMat;
 #if 0
-            // store poses
             if (device_poses_[index].bDeviceIsConnected &&
                 device_poses_[index].eTrackingResult == vr::TrackingResult_Running_OK) {
                 ///
