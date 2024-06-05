@@ -82,17 +82,24 @@ void TestPlugin::Impl::initialize()
         *os_ << "offGL: current: " << glres << std::endl;
         glres = offGL.makeBuffer(nWidth, nHeight, &uiResolveTextureId, &uiResolveFramebufferId);
         *os_ << "offGL: buffer: " << glres << std::endl;
-
+        offGL.glFinish();
+        offGL.glFlush();
+        offGL.context->doneCurrent();
         OffscreenGL::printSurfaceFormat(offGL.context->format(), *os_);
     }
+
     offGL.makeCurrent();
     if ( !vr::VRCompositor() ) {
         *os_ << "Compositor initialization failed. See log file for details" << std::endl;
         return;
     }
+    offGL.glFinish();
+    offGL.glFlush();
+    offGL.context->doneCurrent();
+
     tm.sigTimeout().connect( [this]() { this->singleLoop(); });
 
-    int interval_ms = 1000/5;
+    int interval_ms = 1000/30;
 
     tm.start(interval_ms);
 }
@@ -100,37 +107,33 @@ void TestPlugin::Impl::singleLoop()
 {
     DEBUG_PRINT();
     if (!!m_pHMD) {
-        //SceneWidget *sw = SceneView::instance()->sceneWidget();
-        //sw->makeCurrent();
         std::vector<unsigned char> img(nWidth * nHeight * 3);
         unsigned char *ptr = img.data();
         unsigned char ret = counter++ % 0xFF;
 
         for(int i = 0; i < nHeight; i++) {
             for(int j = 0; j < nWidth; j++) {
-                ptr[3*(i*nWidth + j)] = 0xFF;
+                ptr[3*(i*nWidth + j)] = ret;
                 ptr[3*(i*nWidth + j)+1] = 0;
                 ptr[3*(i*nWidth + j)+2] = 0;
             }
         }
         ////
-        *os_ << "up" << std::endl;
-        ////
         offGL.makeCurrent();
-
+        offGL.writeTexture(uiResolveTextureId, ptr, nWidth, nHeight, 0, 0);
+        vr::Texture_t leftEyeTexture =  {(void*)(uintptr_t)uiResolveTextureId, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
+        auto resL = vr::VRCompositor()->Submit(vr::Eye_Left,  &leftEyeTexture );
+        vr::Texture_t rightEyeTexture = {(void*)(uintptr_t)uiResolveTextureId, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
+        auto resR = vr::VRCompositor()->Submit(vr::Eye_Right, &rightEyeTexture );
+        if (resL != 0) {
+            *os_ << "L: " << resL << std::endl;
+        }
+        if (resR != 0) {
+            *os_ << "R: " << resR << std::endl;
+        }
         vr::TrackedDevicePose_t m_rTrackedDevicePose[ vr::k_unMaxTrackedDeviceCount ];
         vr::VRCompositor()->WaitGetPoses(m_rTrackedDevicePose, vr::k_unMaxTrackedDeviceCount, NULL, 0 );
 
-        offGL.writeTexture(uiResolveTextureId, ptr, nWidth, nHeight, 0, 0);
-
-        vr::Texture_t leftEyeTexture =  {(void*)(uintptr_t)uiResolveTextureId, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
-        vr::VRCompositor()->Submit(vr::Eye_Left,  &leftEyeTexture );
-
-        vr::Texture_t rightEyeTexture = {(void*)(uintptr_t)uiResolveTextureId, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
-        vr::VRCompositor()->Submit(vr::Eye_Right, &rightEyeTexture );
-
-        //// twice
-        vr::VRCompositor()->WaitGetPoses(m_rTrackedDevicePose, vr::k_unMaxTrackedDeviceCount, NULL, 0 );
         //vr::Compositor_FrameTiming tmg;
         //bool tm_q = vr::VRCompositor()->GetFrameTiming(&tmg);
     }
