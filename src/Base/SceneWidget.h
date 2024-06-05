@@ -206,6 +206,9 @@ public:
  
     class Impl;
 
+    bool glInitialized();
+    void makeCurrent();
+    void doneCurrent();
 private:
     Impl* impl;
 };

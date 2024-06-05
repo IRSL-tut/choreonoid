@@ -97,6 +97,7 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     //
     bool makeBuffer(unsigned int nWidth, unsigned int nHeight,
                     unsigned int *pResolveTextureId, unsigned int *pResolveFramebufferId);
+    bool writeTexture(unsigned int textureId, int width, int height, unsigned char *ptr);
 protected:
     virtual void doRender() override;
     virtual bool doPick(int x, int y) override;

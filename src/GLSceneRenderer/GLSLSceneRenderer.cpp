@@ -3620,26 +3620,54 @@ void GLSLSceneRenderer::setLowMemoryConsumptionMode(bool on)
 bool GLSLSceneRenderer::makeBuffer(unsigned int nWidth, unsigned int nHeight,
                                    GLuint *pResolveTextureId, GLuint *pResolveFramebufferId)
 {
-    std::cerr << "b0" << std::endl;
     glGenFramebuffers(1, pResolveFramebufferId );
     glBindFramebuffer(GL_FRAMEBUFFER, *pResolveFramebufferId);
 
-    std::cerr << "b1" << std::endl;
     glGenTextures(1, pResolveTextureId );
     glBindTexture(GL_TEXTURE_2D, *pResolveTextureId );
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, nWidth, nHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, nWidth, nHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *pResolveTextureId, 0);
 
-    std::cerr << "b2" << std::endl;
     // check FBO status
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
         glBindFramebuffer( GL_FRAMEBUFFER, 0 );
         return false;
     }
-    std::cerr << "b3" << std::endl;
     glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+
+    std::vector<unsigned char> img(nWidth * nHeight * 3);
+    unsigned char *ptr = img.data();
+    for(int i = 0; i < nHeight; i++) {
+        for(int j = 0; j < nWidth; j++) {
+            ptr[3*(i*nWidth + j)]   = 0;
+            ptr[3*(i*nWidth + j)+1] = 255;
+            ptr[3*(i*nWidth + j)+2] = 0;
+        }
+    }
+    glBindTexture( GL_TEXTURE_2D, *pResolveTextureId );
+    glTexSubImage2D( GL_TEXTURE_2D, 0,
+                     0, 0, nWidth, nHeight,
+                     GL_RGB, GL_UNSIGNED_BYTE, ptr );
+    glBindTexture( GL_TEXTURE_2D, 0 );
+
+    return true;
+}
+bool GLSLSceneRenderer::writeTexture(unsigned int textureId, int width, int height, unsigned char *ptr)
+{
+    int gl_w = width;
+    int gl_h = height;
+    glBindTexture( GL_TEXTURE_2D, textureId );
+    glGetTexLevelParameteriv( GL_TEXTURE_2D , 0 , GL_TEXTURE_WIDTH , &gl_w );
+    glGetTexLevelParameteriv( GL_TEXTURE_2D , 0 , GL_TEXTURE_HEIGHT, &gl_h );
+    *(impl->os_) << gl_w << " x " << gl_h << std::endl;
+    glTexSubImage2D( GL_TEXTURE_2D, 0,
+                     gl_w/2 - width/2, gl_h/2 - height/2,
+                     width, height,
+                     GL_RGB, GL_UNSIGNED_BYTE, ptr );
+    glBindTexture( GL_TEXTURE_2D, 0 );
     return true;
 }

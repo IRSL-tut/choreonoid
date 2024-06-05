@@ -255,7 +255,7 @@ public:
     void checkAddedEditableNodes(SgNode* node);
     void checkRemovedEditableNodes(SgNode* node);
     void warnRecursiveEditableNodeSetChange();
-    
+    bool _glInitialized;
     virtual void initializeGL() override;
     virtual void resizeGL(int width, int height) override;
     virtual void paintGL() override;
@@ -446,15 +446,26 @@ SceneWidget::SceneWidget(QWidget* parent)
 
     sigSceneWidgetCreated_(this);
 }
-
-
+bool SceneWidget::glInitialized()
+{
+    return impl->_glInitialized;
+}
+void SceneWidget::makeCurrent()
+{
+    impl->makeCurrent();
+}
+void SceneWidget::doneCurrent()
+{
+    impl->doneCurrent();
+}
 SceneWidget::Impl::Impl(SceneWidget* self)
     : QOpenGLWidget(self),
       self(self),
       sceneRoot(new SceneWidgetRoot(self)),
       systemGroup(sceneRoot->systemGroup),
       emitSigStateChangedLater(std::ref(sigStateChanged)),
-      updateGridsLater([this](){ updateGrids(); })
+      updateGridsLater([this](){ updateGrids(); }),
+      _glInitialized(false)
 {
     setFocusPolicy(Qt::WheelFocus);
     
@@ -703,6 +714,7 @@ void SceneWidget::Impl::initializeGL()
             _("OpenGL initialization failed."), MessageView::Error);
         // This view shoulbe be disabled when the glew initialization is failed.
     }
+    _glInitialized = true;
 }
 
 
