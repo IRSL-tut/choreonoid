@@ -4,14 +4,6 @@ items:
   plugin: Base
   class: RootItem
   is_builtin_item: true
-  children: 
-    - 
-      id: 1
-      name: "ScenePublisher"
-      plugin: ROS2
-      class: ScenePublisherItem
-      data: 
-        scene_publishing_rate: 30
 views: 
   - 
     id: 0

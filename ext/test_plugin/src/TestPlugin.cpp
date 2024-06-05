@@ -15,6 +15,8 @@
 
 #include <openvr.h>
 
+#include <QElapsedTimer>
+
 using namespace cnoid;
 
 namespace {
@@ -51,6 +53,9 @@ public:
     std::vector<Isometry3d> devicePoses;
     std::vector<std::string> deviceNames;
     std::vector<int> deviceClasses;
+
+    //
+    QElapsedTimer qtimer;
 
     //
     std::ostream *os_;
@@ -118,7 +123,8 @@ void TestPlugin::Impl::initialize()
 
     tm.sigTimeout().connect( [this]() { this->singleLoop(); });
 
-    int interval_ms = 1000/30;
+    //int interval_ms = 1000/30;
+    int interval_ms = 2;
 
     tm.start(interval_ms);
 }
@@ -127,6 +133,11 @@ void TestPlugin::Impl::singleLoop()
 {
     // DEBUG_PRINT();
     if (!!m_pHMD) {
+        if (counter % 30 == 0) {
+            *os_ << "fps = " << (1000.0 * 30.0)/(qtimer.elapsed()+1) << std::endl;
+            qtimer.start();
+        }
+        counter++;
 #if 0
         std::vector<unsigned char> img_R(nWidth * nHeight * 3);
         std::vector<unsigned char> img_L(nWidth * nHeight * 3);
@@ -160,12 +171,15 @@ void TestPlugin::Impl::singleLoop()
         view_instances.at(1)->sceneWidget()->renderScene(true);//
         view_instances.at(2)->sceneWidget()->renderScene(true);//
 
-        QImage im_l = view_instances.at(1)->sceneWidget()->getImage();
-        QImage im_r = view_instances.at(2)->sceneWidget()->getImage();
-        im_r.convertTo(QImage::Format_RGB888);
-        im_l.convertTo(QImage::Format_RGB888);
+        //QImage im_r.convertTo(QImage::Format_RGB888);
+        //QImage im_l.convertTo(QImage::Format_RGB888);
+        QImage tmp_im_l = view_instances.at(1)->sceneWidget()->getImage();
+        QImage tmp_im_r = view_instances.at(2)->sceneWidget()->getImage();
+        QImage im_l = tmp_im_l.convertToFormat(QImage::Format_RGB888);
+        QImage im_r = tmp_im_r.convertToFormat(QImage::Format_RGB888);
+
         ////
-        *os_ << "up: " << counter << std::endl;
+        //*os_ << "up: " << counter << std::endl;
         ////
         offGL.makeCurrent();
         offGL.writeTexture(ui_R_TextureId, im_r.bits(), nWidth, nHeight, 0, 0);
@@ -219,11 +233,31 @@ void TestPlugin::Impl::updatePoses()
             validPoseCount++;
             deviceClasses[idx] = cls;
             const vr::HmdMatrix34_t &mat = TrackedDevicePoses[idx].mDeviceToAbsoluteTracking;
-            Matrix4d eMat << mat.m[0][0], mat.m[1][0], mat.m[2][0], 0.0,
-                             mat.m[0][1], mat.m[1][1], mat.m[2][1], 0.0,
-                             mat.m[0][2], mat.m[1][2], mat.m[2][2], 0.0,
-                             mat.m[0][3], mat.m[1][3], mat.m[2][3], 1.0;
+#if 0
+            Matrix4d eMat;
+            eMat << mat.m[0][0], mat.m[1][0], mat.m[2][0], 0.0,
+                    mat.m[0][1], mat.m[1][1], mat.m[2][1], 0.0,
+                    mat.m[0][2], mat.m[1][2], mat.m[2][2], 0.0,
+                    mat.m[0][3], mat.m[1][3], mat.m[2][3], 1.0;
+#endif
+#if 0
             //Matrix3d, linear
+            Matrix3d rot;
+            rot << mat.m[0][0], mat.m[0][1], mat.m[0][2],
+                   mat.m[1][0], mat.m[1][1], mat.m[1][2],
+                   mat.m[2][0], mat.m[2][1], mat.m[2][2];
+            Translate3d trs(mat.m[0][3], mat.m[1][3], mat.m[2][3]);
+            devicePoses[idx].linear() = trs;
+#endif
+            //*os_ << "[[" << mat.m[0][0] << ", " << mat.m[1][0] << ", " << mat.m[2][0] << "]," << std::endl;
+            //*os_ << " [" << mat.m[0][1] << ", " << mat.m[1][1] << ", " << mat.m[2][1] << "]," << std::endl;
+            //*os_ << " [" << mat.m[0][2] << ", " << mat.m[1][2] << ", " << mat.m[2][2] << "]]" << std::endl;
+            //*os_ << "["  << mat.m[0][3] << ", " <<  mat.m[1][3] << ", " <<   mat.m[2][3] << "]" << std::endl;
+            Matrix4d eMat;
+            eMat << mat.m[0][0], mat.m[0][1], mat.m[0][2], mat.m[0][3],
+                    mat.m[1][0], mat.m[1][1], mat.m[1][2], mat.m[1][3],
+                    mat.m[2][0], mat.m[2][1], mat.m[2][2], mat.m[2][3],
+                    0.0, 0.0, 0.0, 1.0;
             devicePoses[idx].matrix() = eMat;
 #if 0
             if (device_poses_[index].bDeviceIsConnected &&
@@ -231,7 +265,6 @@ void TestPlugin::Impl::updatePoses()
                 ///
             }
 #endif
-
         }
         if(cls == 0) {
             // do nothing
@@ -264,7 +297,6 @@ void TestPlugin::Impl::updatePoses()
         //m_mat4HMDPose.invert();
     }
 #endif
-
     vr::VREvent_t event;
     while( m_pHMD->PollNextEvent( &event, sizeof( event ) ) ) {
         switch( event.eventType ) {
