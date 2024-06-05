@@ -2,10 +2,11 @@
 #define CNOID_TEST_PLUGIN_H
 
 #include <cnoid/Plugin>
+#include "exportdecl.h"
 
 namespace cnoid {
 
-class TestPlugin : public Plugin
+class CNOID_EXPORT TestPlugin : public Plugin
 {
 public:
     TestPlugin();
@@ -16,8 +17,9 @@ public:
     virtual bool initialize() override;
     virtual bool finalize() override;
     virtual const char* description() const override;
-private:
+
     class Impl;
+private:
     Impl *impl;
 };
 
