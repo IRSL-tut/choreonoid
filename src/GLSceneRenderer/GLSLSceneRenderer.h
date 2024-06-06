@@ -97,6 +97,8 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     //
     bool makeBuffer(unsigned int nWidth, unsigned int nHeight,
                     unsigned int *pResolveTextureId, unsigned int *pResolveFramebufferId);
+    void setUserProjectionMatrix(Matrix4 &set_);
+    void resetUserProjectionMatrix();
 protected:
     virtual void doRender() override;
     virtual bool doPick(int x, int y) override;
