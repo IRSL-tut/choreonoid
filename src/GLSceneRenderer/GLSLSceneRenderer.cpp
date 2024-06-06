@@ -3652,10 +3652,10 @@ bool GLSLSceneRenderer::makeBuffer(unsigned int nWidth, unsigned int nHeight,
 }
 void GLSLSceneRenderer::setUserProjectionMatrix(Matrix4 &set_)
 {
-    impl.setUserProjection = true;
-    impl.userProjectionMatrix = set_;
+    impl->setUserProjection = true;
+    impl->userProjectionMatrix = set_;
 }
 void GLSLSceneRenderer::resetUserProjectionMatrix()
 {
-    impl.setUserProjection = false;
+    impl->setUserProjection = false;
 }
