@@ -89,8 +89,6 @@ void TestPlugin::Impl::initialize()
     origin.pos << 2.0, 0.0, 0.0;
     {
         Quaternion q(0.5, 0.5, 0.5, 0.5);
-        //coordinates cds(q);
-        //cds.inverse_transformation(origin_to_HMD);
         origin_to_HMD.set(q);
     }
 
@@ -98,7 +96,6 @@ void TestPlugin::Impl::initialize()
     m_pHMD = vr::VR_Init( &eError, vr::VRApplication_Scene );
     if ( eError != vr::VRInitError_None ) {
         m_pHMD = NULL;
-        //printf( "Unable to init VR runtime: %s", vr::VR_GetVRInitErrorAsEnglishDescription( eError ) );
         *os_ << "Unable to init VR runtime:  " << vr::VR_GetVRInitErrorAsEnglishDescription( eError ) << std::endl;
         return;
     }
@@ -108,7 +105,7 @@ void TestPlugin::Impl::initialize()
     vr::HmdMatrix44_t r_mat = m_pHMD->GetProjectionMatrix( vr::Eye_Right, 0.01f, 15.0f );
     vr::HmdMatrix34_t l_eye = m_pHMD->GetEyeToHeadTransform( vr::Eye_Left );
     vr::HmdMatrix34_t r_eye = m_pHMD->GetEyeToHeadTransform( vr::Eye_Right );
-#if 1
+#if 1 // DEBUG_PRINT
     *os_ << "left_projection" << std::endl;
     *os_ << l_mat.m[0][0] << ", " << l_mat.m[0][1] << ", " << l_mat.m[0][2] << ", " << l_mat.m[0][3] << std::endl;
     *os_ << l_mat.m[1][0] << ", " << l_mat.m[1][1] << ", " << l_mat.m[1][2] << ", " << l_mat.m[1][3] << std::endl;
@@ -182,73 +179,50 @@ void TestPlugin::Impl::initialize()
 
 void TestPlugin::Impl::singleLoop()
 {
-    // DEBUG_PRINT();
     if (!!m_pHMD) {
         if (counter % 30 == 0) {
             *os_ << "fps = " << (1000.0 * 30.0)/(qtimer.elapsed()+1) << std::endl;
             qtimer.start();
         }
         counter++;
-#if 0
-        std::vector<unsigned char> img_R(nWidth * nHeight * 3);
-        std::vector<unsigned char> img_L(nWidth * nHeight * 3);
-        unsigned char *ptr_R = img_R.data();
-        unsigned char *ptr_L = img_L.data();
-        unsigned char col_R = counter++ % 0xFF;
-        unsigned char col_L = 0xFF - col_R;
-        for(int i = 0; i < nHeight; i++) {
-            for(int j = 0; j < nWidth; j++) {
-                ptr_R[3*(i*nWidth + j)]   = col_R;
-                ptr_R[3*(i*nWidth + j)+1] = 0;
-                ptr_R[3*(i*nWidth + j)+2] = 0;
-                ptr_L[3*(i*nWidth + j)]   = 0;
-                ptr_L[3*(i*nWidth + j)+1] = 0;
-                ptr_L[3*(i*nWidth + j)+2] = col_L;
-            }
-        }
-#endif
+
         std::vector<SceneView *> view_instances = SceneView::instances();
         if (view_instances.size() < 2) {
             *os_ << "scene less than 3" << std::endl;
             return;
         }
+
         /// update camera pose
         // set_camera
         coordinates cds = origin;
         cds.transform(origin_to_HMD);
         cds.transform(HMD_coords);
-        ////
+        // left camera
         coordinates cds_l = cds;
         cds_l.transform(eyeToHead_L);
-#if 0 // DEBUG_PRINT
         {
-            Quaternion q(cds_l.rot);
-            *os_ << "camera" << std::endl;
-            *os_ << "p: " << cds_l.pos(0) << ", " << cds_l.pos(1) << ", " << cds_l.pos(2) << std::endl;
-            *os_ << "q: " << q.w() << ", " << q.x() << ", " << q.y() << ", " << q.z() << std::endl;
+            Isometry3 cur;
+            cds_l.toPosition(cur);
+            view_instances.at(1)->sceneWidget()->builtinCameraTransform()->setPosition(cur);
         }
-#endif
-        Isometry3 cur;
-        cds_l.toPosition(cur);
-        float fov_ = 1.48;
-        //view_instances.at(1)->sceneWidget()->builtinPerspectiveCamera()->setFieldOfView(fov_);
-        view_instances.at(1)->sceneWidget()->builtinCameraTransform()->setPosition(cur);
-        // set_camera
+        // right camera
         coordinates cds_r = cds;
         cds_r.transform(eyeToHead_R);
-        cds_r.toPosition(cur);
-        //view_instances.at(2)->sceneWidget()->builtinPerspectiveCamera()->setFieldOfView(fov_);
-        view_instances.at(2)->sceneWidget()->builtinCameraTransform()->setPosition(cur);
+        {
+            Isometry3 cur;
+            cds_r.toPosition(cur);
+            view_instances.at(2)->sceneWidget()->builtinCameraTransform()->setPosition(cur);
+        }
         view_instances.at(1)->sceneWidget()->renderScene(true);//
         view_instances.at(2)->sceneWidget()->renderScene(true);//
-        //QImage im_r.convertTo(QImage::Format_RGB888);
-        //QImage im_l.convertTo(QImage::Format_RGB888);
         QImage tmp_im_l = view_instances.at(1)->sceneWidget()->getImage();
         QImage tmp_im_r = view_instances.at(2)->sceneWidget()->getImage();
 
         offGL.makeCurrent();
         QImage im_l = tmp_im_l.convertToFormat(QImage::Format_RGB888).mirrored(false, true);
         QImage im_r = tmp_im_r.convertToFormat(QImage::Format_RGB888).mirrored(false, true);
+        //QImage im_r.convertTo(QImage::Format_RGB888);
+        //QImage im_l.convertTo(QImage::Format_RGB888);
         ////
         //*os_ << "up: " << im_r.width() << " x " << im_r.height() << " / " << im_r.bytesPerLine() << std::endl;
         ////
@@ -303,28 +277,7 @@ void TestPlugin::Impl::updatePoses()
             validPoseCount++;
             deviceClasses[idx] = cls;
             const vr::HmdMatrix34_t &mat = TrackedDevicePoses[idx].mDeviceToAbsoluteTracking;
-#if 0
-            Matrix4d eMat;
-            eMat << mat.m[0][0], mat.m[1][0], mat.m[2][0], 0.0,
-                    mat.m[0][1], mat.m[1][1], mat.m[2][1], 0.0,
-                    mat.m[0][2], mat.m[1][2], mat.m[2][2], 0.0,
-                    mat.m[0][3], mat.m[1][3], mat.m[2][3], 1.0;
-#endif
-#if 0
-            //Matrix3d, linear
-            Matrix3d rot;
-            rot << mat.m[0][0], mat.m[0][1], mat.m[0][2],
-                   mat.m[1][0], mat.m[1][1], mat.m[1][2],
-                   mat.m[2][0], mat.m[2][1], mat.m[2][2];
-            Translate3d trs(mat.m[0][3], mat.m[1][3], mat.m[2][3]);
-            devicePoses[idx].linear() = trs;
-#endif
-#if 0
-            *os_ << "[[" << mat.m[0][0] << ", " << mat.m[1][0] << ", " << mat.m[2][0] << "]," << std::endl;
-            *os_ << " [" << mat.m[0][1] << ", " << mat.m[1][1] << ", " << mat.m[2][1] << "]," << std::endl;
-            *os_ << " [" << mat.m[0][2] << ", " << mat.m[1][2] << ", " << mat.m[2][2] << "]]" << std::endl;
-            *os_ << "["  << mat.m[0][3] << ", " <<  mat.m[1][3] << ", " <<   mat.m[2][3] << "]" << std::endl;
-#endif
+
             Matrix4d eMat;
             eMat << mat.m[0][0], mat.m[0][1], mat.m[0][2], mat.m[0][3],
                     mat.m[1][0], mat.m[1][1], mat.m[1][2], mat.m[1][3],
@@ -346,21 +299,58 @@ void TestPlugin::Impl::updatePoses()
         if(cls == vr::TrackedDeviceClass_HMD) {
             // update HMD pose
             HMD_coords = devicePoses[idx];
-#if 0 // DEBUG_PRINT
-            Quaternion q(HMD_coords.rot);
-            *os_ << "hmd_raw" << std::endl;
-            *os_ << "p: " << HMD_coords.pos(0) << ", " << HMD_coords.pos(1) << ", " << HMD_coords.pos(2) << std::endl;
-            *os_ << "q: " << q.w() << ", " << q.x() << ", " << q.y() << ", " << q.z() << std::endl;
-#endif
             break;
         }
         if(cls == vr::TrackedDeviceClass_Controller) {
+            {
+                std::string res;
+                if(getDeviceString(res, idx, vr::Prop_RenderModelName_String)) {
+                    *os_ << "model: " << idx << " / " << res << std::endl;
+                }
+            }
+            {
+                std::string res;
+                if(getDeviceString(res, idx, vr::Prop_TrackingSystemName_String)) {
+                    *os_ << "system: " << idx << " / " << res << std::endl;
+                }
+            }
+            {
+                std::string res;
+                if(getDeviceString(res, idx, vr::Prop_SerialNumber_String)) {
+                    *os_ << "serial: " << idx << " / " << res << std::endl;
+                }
+            }
             // update controller pose
 
             // update controller state(button etc.)
             vr::VRControllerState_t state;
             m_pHMD->GetControllerState(idx, &state, sizeof(vr::VRControllerState_t));
 
+            //// Meta Quest2 version
+            int buttons[5];
+            float axes[4];
+            // ButtonA
+            if((1LL << vr::k_EButton_A) & state.ulButtonPressed)
+                buttons[0] = 1;
+            // ButtonB
+            if((1LL << vr::k_EButton_ApplicationMenu) & state.ulButtonPressed)
+                buttons[1] = 1;
+            // Stick
+            if((1LL << vr::k_EButton_SteamVR_Touchpad) & state.ulButtonPressed)
+                buttons[2] = 1;
+            // Finger0
+            if((1LL << vr::k_EButton_SteamVR_Trigger) & state.ulButtonPressed)
+                buttons[3] = 1;
+            // Finger1
+            if((1LL << vr::k_EButton_Grip) & state.ulButtonPressed)
+                buttons[4] = 1;
+            // Stick
+            axes[0] = state.rAxis[0].x;
+            axes[1] = state.rAxis[0].y;
+            // Finger0
+            axes[2] = state.rAxis[1].x;
+            // Finger1
+            axes[3] = state.rAxis[2].x;
             break;
         }
         if(cls == vr::TrackedDeviceClass_GenericTracker) {
@@ -371,12 +361,6 @@ void TestPlugin::Impl::updatePoses()
         }
     }
 
-#if 0
-    if ( TrackedDevicePose[ vr::k_unTrackedDeviceIndex_Hmd ].bPoseIsValid ) {
-        //m_mat4HMDPose = m_rmat4DevicePose[ vr::k_unTrackedDeviceIndex_Hmd ];
-        //m_mat4HMDPose.invert();
-    }
-#endif
     vr::VREvent_t event;
     while( m_pHMD->PollNextEvent( &event, sizeof( event ) ) ) {
         switch( event.eventType ) {
