@@ -2,7 +2,7 @@
 #define IRSL_DEBUG
 #include "irsl_debug.h"
 
-//#include <cnoid/GLSLSceneRenderer>
+#include <cnoid/GLSLSceneRenderer>
 #include <cnoid/SceneWidget>
 #include <cnoid/SceneView>
 #include <cnoid/SceneCameras>
@@ -12,6 +12,7 @@
 
 #include "TestPlugin.h"
 #include "OffscreenGL.h"
+#include "Coordinates.h"
 
 #include <openvr.h>
 
@@ -33,6 +34,7 @@ public:
     void updatePoses();
     bool getDeviceString(std::string &_res, int index, vr::TrackedDeviceProperty prop);
 
+    void setToCoords(const vr::HmdMatrix34_t &hmd_mat, coordinates &cds);
 public:
     Timer tm;
     unsigned long counter;
@@ -51,9 +53,18 @@ public:
     vr::TrackedDevicePose_t TrackedDevicePoses[ vr::k_unMaxTrackedDeviceCount ];
     // Eigen // devicePoses
     std::vector<Isometry3d> devicePoses;
+    std::vector<coordinates> deviceCoords;
     std::vector<std::string> deviceNames;
     std::vector<int> deviceClasses;
 
+    Matrix4 projection_L;
+    Matrix4 projection_R;
+
+    coordinates eyeToHead_L;
+    coordinates eyeToHead_R;
+    coordinates HMD_coords;
+    coordinates origin_to_HMD;
+    coordinates origin;
     //
     QElapsedTimer qtimer;
 
@@ -75,6 +86,14 @@ void TestPlugin::Impl::initialize()
 {
     os_ = &(MessageView::instance()->cout(false));
 
+    origin.pos << 2.0, 0.0, 0.0;
+    {
+        Quaternion q(0.5, 0.5, 0.5, 0.5);
+        //coordinates cds(q);
+        //cds.inverse_transformation(origin_to_HMD);
+        origin_to_HMD.set(q);
+    }
+
     vr::EVRInitError eError = vr::VRInitError_None;
     m_pHMD = vr::VR_Init( &eError, vr::VRApplication_Scene );
     if ( eError != vr::VRInitError_None ) {
@@ -89,6 +108,28 @@ void TestPlugin::Impl::initialize()
     vr::HmdMatrix44_t r_mat = m_pHMD->GetProjectionMatrix( vr::Eye_Right, 0.01f, 15.0f );
     vr::HmdMatrix34_t l_eye = m_pHMD->GetEyeToHeadTransform( vr::Eye_Left );
     vr::HmdMatrix34_t r_eye = m_pHMD->GetEyeToHeadTransform( vr::Eye_Right );
+#if 1
+    *os_ << "left_projection" << std::endl;
+    *os_ << l_mat.m[0][0] << ", " << l_mat.m[0][1] << ", " << l_mat.m[0][2] << ", " << l_mat.m[0][3] << std::endl;
+    *os_ << l_mat.m[1][0] << ", " << l_mat.m[1][1] << ", " << l_mat.m[1][2] << ", " << l_mat.m[1][3] << std::endl;
+    *os_ << l_mat.m[2][0] << ", " << l_mat.m[2][1] << ", " << l_mat.m[2][2] << ", " << l_mat.m[2][3] << std::endl;
+    *os_ << l_mat.m[3][0] << ", " << l_mat.m[3][1] << ", " << l_mat.m[3][2] << ", " << l_mat.m[3][3] << std::endl;
+    //
+    *os_ << "left_eye_to_head" << std::endl;
+    *os_ << l_eye.m[0][0] << ", " << l_eye.m[0][1] << ", " << l_eye.m[0][2] << ", " << l_eye.m[0][3] << std::endl;
+    *os_ << l_eye.m[1][0] << ", " << l_eye.m[1][1] << ", " << l_eye.m[1][2] << ", " << l_eye.m[1][3] << std::endl;
+    *os_ << l_eye.m[2][0] << ", " << l_eye.m[2][1] << ", " << l_eye.m[2][2] << ", " << l_eye.m[2][3] << std::endl;
+#endif
+    projection_L << l_mat.m[0][0], l_mat.m[0][1], l_mat.m[0][2], l_mat.m[0][3],
+                    l_mat.m[1][0], l_mat.m[1][1], l_mat.m[1][2], l_mat.m[1][3],
+                    l_mat.m[2][0], l_mat.m[2][1], l_mat.m[2][2], l_mat.m[2][3],
+                    l_mat.m[3][0], l_mat.m[3][1], l_mat.m[3][2], l_mat.m[3][3];
+    projection_R << r_mat.m[0][0], r_mat.m[0][1], r_mat.m[0][2], r_mat.m[0][3],
+                    r_mat.m[1][0], r_mat.m[1][1], r_mat.m[1][2], r_mat.m[1][3],
+                    r_mat.m[2][0], r_mat.m[2][1], r_mat.m[2][2], r_mat.m[2][3],
+                    r_mat.m[3][0], r_mat.m[3][1], r_mat.m[3][2], r_mat.m[3][3];
+    setToCoords(l_eye, eyeToHead_L);
+    setToCoords(r_eye, eyeToHead_R);
 
     {
         bool glres = offGL.create();
@@ -119,6 +160,16 @@ void TestPlugin::Impl::initialize()
     if (view_instances.size() > 2) {
         view_instances.at(1)->sceneWidget()->setScreenSize(nWidth, nHeight);
         view_instances.at(2)->sceneWidget()->setScreenSize(nWidth, nHeight);
+        {
+            GLSceneRenderer *glsr = view_instances.at(1)->sceneWidget()->renderer<GLSceneRenderer>();
+            GLSLSceneRenderer *sl = static_cast<GLSLSceneRenderer *>(glsr);
+            sl->setUserProjectionMatrix(projection_L);
+        }
+        {
+            GLSceneRenderer *glsr = view_instances.at(2)->sceneWidget()->renderer<GLSceneRenderer>();
+            GLSLSceneRenderer *sl = static_cast<GLSLSceneRenderer *>(glsr);
+            sl->setUserProjectionMatrix(projection_R);
+        }
     }
 
     tm.sigTimeout().connect( [this]() { this->singleLoop(); });
@@ -163,25 +214,44 @@ void TestPlugin::Impl::singleLoop()
         }
         /// update camera pose
         // set_camera
+        coordinates cds = origin;
+        cds.transform(origin_to_HMD);
+        cds.transform(HMD_coords);
+        ////
+        coordinates cds_l = cds;
+        cds_l.transform(eyeToHead_L);
+#if 0 // DEBUG_PRINT
+        {
+            Quaternion q(cds_l.rot);
+            *os_ << "camera" << std::endl;
+            *os_ << "p: " << cds_l.pos(0) << ", " << cds_l.pos(1) << ", " << cds_l.pos(2) << std::endl;
+            *os_ << "q: " << q.w() << ", " << q.x() << ", " << q.y() << ", " << q.z() << std::endl;
+        }
+#endif
+        Isometry3 cur;
+        cds_l.toPosition(cur);
+        float fov_ = 1.48;
         //view_instances.at(1)->sceneWidget()->builtinPerspectiveCamera()->setFieldOfView(fov_);
-        //view_instances.at(1)->sceneWidget()->builtinCameraTransform()->setPosition(cur);
+        view_instances.at(1)->sceneWidget()->builtinCameraTransform()->setPosition(cur);
         // set_camera
+        coordinates cds_r = cds;
+        cds_r.transform(eyeToHead_R);
+        cds_r.toPosition(cur);
         //view_instances.at(2)->sceneWidget()->builtinPerspectiveCamera()->setFieldOfView(fov_);
-        //view_instances.at(2)->sceneWidget()->builtinCameraTransform()->setPosition(cur);
+        view_instances.at(2)->sceneWidget()->builtinCameraTransform()->setPosition(cur);
         view_instances.at(1)->sceneWidget()->renderScene(true);//
         view_instances.at(2)->sceneWidget()->renderScene(true);//
-
         //QImage im_r.convertTo(QImage::Format_RGB888);
         //QImage im_l.convertTo(QImage::Format_RGB888);
         QImage tmp_im_l = view_instances.at(1)->sceneWidget()->getImage();
         QImage tmp_im_r = view_instances.at(2)->sceneWidget()->getImage();
-        QImage im_l = tmp_im_l.convertToFormat(QImage::Format_RGB888);
-        QImage im_r = tmp_im_r.convertToFormat(QImage::Format_RGB888);
 
-        ////
-        //*os_ << "up: " << counter << std::endl;
-        ////
         offGL.makeCurrent();
+        QImage im_l = tmp_im_l.convertToFormat(QImage::Format_RGB888).mirrored(false, true);
+        QImage im_r = tmp_im_r.convertToFormat(QImage::Format_RGB888).mirrored(false, true);
+        ////
+        //*os_ << "up: " << im_r.width() << " x " << im_r.height() << " / " << im_r.bytesPerLine() << std::endl;
+        ////
         offGL.writeTexture(ui_R_TextureId, im_r.bits(), nWidth, nHeight, 0, 0);
         offGL.writeTexture(ui_L_TextureId, im_l.bits(), nWidth, nHeight, 0, 0);
         vr::Texture_t leftEyeTexture =  {(void*)(uintptr_t)ui_L_TextureId, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
@@ -249,15 +319,18 @@ void TestPlugin::Impl::updatePoses()
             Translate3d trs(mat.m[0][3], mat.m[1][3], mat.m[2][3]);
             devicePoses[idx].linear() = trs;
 #endif
-            //*os_ << "[[" << mat.m[0][0] << ", " << mat.m[1][0] << ", " << mat.m[2][0] << "]," << std::endl;
-            //*os_ << " [" << mat.m[0][1] << ", " << mat.m[1][1] << ", " << mat.m[2][1] << "]," << std::endl;
-            //*os_ << " [" << mat.m[0][2] << ", " << mat.m[1][2] << ", " << mat.m[2][2] << "]]" << std::endl;
-            //*os_ << "["  << mat.m[0][3] << ", " <<  mat.m[1][3] << ", " <<   mat.m[2][3] << "]" << std::endl;
+#if 0
+            *os_ << "[[" << mat.m[0][0] << ", " << mat.m[1][0] << ", " << mat.m[2][0] << "]," << std::endl;
+            *os_ << " [" << mat.m[0][1] << ", " << mat.m[1][1] << ", " << mat.m[2][1] << "]," << std::endl;
+            *os_ << " [" << mat.m[0][2] << ", " << mat.m[1][2] << ", " << mat.m[2][2] << "]]" << std::endl;
+            *os_ << "["  << mat.m[0][3] << ", " <<  mat.m[1][3] << ", " <<   mat.m[2][3] << "]" << std::endl;
+#endif
             Matrix4d eMat;
             eMat << mat.m[0][0], mat.m[0][1], mat.m[0][2], mat.m[0][3],
                     mat.m[1][0], mat.m[1][1], mat.m[1][2], mat.m[1][3],
                     mat.m[2][0], mat.m[2][1], mat.m[2][2], mat.m[2][3],
                     0.0, 0.0, 0.0, 1.0;
+
             devicePoses[idx].matrix() = eMat;
 #if 0
             if (device_poses_[index].bDeviceIsConnected &&
@@ -272,6 +345,13 @@ void TestPlugin::Impl::updatePoses()
         }
         if(cls == vr::TrackedDeviceClass_HMD) {
             // update HMD pose
+            HMD_coords = devicePoses[idx];
+#if 0 // DEBUG_PRINT
+            Quaternion q(HMD_coords.rot);
+            *os_ << "hmd_raw" << std::endl;
+            *os_ << "p: " << HMD_coords.pos(0) << ", " << HMD_coords.pos(1) << ", " << HMD_coords.pos(2) << std::endl;
+            *os_ << "q: " << q.w() << ", " << q.x() << ", " << q.y() << ", " << q.z() << std::endl;
+#endif
             break;
         }
         if(cls == vr::TrackedDeviceClass_Controller) {
@@ -306,6 +386,13 @@ void TestPlugin::Impl::updatePoses()
             break;
         }
     }
+}
+void TestPlugin::Impl::setToCoords(const vr::HmdMatrix34_t &hmd_mat, coordinates &cds)
+{
+    cds.rot << hmd_mat.m[0][0], hmd_mat.m[0][1], hmd_mat.m[0][2],
+               hmd_mat.m[1][0], hmd_mat.m[1][1], hmd_mat.m[1][2],
+               hmd_mat.m[2][0], hmd_mat.m[2][1], hmd_mat.m[2][2];
+    cds.pos << hmd_mat.m[0][3], hmd_mat.m[1][3], hmd_mat.m[2][3];
 }
 //// <<<< Impl
 
