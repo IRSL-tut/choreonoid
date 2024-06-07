@@ -24,6 +24,49 @@ namespace {
 TestPlugin* instance_ = nullptr;
 }
 
+struct controllerState {
+    controllerState() {
+        buttons.resize(5);
+        axes.resize(4);
+        reset();
+    }
+    void reset() {
+        update = false;
+        buttons.assign(5, 0);
+    }
+    bool update;
+    std::vector<int> buttons;
+    std::vector<float> axes;
+    coordinates coords;
+};
+
+void setStateToStruct(const vr::VRControllerState_t &state,
+                      struct controllerState &res) {
+    res.update = true;
+    // ButtonA
+    if((1LL << vr::k_EButton_A) & state.ulButtonPressed)
+        res.buttons[0] = 1;
+    // ButtonB
+    if((1LL << vr::k_EButton_ApplicationMenu) & state.ulButtonPressed)
+        res.buttons[1] = 1;
+    // Stick
+    if((1LL << vr::k_EButton_SteamVR_Touchpad) & state.ulButtonPressed)
+        res.buttons[2] = 1;
+    // Finger0
+    if((1LL << vr::k_EButton_SteamVR_Trigger) & state.ulButtonPressed)
+        res.buttons[3] = 1;
+    // Finger1
+    if((1LL << vr::k_EButton_Grip) & state.ulButtonPressed)
+        res.buttons[4] = 1;
+    // Stick
+    res.axes[0] = state.rAxis[0].x;
+    res.axes[1] = state.rAxis[0].y;
+    // Finger0
+    res.axes[2] = state.rAxis[1].x;
+    // Finger1
+    res.axes[3] = state.rAxis[2].x;
+}
+
 //// Impl
 class TestPlugin::Impl
 {
@@ -40,6 +83,8 @@ public:
     unsigned long counter;
     double publishingRate;
 
+    controllerState state_L, state_R;
+
     OffscreenGL offGL;
 
     vr::IVRSystem *m_pHMD;
@@ -53,7 +98,6 @@ public:
     vr::TrackedDevicePose_t TrackedDevicePoses[ vr::k_unMaxTrackedDeviceCount ];
     // Eigen // devicePoses
     std::vector<Isometry3d> devicePoses;
-    std::vector<coordinates> deviceCoords;
     std::vector<std::string> deviceNames;
     std::vector<int> deviceClasses;
 
@@ -65,6 +109,7 @@ public:
     coordinates HMD_coords;
     coordinates origin_to_HMD;
     coordinates origin;
+
     //
     QElapsedTimer qtimer;
 
@@ -264,6 +309,9 @@ bool TestPlugin::Impl::getDeviceString(std::string &_res, int index, vr::Tracked
 
 void TestPlugin::Impl::updatePoses()
 {
+    state_L.reset();
+    state_R.reset();
+
     if ( !m_pHMD ) {
         return;
     }
@@ -274,6 +322,8 @@ void TestPlugin::Impl::updatePoses()
     for ( int idx = 0; idx < vr::k_unMaxTrackedDeviceCount; idx++ ) {
         int cls = m_pHMD->GetTrackedDeviceClass(idx);
         if ( TrackedDevicePoses[idx].bPoseIsValid ) {
+            *os_ << "t: " << idx << " / " << cls << " ";
+            *os_ << TrackedDevicePoses[idx].bDeviceIsConnected << " " << TrackedDevicePoses[idx].eTrackingResult << std::endl;
             validPoseCount++;
             deviceClasses[idx] = cls;
             const vr::HmdMatrix34_t &mat = TrackedDevicePoses[idx].mDeviceToAbsoluteTracking;
@@ -286,22 +336,26 @@ void TestPlugin::Impl::updatePoses()
 
             devicePoses[idx].matrix() = eMat;
 #if 0
-            if (device_poses_[index].bDeviceIsConnected &&
-                device_poses_[index].eTrackingResult == vr::TrackingResult_Running_OK) {
+            if (device_poses_[idx].bDeviceIsConnected &&
+                device_poses_[idx].eTrackingResult == vr::TrackingResult_Running_OK) {
                 ///
             }
 #endif
+        } else {
+            continue;
         }
+        ////
         if(cls == 0) {
             // do nothing
-            break;
+            continue;
         }
         if(cls == vr::TrackedDeviceClass_HMD) {
             // update HMD pose
             HMD_coords = devicePoses[idx];
-            break;
+            continue;
         }
         if(cls == vr::TrackedDeviceClass_Controller) {
+#if 0
             {
                 std::string res;
                 if(getDeviceString(res, idx, vr::Prop_RenderModelName_String)) {
@@ -320,44 +374,39 @@ void TestPlugin::Impl::updatePoses()
                     *os_ << "serial: " << idx << " / " << res << std::endl;
                 }
             }
+#endif
+            if (!TrackedDevicePoses[idx].bDeviceIsConnected ||
+                !(TrackedDevicePoses[idx].eTrackingResult == vr::TrackingResult_Running_OK)) {
+                //// default controller pose
+                continue;
+            }
             // update controller pose
-
+            if (idx == 1) {
+                state_L.coords = devicePoses[idx];
+            } else if (idx == 2) {
+                state_R.coords = devicePoses[idx];
+            } else {
+                /// more then 3 controller?
+                continue;
+            }
             // update controller state(button etc.)
             vr::VRControllerState_t state;
             m_pHMD->GetControllerState(idx, &state, sizeof(vr::VRControllerState_t));
-
-            //// Meta Quest2 version
-            int buttons[5];
-            float axes[4];
-            // ButtonA
-            if((1LL << vr::k_EButton_A) & state.ulButtonPressed)
-                buttons[0] = 1;
-            // ButtonB
-            if((1LL << vr::k_EButton_ApplicationMenu) & state.ulButtonPressed)
-                buttons[1] = 1;
-            // Stick
-            if((1LL << vr::k_EButton_SteamVR_Touchpad) & state.ulButtonPressed)
-                buttons[2] = 1;
-            // Finger0
-            if((1LL << vr::k_EButton_SteamVR_Trigger) & state.ulButtonPressed)
-                buttons[3] = 1;
-            // Finger1
-            if((1LL << vr::k_EButton_Grip) & state.ulButtonPressed)
-                buttons[4] = 1;
-            // Stick
-            axes[0] = state.rAxis[0].x;
-            axes[1] = state.rAxis[0].y;
-            // Finger0
-            axes[2] = state.rAxis[1].x;
-            // Finger1
-            axes[3] = state.rAxis[2].x;
-            break;
+            if (idx == 1) {
+                setStateToStruct(state, state_L);
+            } else if (idx == 2) {
+                setStateToStruct(state, state_R);
+            } else {
+                /// more then 3 controller?
+                continue;
+            }
+            continue;
         }
         if(cls == vr::TrackedDeviceClass_GenericTracker) {
-            break;
+            continue;
         }
         if(cls == vr::TrackedDeviceClass_TrackingReference) {
-            break;
+            continue;
         }
     }
 

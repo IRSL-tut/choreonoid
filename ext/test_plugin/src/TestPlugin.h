@@ -4,6 +4,8 @@
 #include <cnoid/Plugin>
 #include "exportdecl.h"
 
+////
+
 namespace cnoid {
 
 class CNOID_EXPORT TestPlugin : public Plugin
@@ -17,6 +19,9 @@ public:
     virtual bool initialize() override;
     virtual bool finalize() override;
     virtual const char* description() const override;
+
+    //Signal
+    //void setControllerCallback();
 
     class Impl;
 private:
