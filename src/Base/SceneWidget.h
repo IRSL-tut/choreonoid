@@ -203,7 +203,12 @@ public:
     void setFloorGridSpan(double span);
     [[deprecated("Use setGridGeometry")]]
     void setFloorGridInterval(double intervale);
- 
+
+    //
+    void makeCurrent();
+    void doneCurrent();
+    void paintGL();
+
     class Impl;
 
 private:

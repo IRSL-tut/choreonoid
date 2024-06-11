@@ -3160,3 +3160,18 @@ void SceneWidget::Impl::activateSystemNode(SgNode* node, bool on)
         systemGroup->removeChild(node, sgUpdate);
     }
 }
+
+void SceneWidget::makeCurrent()
+{
+    impl->makeCurrent();
+}
+void SceneWidget::doneCurrent()
+{
+    impl->doneCurrent();
+}
+void SceneWidget::paintGL()
+{
+    impl->needToUpdateViewportInformation = true;
+    //impl->isCameraPositionInteractivelyChanged = true;
+    impl->paintGL();
+}
