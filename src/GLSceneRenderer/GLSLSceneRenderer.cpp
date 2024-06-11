@@ -3633,3 +3633,18 @@ void GLSLSceneRenderer::resetUserProjectionMatrix()
 {
     impl->setUserProjection = false;
 }
+int GLSLSceneRenderer::getTextureId()
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, impl->defaultFBO);
+    //
+    GLint buffer, params = 1111 ;
+    //glGetIntegerv(GL_FRAMEBUFFER_BINDING, &buffer);
+    glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &params);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    return params;
+}
+int GLSLSceneRenderer::defaultFBO()
+{
+    return impl->defaultFBO;
+}
