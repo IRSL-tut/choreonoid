@@ -801,6 +801,10 @@ public:
     void clearGLState();
     void setPointSize(float size);
     void setGlLineWidth(float width);
+
+    ///
+    bool setUserProjection;
+    Matrix4 userProjectionMatrix;
 };
 
 class ScopedTransparentRendering
@@ -866,7 +870,7 @@ GLSLSceneRenderer::GLSLSceneRenderer(SgGroup* sceneRoot)
 GLSLSceneRenderer::Impl::Impl(GLSLSceneRenderer* self)
     : self(self)
 {
-
+    setUserProjection = false;
 }
 
 
@@ -2317,6 +2321,10 @@ void GLSLSceneRenderer::Impl::renderCamera(SgCamera* camera, const Isometry3& ca
     bool useReversed = isReversedDepthBufferActive;
     bool useInfinite = isReversedDepthBufferActive && isInfiniteFarOverrideEnabled;
 
+    if (setUserProjection) {
+        projectionMatrix = userProjectionMatrix;
+    } else {
+
     if(SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera)){
         double aspectRatio = self->aspectRatio();
         double fovy = self->getEffectiveFovy(pers);
@@ -2393,7 +2401,7 @@ void GLSLSceneRenderer::Impl::renderCamera(SgCamera* camera, const Isometry3& ca
                 projectionMatrix);
         }
     }
-
+    }////
     if(isUpsideDownEnabled){
         Isometry3 T = cameraPosition * AngleAxis(PI, Vector3(0.0, 0.0, 1.0));
         viewTransform = T.inverse(Eigen::Isometry);
@@ -5764,5 +5772,13 @@ void GLSLSceneRenderer::setLowMemoryConsumptionMode(bool on)
         requestToClearResources();
     }
 }
-
-
+////
+void GLSLSceneRenderer::setUserProjectionMatrix(Matrix4 &set_)
+{
+    impl->setUserProjection = true;
+    impl->userProjectionMatrix = set_;
+}
+void GLSLSceneRenderer::resetUserProjectionMatrix()
+{
+    impl->setUserProjection = false;
+}
