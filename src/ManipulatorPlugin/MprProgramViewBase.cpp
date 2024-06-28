@@ -17,6 +17,7 @@
 #include <cnoid/ConnectionSet>
 #include <cnoid/Archive>
 #include <cnoid/MessageOut>
+#include <cnoid/QtEventUtil>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QMouseEvent>
@@ -339,24 +340,38 @@ void ProgramViewDelegate::paint(QPainter* painter, const QStyleOptionViewItem& o
 {
     auto item = viewImpl->itemFromIndex(index);
     auto statement = item->statement();
-    
     int column = index.column();
     int span = item->delegate->impl->actualLabelSpan(statement, column);
+    
     if(span == 1){
         QStyledItemDelegate::paint(painter, option, index);
-    } else if(span > 1){
-        auto rect = viewImpl->visualRect(index);
-        for(int i=1; i < span; ++i){
-            auto rect2 = viewImpl->visualRect(viewImpl->indexFromItem(item, column + i));
-            rect = rect.united(rect2);
+
+    } else {
+#ifdef _WIN32
+        QStyledItemDelegate::paint(painter, option, index);
+#endif
+        if(span >= 2){
+            auto rect = viewImpl->visualRect(index);
+            for(int i=1; i < span; ++i){
+                auto rect2 = viewImpl->visualRect(viewImpl->indexFromItem(item, column + i));
+                rect = rect.united(rect2);
+            }
+            painter->save();
+
+#ifdef _WIN32
+            constexpr bool doHighlight = false;
+#else
+            constexpr bool doHighlight = true;
+#endif
+            if(doHighlight && (option.state & QStyle::State_Selected)){
+                painter->fillRect(rect, option.palette.highlight());
+                painter->setPen(option.palette.highlightedText().color());
+            } else {
+                painter->setPen(item->foreground(column).color());
+            }
+            painter->drawText(rect, 0, statement->label(column).c_str());
+            painter->restore();
         }
-        painter->save();
-        if(option.state & QStyle::State_Selected){
-            painter->fillRect(rect, option.palette.highlight());
-            painter->setPen(option.palette.highlightedText().color());
-        }
-        painter->drawText(rect, 0, statement->label(column).c_str());
-        painter->restore();
     }
 }
 
@@ -667,7 +682,13 @@ void MprProgramViewBase::Impl::setupWidgets()
     QItemEditorFactory* factory = new QItemEditorFactory;
     QItemEditorCreatorBase* stringListEditorCreator =
         new QStandardItemEditorCreator<StringListComboBox>();
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    factory->registerEditor(QMetaType::QStringList, stringListEditorCreator);
+#else
     factory->registerEditor(QVariant::StringList, stringListEditorCreator);
+#endif
+
     mainDelegate->setItemEditorFactory(factory);
     
     setItemDelegate(mainDelegate);
@@ -1689,7 +1710,7 @@ void MprProgramViewBase::Impl::mousePressEvent(QMouseEvent* event)
     }
     
     if(event->button() == Qt::RightButton){
-        showContextMenu(statement, event->globalPos());
+        showContextMenu(statement, getGlobalPosition(event));
     }
 }
 
@@ -1880,25 +1901,27 @@ void MprProgramViewBase::Impl::dropEvent(QDropEvent *event)
 {
     bool insertAbove = false;
     bool insertBelow = false;
-    auto destinationItem = dynamic_cast<StatementItem*>(itemAt(event->pos()));
+    auto destinationItem = dynamic_cast<StatementItem*>(itemAt(getPosition(event)));
     if(!destinationItem){
         destinationItem = dynamic_cast<StatementItem*>(topLevelItem(topLevelItemCount() - 1));
         insertBelow = true;
     }
 
-    if(event->pos().y() < 4){
+    const auto pos = getPosition(event);
+
+    if(pos.y() < 4){
         insertAbove = true;
 
-    } else if(itemAt(event->pos()) == nullptr){
+    } else if(itemAt(pos) == nullptr){
         insertBelow = true;
 
     } else {
-        auto checkPos = QPoint(event->pos().x(), event->pos().y() - 4);
-        if(itemAt(event->pos()) != itemAt(checkPos)){
+        auto checkPos = QPoint(pos.x(), pos.y() - 4);
+        if(itemAt(pos) != itemAt(checkPos)){
             insertAbove = true;
         }
-        checkPos = QPoint(event->pos().x(), event->pos().y() + 4);
-        if(itemAt(event->pos()) != itemAt(checkPos)){
+        checkPos = QPoint(pos.x(), pos.y() + 4);
+        if(itemAt(pos) != itemAt(checkPos)){
             insertBelow = true;
         }
     }

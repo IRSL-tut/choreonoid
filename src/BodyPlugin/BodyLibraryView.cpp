@@ -21,6 +21,7 @@
 #include <cnoid/FileDialog>
 #include <cnoid/LineEdit>
 #include <cnoid/PushButton>
+#include <cnoid/QtEventUtil>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QDialogButtonBox>
@@ -68,7 +69,13 @@ public:
     
     ExTreeWidget(BodyLibraryView::Impl* viewImpl);
     LibraryItem* getLibraryItem(const QModelIndex& index);
-    virtual QMimeData* mimeData(const QList<QTreeWidgetItem *> items) const override;
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    virtual QMimeData* mimeData(const QList<QTreeWidgetItem*>& items) const override;
+#else
+    virtual QMimeData* mimeData(const QList<QTreeWidgetItem*> items) const override;
+#endif
+
     virtual void startDrag(Qt::DropActions supportedActions) override;
     virtual void dropEvent(QDropEvent* event) override;
 };
@@ -228,7 +235,11 @@ LibraryItem* ExTreeWidget::getLibraryItem(const QModelIndex& index)
 }
 
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+QMimeData* ExTreeWidget::mimeData(const QList<QTreeWidgetItem*>& items) const
+#else
 QMimeData* ExTreeWidget::mimeData(const QList<QTreeWidgetItem*> items) const
+#endif
 {
     auto mimeData = new ExMimeData;
 
@@ -267,40 +278,56 @@ void ExTreeWidget::startDrag(Qt::DropActions supportedActions)
 void ExTreeWidget::dropEvent(QDropEvent* event)
 {
     if(auto data = dynamic_cast<const ExMimeData*>(event->mimeData())){
-        QTreeWidgetItem* itemAtDrop = itemAt(event->pos());
-        if(auto libraryItem = dynamic_cast<LibraryItem*>(itemAtDrop)){
-            if(!libraryItem->isGroup){
-                itemAtDrop = libraryItem->parent();
-            }
-        }
-        if(!itemAtDrop){
-            itemAtDrop = invisibleRootItem();
-        }
-        bool duplicated = false;
-        string duplicatedName;
-        for(auto& item : data->libraryItems){
-            if(item->parent() != itemAtDrop){ // Drop to another group?
-                if(viewImpl->checkNameDuplication(itemAtDrop, item->name)){
-                    duplicatedName = item->name;
-                    duplicated = true;
-                    break;
+        QTreeWidgetItem* itemAtDrop = itemAt(getPosition(event));
+        DropIndicatorPosition dropIndicator = dropIndicatorPosition();
+        switch(dropIndicator){
+        case QAbstractItemView::OnItem:
+            if(auto libraryItem = dynamic_cast<LibraryItem*>(itemAtDrop)){
+                if(!libraryItem->isGroup){
+                    itemAtDrop = libraryItem->parent();
                 }
             }
-        }
-        if(duplicated){
-            showErrorDialog(
-                format(_("Drop was canceled because item \"{0}\" is duplicated in the drop position."),
-                       duplicatedName));
-            return; // Ignore the drop
+            break;
+        case QAbstractItemView::AboveItem:
+        case QAbstractItemView::BelowItem:
+            if(itemAtDrop){
+                itemAtDrop = itemAtDrop->parent();
+            }
+            break;
+        case QAbstractItemView::OnViewport:
+            if(!itemAtDrop){
+                itemAtDrop = invisibleRootItem();
+            }
+            break;
+        default:
+            break;
         }
 
-        viewImpl->libraryItemToOrgDirPathMap.clear();
-        for(auto& item : data->libraryItems){
-            viewImpl->libraryItemToOrgDirPathMap[item] = viewImpl->getInternalItemDirPath(item);
+        if(itemAtDrop){
+            bool duplicated = false;
+            string duplicatedName;
+            for(auto& item : data->libraryItems){
+                if(item->parent() != itemAtDrop){ // Drop to another group?
+                    if(viewImpl->checkNameDuplication(itemAtDrop, item->name)){
+                        duplicatedName = item->name;
+                        duplicated = true;
+                        break;
+                    }
+                }
+            }
+            if(duplicated){
+                showErrorDialog(
+                    format(_("Drop was canceled because item \"{0}\" is duplicated in the drop position."),
+                           duplicatedName));
+            } else {
+                viewImpl->libraryItemToOrgDirPathMap.clear();
+                for(auto& item : data->libraryItems){
+                    viewImpl->libraryItemToOrgDirPathMap[item] = viewImpl->getInternalItemDirPath(item);
+                }
+                TreeWidget::dropEvent(event);
+            }
         }
-        
     }
-    TreeWidget::dropEvent(event);
 }
 
 
@@ -768,16 +795,14 @@ bool BodyLibraryView::Impl::copyFile(const fs::path& srcPath, const fs::path& de
 bool BodyLibraryView::Impl::renameLibraryItem(LibraryItem* item, const string& newName)
 {
     bool failed = false;
+
     fs::path orgDirPath = getInternalItemDirPath(item);
-    fs::path newNamePath(fromUTF8(newName));
-    fs::path newDirPath = orgDirPath.parent_path() / newNamePath;
+    fs::path newDirPath;
 
     stdx::error_code ec;
-    if(!fs::is_directory(orgDirPath, ec)){
-        if(ec){
-            failed = true;
-        }
-    } else {
+    if(fs::is_directory(orgDirPath, ec)){
+        fs::path newNamePath(fromUTF8(newName));
+        newDirPath = orgDirPath.parent_path() / newNamePath;
         fs::rename(orgDirPath, newDirPath, ec);
         if(ec){
             failed = true;
@@ -786,8 +811,10 @@ bool BodyLibraryView::Impl::renameLibraryItem(LibraryItem* item, const string& n
 
     if(!failed){
         item->name = newName;
-        relocateItemFileInformationRecursively(item, newDirPath);
-        updateItemImagesRecursively(item);
+        if(!newDirPath.empty()){
+            relocateItemFileInformationRecursively(item, newDirPath);
+            updateItemImagesRecursively(item);
+        }
         saveIndexFile();
     }
 

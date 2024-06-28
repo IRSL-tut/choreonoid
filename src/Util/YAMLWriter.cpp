@@ -338,6 +338,10 @@ bool YAMLWriter::Impl::startValuePut(bool doPutValueInSameLine)
 
     // Put an anchor
     if(!anchor.empty()){
+        if(!spaceInserted){
+            os() << " ";
+            spaceInserted = true;
+        }
         os() << anchor;
         if(doPutValueInSameLine || current->isFlowStyle){
             os() << " ";
@@ -692,7 +696,7 @@ void YAMLWriter::Impl::endListing()
             os() << " ]";
         } else {
             if(!current->hasValuesBeenPut){
-                os() << "[ ]"; // Put an empty listing
+                os() << " [ ]"; // Put an empty listing
             }
         }
         popState();
@@ -816,7 +820,7 @@ bool YAMLWriter::Impl::setAnchorOrPutAliasForSharedNode(const ValueNode* node)
     if(it != anchorMap.end()){
         auto inserted = nodeSet.insert(node);
         if(!inserted.second){
-            startValuePut(false);
+            startValuePut(true);
             os() << format("*A{}", it->second);
             endValuePut();
             return true;

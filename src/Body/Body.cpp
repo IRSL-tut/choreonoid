@@ -31,10 +31,11 @@ typedef std::map<std::string, ReferencedPtr> CacheMap;
 
 struct MultiplexInfo : public Referenced
 {
-    Body* masterBody;
+    Body* mainBody;
     Body* lastBody;
     int numBodies;
     vector<BodyPtr> bodyCache;
+    Signal<void(Body* body, bool isAdded)> sigMultiplexBodyAddedOrRemoved;
 };
 typedef ref_ptr<MultiplexInfo> MultiplexInfoPtr;
 
@@ -69,13 +70,13 @@ public:
     BodyHandle bodyHandle;
 
     MultiplexInfoPtr multiplexInfo;
-    Signal<void(Body* body, bool isAdded)> sigMultiplexBodyAddedOrRemoved;
     Signal<void(bool on)> sigExistenceChanged;
         
     Impl(Body* self);
     void initialize(Body* self, Link* rootLink);
     void guessMainEndLinkSub(Link* link, Link* rootLink, int dof, Link** linkOfDof);
     void removeDeviceFromDeviceNameMap(Device* device);
+    MultiplexInfo* getOrCreateMultiplexInfo(Body* self);
     bool installCustomizer(BodyCustomizerInterface* customizerInterface);
 };
 
@@ -862,38 +863,68 @@ SignalProxy<void(bool on)> Body::sigExistenceChanged()
 }
 
 
+bool Body::isMultiplexBody() const
+{
+    if(impl->multiplexInfo){
+        if(this != impl->multiplexInfo->mainBody){
+            return true;
+        }
+    }
+    return false;
+}
+
+
+bool Body::isMultiplexMainBody() const
+{
+    return impl->multiplexInfo ? (impl->multiplexInfo->mainBody == this) : true;
+}
+
+
+Body* Body::multiplexMainBody()
+{
+    return impl->multiplexInfo ? impl->multiplexInfo->mainBody : this;
+}
+
+
 int Body::getNumMultiplexBodies() const
 {
     return impl->multiplexInfo->numBodies;
 }
 
 
+MultiplexInfo* Body::Impl::getOrCreateMultiplexInfo(Body* self)
+{
+    if(!multiplexInfo){
+        multiplexInfo = new MultiplexInfo;
+        multiplexInfo->mainBody = self;
+        multiplexInfo->lastBody = self;
+        multiplexInfo->numBodies = 1;
+    }
+    return multiplexInfo;
+}
+
+
 Body* Body::addMultiplexBody()
 {
-    if(!impl->multiplexInfo){
-        impl->multiplexInfo = new MultiplexInfo;
-        impl->multiplexInfo->masterBody = this;
-        impl->multiplexInfo->lastBody = this;
-        impl->multiplexInfo->numBodies = 1;
-    }
-
+    auto multiplexInfo = impl->getOrCreateMultiplexInfo(this);
+    
     BodyPtr newBody;
-    if(impl->multiplexInfo->bodyCache.empty()){
+    if(multiplexInfo->bodyCache.empty()){
         newBody = clone();
     } else {
-        newBody = impl->multiplexInfo->bodyCache.back();
+        newBody = multiplexInfo->bodyCache.back();
         // \todo copy all the link positions
         newBody->rootLink()->setPosition(rootLink()->position());
-        impl->multiplexInfo->bodyCache.pop_back();
+        multiplexInfo->bodyCache.pop_back();
     }
         
-    newBody->impl->multiplexInfo = impl->multiplexInfo;
+    newBody->impl->multiplexInfo = multiplexInfo;
 
-    impl->multiplexInfo->lastBody->nextMultiplexBody_ = newBody;
-    impl->multiplexInfo->lastBody = newBody;
-    impl->multiplexInfo->numBodies++;
+    multiplexInfo->lastBody->nextMultiplexBody_ = newBody;
+    multiplexInfo->lastBody = newBody;
+    multiplexInfo->numBodies++;
 
-    impl->sigMultiplexBodyAddedOrRemoved(newBody, true);
+    multiplexInfo->sigMultiplexBodyAddedOrRemoved(newBody, true);
     
     return newBody;
 }
@@ -905,17 +936,19 @@ bool Body::doClearMultiplexBodies(bool doClearCache)
 
     BodyPtr nextBody = nextMultiplexBody_;
     while(nextBody){
-        impl->multiplexInfo->bodyCache.push_back(nextBody);
+        if(!doClearCache){
+            impl->multiplexInfo->bodyCache.push_back(nextBody);
+        }
         nextBody->impl->multiplexInfo.reset();
         BodyPtr nextNextBody = nextBody->nextMultiplexBody_;
         nextBody->nextMultiplexBody_.reset();
-        nextBody = nextNextBody;
         nextMultiplexBody_ = nextNextBody;
         if(!nextNextBody){
             impl->multiplexInfo->lastBody = this;
         }
         --impl->multiplexInfo->numBodies;
-        impl->sigMultiplexBodyAddedOrRemoved(nextBody, false);
+        impl->multiplexInfo->sigMultiplexBodyAddedOrRemoved(nextBody, false);
+        nextBody = nextNextBody;
         removed = true;
     }
 
@@ -939,7 +972,7 @@ void Body::exchangePositionWithMultiplexBody(Body* multiplexBody)
 
 SignalProxy<void(Body* body, bool isAdded)> Body::sigMultiplexBodyAddedOrRemoved()
 {
-    return impl->sigMultiplexBodyAddedOrRemoved;
+    return impl->getOrCreateMultiplexInfo(this)->sigMultiplexBodyAddedOrRemoved;
 }
 
 

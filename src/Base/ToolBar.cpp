@@ -2,8 +2,10 @@
 #include "ToolBarArea.h"
 #include "MainWindow.h"
 #include "Separator.h"
+#include "ButtonGroup.h"
 #include "Archive.h"
-#include <QButtonGroup>
+#include "QtEventUtil.h"
+#include "QtSvgUtil.h"
 #include <QStylePainter>
 #include <QStyleOptionToolBar>
 #include <QMouseEvent>
@@ -65,7 +67,7 @@ public:
 
     virtual void mouseMoveEvent(QMouseEvent* event) {
         if(isDragging){
-            toolBar->toolBarArea()->dragToolBar(toolBar, event->globalPos() - dragOrgLocalPos);
+            toolBar->toolBarArea()->dragToolBar(toolBar, getGlobalPosition(event) - dragOrgLocalPos);
         }
     }
 
@@ -156,7 +158,14 @@ void ToolBar::registerElement(QWidget* element, int id)
 ToolButton* ToolBar::addButton(const QString& text, int id)
 {
     auto button = addButton(id);
-    button->setText(text);
+
+    if(text.startsWith(':') && text.endsWith(".svg")){
+        button->setIconSize(mainWindow->iconSize());
+        button->setIcon(QtSvgUtil::createIconFromSvgFile(text));
+    } else {
+        button->setText(text);
+    }
+    
     return button;
 }
 
@@ -255,10 +264,10 @@ void ToolBar::requestNewRadioGroup()
 }
 
 
-QButtonGroup* ToolBar::currentRadioGroup()
+ButtonGroup* ToolBar::currentRadioGroup()
 {
     if(isNewRadioGroupRequested){
-        radioGroup = new QButtonGroup(this);
+        radioGroup = new ButtonGroup(this);
         isNewRadioGroupRequested = false;
     }
     return radioGroup;

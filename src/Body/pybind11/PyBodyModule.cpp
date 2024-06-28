@@ -1,7 +1,7 @@
 #include "../Body.h"
 #include "../BodyLoader.h"
 #include "../BodyMotion.h"
-#include "../BodyPositionSeq.h"
+#include "../BodyStateSeq.h"
 #include "../InverseKinematics.h"
 #include "../JointPath.h"
 #include "../LeggedBodyHelper.h"
@@ -113,7 +113,7 @@ PYBIND11_MODULE(Body, m)
         .def_property_readonly("timeStep", &BodyMotion::timeStep)
         .def_property("offsetTime", &BodyMotion::offsetTime, &BodyMotion::setOffsetTime)
         .def_property("numFrames", &BodyMotion::numFrames, &BodyMotion::setNumFrames)
-        .def_property_readonly("positionSeq", [](BodyMotion& self){ return self.positionSeq(); })
+        .def_property_readonly("stateSeq", [](BodyMotion& self){ return self.stateSeq(); })
         .def("getFrame", [](BodyMotion& self, int f){ return self.frame(f); })
         .def("load", [](BodyMotion& self, const std::string& filename){ return self.load(filename); })
         .def("save", [](BodyMotion& self, const std::string& filename){ return self.save(filename); })
@@ -130,6 +130,7 @@ PYBIND11_MODULE(Body, m)
         .def("getNumParts", &BodyMotion::numJoints)
 
         // deprecated
+        .def_property_readonly("positionSeq", [](BodyMotion& self){ return self.stateSeq(); })
         .def_property("numJoints", &BodyMotion::numJoints, &BodyMotion::setNumJoints)
         .def("getNumJoints", &BodyMotion::numJoints)
         .def("setNumJoints", &BodyMotion::setNumJoints)
@@ -151,11 +152,11 @@ PYBIND11_MODULE(Body, m)
         .def("getFrame", &BodyMotion::Frame::frame)
         ;
 
-    py::class_<BodyPositionSeq, shared_ptr<BodyPositionSeq>>(m, "BodyPositionSeq")
-        .def_property_readonly("numLinkPositionsHint", &BodyPositionSeq::numLinkPositionsHint)
-        .def("setNumLinkPositionsHint", &BodyPositionSeq::setNumLinkPositionsHint)
-        .def_property_readonly("numJointDisplacementsHint", &BodyPositionSeq::numJointDisplacementsHint)
-        .def("setNumJointDisplacementsHint", &BodyPositionSeq::setNumJointDisplacementsHint)
+    py::class_<BodyStateSeq, shared_ptr<BodyStateSeq>>(m, "BodyStateSeq")
+        .def_property_readonly("numLinkPositionsHint", &BodyStateSeq::numLinkPositionsHint)
+        .def("setNumLinkPositionsHint", &BodyStateSeq::setNumLinkPositionsHint)
+        .def_property_readonly("numJointDisplacementsHint", &BodyStateSeq::numJointDisplacementsHint)
+        .def("setNumJointDisplacementsHint", &BodyStateSeq::setNumJointDisplacementsHint)
         ;
 
     py::class_<LeggedBodyHelper>(m, "LeggedBodyHelper")

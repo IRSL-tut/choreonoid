@@ -10,6 +10,7 @@
 #include "Timer.h"
 #include "AppConfig.h"
 #include "DisplayValueFormat.h"
+#include "QtEventUtil.h"
 #include <cnoid/GL1SceneRenderer>
 #include <cnoid/GLSLSceneRenderer>
 #include <cnoid/Selection>
@@ -687,7 +688,7 @@ void SceneWidget::Impl::initializeGL()
     }
 
     renderer->setDefaultFramebufferObject(defaultFramebufferObject());
-    
+
     lastDevicePixelRatio = devicePixelRatio();
     renderer->setDevicePixelRatio(lastDevicePixelRatio);
 
@@ -1332,9 +1333,10 @@ void SceneWidget::Impl::updateLatestEvent(QMouseEvent* event)
     default:
         latestEvent.type_ = SceneWidgetEvent::NoEvent;
     }
-    updateLatestEvent(event->x(), event->y(), event->modifiers());
+    auto pos = getPosition(event);
+    updateLatestEvent(pos.x(), pos.y(), event->modifiers());
     latestEvent.button_ = event->button();
-    latestGlobalMousePos = event->globalPos();
+    latestGlobalMousePos = getGlobalPosition(event);
 }
 
 
@@ -1350,9 +1352,8 @@ void SceneWidget::Impl::updateLatestEventPath(bool forceFullPicking)
 
     makeCurrent();
 
-    const int r = lastDevicePixelRatio;
-    int px = r * latestEvent.x();
-    int py = r * latestEvent.y();
+    int px = lastDevicePixelRatio * latestEvent.x();
+    int py = lastDevicePixelRatio * latestEvent.y();
 
     isRendering = true;
     bool picked = renderer->pick(px, py);
@@ -1611,8 +1612,9 @@ void SceneWidget::Impl::mousePressEvent(QMouseEvent* event)
     updateLatestEvent(event);
     updateLatestEventPath();
     updateLastClickedPoint();
-    mousePressX = event->x();
-    mousePressY = event->y();
+    auto pos = getPosition(event);
+    mousePressX = pos.x();
+    mousePressY = pos.y();
 
     bool handled = false;
     bool forceViewMode = (event->modifiers() & Qt::AltModifier);
@@ -1635,9 +1637,9 @@ void SceneWidget::Impl::mousePressEvent(QMouseEvent* event)
     if(!handled){
         if(event->button() == Qt::RightButton){
             if(isEditMode){
-                showEditModePopupMenu(event->globalPos());
+                showEditModePopupMenu(getGlobalPosition(event));
             } else {
-                showViewModePopupMenu(event->globalPos());
+                showViewModePopupMenu(getGlobalPosition(event));
             }
             handled = true;
         }
@@ -1722,7 +1724,8 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
         if(focusedEditable){
             if(dragMode == ABOUT_TO_EDIT){
                 const int thresh = ThreashToStartPointerMoveEventForEditableNode;
-                if(abs(event->x() - mousePressX) > thresh || abs(event->y() - mousePressY) > thresh){
+                auto pos = getPosition(event);
+                if(abs(pos.x() - mousePressX) > thresh || abs(pos.y() - mousePressY) > thresh){
                     dragMode = EDITING;
                 }
             }
@@ -1823,7 +1826,7 @@ void SceneWidget::Impl::mouseMoveEvent(QMouseEvent* event)
     }
     lastMouseMoveEvent =
         new QMouseEvent(
-            event->type(), event->localPos(), event->windowPos(), event->screenPos(),
+            event->type(), getPosition(event), getScenePosition(event), getGlobalPosition(event),
             event->button(), event->buttons(), event->modifiers());
 }
 
@@ -1929,7 +1932,7 @@ void SceneWidget::Impl::wheelEvent(QWheelEvent* event)
 
 bool SceneWidget::unproject(double x, double y, double z, Vector3& out_projected) const
 {
-    const int r = impl->lastDevicePixelRatio;
+    const float r = impl->lastDevicePixelRatio;
     return impl->renderer->unproject(r * x, r * y, z, out_projected);
 }
 

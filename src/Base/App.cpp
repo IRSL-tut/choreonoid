@@ -67,12 +67,12 @@
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
 #include <cnoid/FilePathVariableProcessor>
+#include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
 #include <fmt/format.h>
 #include <Eigen/Core>
 #include <QApplication>
 #include <QTranslator>
-#include <QTextCodec>
 #include <QSurfaceFormat>
 #include <QStyleFactory>
 #include <QThread>
@@ -80,6 +80,10 @@
 #include <regex>
 #include <iostream>
 #include <csignal>
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#include <QTextCodec>
+#endif
 
 #ifdef Q_OS_WIN32
 #include <windows.h>
@@ -116,9 +120,6 @@ void onCtrl_C_Input(int)
 }
 
 #ifdef Q_OS_WIN32
-int argc_winmain;
-vector<char*> argv_winmain;
-
 BOOL WINAPI consoleCtrlHandler(DWORD ctrlChar)
 {
     callLater([](){ MainWindow::instance()->close(); });
@@ -174,40 +175,6 @@ App::App(int& argc, char** argv, const std::string& appName, const std::string& 
 }
 
 
-#ifdef _WIN32
-App::App
-(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow,
- const std::string& appName, const std::string& organization)
-{
-#ifndef UNICODE
-    for(int i=0; i < __argc; ++i){
-        argv_winmain.push_back(__argv[i]);
-    }
-#else
-    vector<char> buf;
-    vector<string> args(wargs.size());
-    int codepage = _getmbcp();
-    for(int i=0; i < __argc; ++i){
-        wchar_t* warg = __wargv[i];
-        size_t wargsize = wcslen(warg);
-        const int size = WideCharToMultiByte(codepage, 0, warg, wargsize, NULL, 0, NULL, NULL);
-        char* arg;
-        if(size > 0){
-            arg = new char[size + 1];
-            WideCharToMultiByte(codepage, 0, warg, wargsize, arg, size + 1, NULL, NULL);
-        } else {
-            arg = new char[1];
-            arg[0] = '\0';
-        }
-        argv_winmain.push_back(arg);
-    }
-#endif
-    argc_winmain = argv_winmain.size();
-    impl = new Impl(this, argc_winmain, &argv_winmain[0], appName, organization);
-}
-#endif
-
-
 App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, const std::string& organization)
     : self(self),
       qapplication(nullptr),
@@ -259,11 +226,13 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
 
     QSurfaceFormat::setDefaultFormat(glFormat);
 
-#if (QT_VERSION < QT_VERSION_CHECK(5, 6, 0))
-    QCoreApplication::setAttribute(Qt::AA_X11InitThreads);
-#endif
-    
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+
+    // The following attribute is currently disabled because the actual scaling
+    // enabled by this attribute seems too large.
+    // QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif
 
     /*
       This attribute is necessary to render the scene on a scene view when the view is
@@ -272,7 +241,7 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
     */
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)) && (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
     QCoreApplication::setAttribute(Qt::AA_DisableWindowContextHelpButton);
 #endif
 
@@ -285,7 +254,22 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
     setlocale(LC_NUMERIC, "C");
 #endif
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
+#endif
+
+#ifdef Q_OS_WIN32
+    // Make a bundled Python available if it exists in the Choreonoid top directory.
+    std::smatch match;
+    for(auto& dir : filesystem::directory_iterator(executableTopDirPath())){
+        static std::regex re("^Python\\d+$");
+        string dirString = dir.path().filename().string();
+        if(regex_match(dirString, match, re)){
+            qputenv("PATH", fmt::format("{0};{1}", dir.path().string(), qgetenv("PATH")).c_str());
+            break;
+        }
+    }
+#endif
 }
 
 
@@ -342,10 +326,15 @@ void App::initialize()
 void App::Impl::initialize()
 {
     if(checkCurrentLocaleLanguageSupport()){
-        translator.load(
-            "qt_" + QLocale::system().name(),
-            QLibraryInfo::location(QLibraryInfo::TranslationsPath));
-        qapplication->installTranslator(&translator);
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        QString translationsPath = QLibraryInfo::path(QLibraryInfo::TranslationsPath);
+#else
+        QString translationsPath = QLibraryInfo::location(QLibraryInfo::TranslationsPath);
+#endif
+        if(translator.load("qt_" + QLocale::system().name(), translationsPath)){
+            qapplication->installTranslator(&translator);
+        }
     }
 
     qapplication->setWindowIcon(
@@ -596,9 +585,12 @@ int App::Impl::exec()
     RootItem::instance()->clearChildren();
     
     pluginManager->finalizePlugins();
-    delete ext;
     delete mainWindow;
     mainWindow = nullptr;
+
+    // Note that the application must be terminated without deleting
+    // the base extension manager pointed by the 'ext' variable
+    // to avoid crashes due to destructors accessing invalid objects.
     
     return returnCode;
 }

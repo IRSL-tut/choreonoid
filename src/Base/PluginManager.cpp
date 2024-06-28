@@ -15,12 +15,12 @@
 #include <cnoid/UTF8>
 #include <cnoid/stdx/filesystem>
 #include <QLibrary>
-#include <QRegExp>
 #include <QFileDialog>
 #include <vector>
 #include <map>
 #include <set>
 #include <list>
+#include <regex>
 #include <fmt/format.h>
 
 #ifdef Q_OS_WIN32
@@ -101,7 +101,7 @@ public:
 
     string pluginDirectory;
     vector<string> pluginDirectories;
-    QRegExp pluginNamePattern;
+    std::regex pluginNamePattern;
 
     vector<PluginInfoPtr> allPluginInfos;
     PluginMap nameToPluginInfoMap;
@@ -121,11 +121,11 @@ public:
     LazyCaller unloadPluginsLater;
     LazyCaller reloadPluginsLater;
 
-    void addPluginDirectory(const std::string& directory, bool doMakeAbsolute);
+    bool addPluginDirectory(const std::string& directory, bool doMakeAbsolute);
     void loadPlugins(bool doActivation);
     void scanPluginFiles(const std::string& pathString, bool isUTF8, bool isRecursive);
     void loadScannedPluginFiles(bool doActivation);
-    bool loadPlugin(int index);
+    bool loadPlugin(int index, bool isLoadingMultiplePlugins);
     bool activatePlugin(int index);
     bool unloadPlugin(int index);
     bool unloadPlugin(const std::string& name, bool doReloading);
@@ -178,8 +178,7 @@ PluginManager::Impl::Impl()
 
     addPluginDirectory(cnoid::pluginDir(), false);
 
-    pluginNamePattern.setPattern(
-        QString(DLL_PREFIX) + "Cnoid(.+)Plugin" + DEBUG_SUFFIX + "\\." + DLL_EXTENSION);
+    pluginNamePattern.assign(string(DLL_PREFIX) + "Cnoid(.+)Plugin" + DEBUG_SUFFIX + "\\." + DLL_EXTENSION);
 
     // for the base module
     PluginInfoPtr info = std::make_shared<PluginInfo>();
@@ -224,48 +223,47 @@ void PluginManager::addPluginPath(const std::string& pathList)
 }
 
 
-void PluginManager::addPluginDirectory(const std::string& directory)
+bool PluginManager::addPluginDirectory(const std::string& directory)
 {
-    impl->addPluginDirectory(directory, true);
+    return impl->addPluginDirectory(fromUTF8(directory), true);
 }
 
 
-void PluginManager::Impl::addPluginDirectory(const std::string& directory, bool doMakeAbsolute)
+bool PluginManager::Impl::addPluginDirectory(const std::string& nativeDirectory, bool doMakeAbsolute)
 {
-    string directoryFromUTF8;
-    if(doMakeAbsolute){
-        directoryFromUTF8 = fromUTF8(directory);
-        filesystem::path path(directoryFromUTF8);
-        if(!path.is_absolute()){
-            string absDirectory = filesystem::absolute(path).string();
-            pluginDirectories.insert(pluginDirectories.begin(), toUTF8(absDirectory));
-#ifdef Q_OS_WIN32
-            // Add the plugin directory to PATH
-            qputenv("PATH", format("{0};{1}", absDirectory, qgetenv("PATH")).c_str());
-#endif
-            return;
+    filesystem::path path(nativeDirectory);
+
+    if(!path.is_absolute()){
+        if(!doMakeAbsolute){
+            return false;
         }
+        path = filesystem::absolute(path);
+    }
+
+    stdx::error_code ec;
+    if(!filesystem::is_directory(path, ec)){
+        return false;
     }
     
-    pluginDirectories.insert(pluginDirectories.begin(), directory);
+    auto pathString = path.string();
+    pluginDirectories.insert(pluginDirectories.begin(), toUTF8(pathString));
     
 #ifdef Q_OS_WIN32
     // Add the plugin directory to PATH
-    if(directoryFromUTF8.empty()){
-        directoryFromUTF8 = fromUTF8(directory);
-    }
-    qputenv("PATH", format("{0};{1}", directoryFromUTF8, qgetenv("PATH")).c_str());
+    qputenv("PATH", format("{0};{1}", pathString, qgetenv("PATH")).c_str());
 #endif
+
+    return true;
 }
 
 
 /**
    @param directory the install prefix of the corresponding plugin module.
 */
-void PluginManager::addPluginDirectoryAsPrefix(const std::string& prefix)
+bool PluginManager::addPluginDirectoryAsPrefix(const std::string& prefix)
 {
-    addPluginDirectory(
-        toUTF8((filesystem::path(fromUTF8(prefix)) / CNOID_PLUGIN_SUBDIR).string()));
+    return impl->addPluginDirectory(
+        (filesystem::path(fromUTF8(prefix)) / CNOID_PLUGIN_SUBDIR).string(), false);
 }
 
 
@@ -347,13 +345,14 @@ void PluginManager::Impl::scanPluginFiles(const std::string& pathString, bool is
                 pPathStringUtf8 = &tmpPathStringUtf8;
             }
             const string& pathStringUtf8 = *pPathStringUtf8;
-            QString filename(toUTF8(pluginPath.filename().string()).c_str());
-            if(isNamingConventionCheckDisabled || pluginNamePattern.exactMatch(filename)){
-                PluginMap::iterator p = pathToPluginInfoMap.find(pathStringUtf8);
-                if(p == pathToPluginInfoMap.end()){
+            string filename(toUTF8(pluginPath.filename().string()));
+            std::smatch match;
+            if(isNamingConventionCheckDisabled || regex_match(filename, match, pluginNamePattern)){
+                auto it = pathToPluginInfoMap.find(pathStringUtf8);
+                if(it == pathToPluginInfoMap.end()){
                     PluginInfoPtr info = std::make_shared<PluginInfo>();
                     // Set a tentative name extracted from the plugin file name
-                    info->name = pluginNamePattern.cap(1).toStdString();
+                    info->name = match.str(1);
                     info->pathString = pathStringUtf8;
                     allPluginInfos.push_back(info);
                     pathToPluginInfoMap[info->pathString] = info;
@@ -371,14 +370,25 @@ void PluginManager::Impl::loadScannedPluginFiles(bool doActivation)
         int numNotLoaded = 0;
         for(size_t i=0; i < allPluginInfos.size(); ++i){
             if(allPluginInfos[i]->status == PluginManager::NOT_LOADED){
-                if(loadPlugin(i)){
+                if(loadPlugin(i, true)){
                     ++numLoaded;
                 } else {
                     ++numNotLoaded;
                 }
             }
         }
-        if(numLoaded == 0 || numNotLoaded == 0){
+        if(numLoaded == 0){
+            if(numNotLoaded > 0){
+                for(auto& plugin : allPluginInfos){
+                    if(plugin->status == PluginManager::NOT_LOADED){
+                        mout->putErrorln(format(_("Loading {0} failed.\n"), plugin->name));
+                        if(!plugin->lastErrorMessage.empty()){
+                            mout->putErrorln(plugin->lastErrorMessage);
+                        }
+                        plugin->status = PluginManager::INVALID;
+                    }
+                }
+            }
             break;
         }
     }
@@ -432,14 +442,14 @@ void PluginManager::Impl::loadScannedPluginFiles(bool doActivation)
 
 bool PluginManager::loadPlugin(int index)
 {
-    if(impl->loadPlugin(index)){
+    if(impl->loadPlugin(index, false)){
         return impl->activatePlugin(index);
     }
     return false;
 }
 
 
-bool PluginManager::Impl::loadPlugin(int index)
+bool PluginManager::Impl::loadPlugin(int index, bool isLoadingMultiplePlugins)
 {
     PluginInfoPtr& info = allPluginInfos[index];
     
@@ -468,9 +478,17 @@ bool PluginManager::Impl::loadPlugin(int index)
 
         if(!(info->dll.load())){
             info->lastErrorMessage = fmt::format(_("System error: {0}"), info->dll.errorString().toStdString());
-            mout->putErrorln(info->lastErrorMessage);
-            info->status = PluginManager::INVALID;
-
+            if(isLoadingMultiplePlugins){
+                /*
+                  A plugin without the RPATH information may not be loaded if it is loaded before
+                  the plugins it depends on are loaded. In such cases, loading the plugin again
+                  after the other plugins have been loaded may allow it to be loaded.
+                */
+                return false;
+            } else {
+                mout->putErrorln(info->lastErrorMessage);
+                info->status = PluginManager::INVALID;
+            }
         } else {
             QFunctionPointer symbol = info->dll.resolve("getChoreonoidPlugin");
             if(!symbol){
@@ -933,7 +951,6 @@ void PluginManager::Impl::showDialogToLoadPlugin()
             string filename = toUTF8(path.make_preferred().string());
 
             // This code was taken from 'scanPluginFiles'. This should be unified.
-            //if(pluginNamePattern.exactMatch(QString(getFilename(pluginPath).c_str()))){
             if(true){
                 PluginMap::iterator p = pathToPluginInfoMap.find(filename);
                 if(p == pathToPluginInfoMap.end()){

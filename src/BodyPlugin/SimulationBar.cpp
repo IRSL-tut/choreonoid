@@ -8,6 +8,7 @@
 #include <cnoid/MessageView>
 #include <cnoid/UnifiedEditHistory>
 #include <cnoid/Archive>
+#include <cnoid/QtEventUtil>
 #include <fmt/format.h>
 #include <functional>
 #include "gettext.h"
@@ -53,28 +54,28 @@ SimulationBar* SimulationBar::instance()
 SimulationBar::SimulationBar()
     : ToolBar(N_("SimulationBar"))
 {
-    auto storeButton = addButton(QIcon(":/Body/icon/store-world-initial.svg"));
+    auto storeButton = addButton(":/Body/icon/store-world-initial.svg");
     storeButton->setToolTip(_("Store body positions to the initial world state"));
     storeButton->sigClicked().connect([this](){ onStoreInitialClicked(); });
     
-    auto restoreButton = addButton(QIcon(":/Body/icon/restore-world-initial.svg"));
+    auto restoreButton = addButton(":/Body/icon/restore-world-initial.svg");
     restoreButton->setToolTip(_("Restore body positions from the initial world state"));
     restoreButton->sigClicked().connect([this](){ onRestoreInitialClicked(); });
 
-    auto startButton = addButton(QIcon(":/Body/icon/start-simulation.svg"));
+    auto startButton = addButton(":/Body/icon/start-simulation.svg");
     startButton->setToolTip(_("Start simulation from the beginning"));
     startButton->sigClicked().connect([this](){ startSimulation(true); });
 
-    auto restartButton = addButton(QIcon(":/Body/icon/restart-simulation.svg"));
+    auto restartButton = addButton(":/Body/icon/restart-simulation.svg");
     restartButton->setToolTip(_("Start simulation from the current state"));
     restartButton->sigClicked().connect([this](){ startSimulation(false); });
     
-    pauseToggle = addToggleButton(QIcon(":/Body/icon/pause-simulation.svg"));
+    pauseToggle = addToggleButton(":/Body/icon/pause-simulation.svg");
     pauseToggle->setToolTip(_("Pause simulation"));
     pauseToggle->sigClicked().connect([this](){ onPauseSimulationClicked(); });
     pauseToggle->setChecked(false);
 
-    stopButton = addButton(QIcon(":/Body/icon/stop-simulation.svg"));
+    stopButton = addButton(":/Body/icon/stop-simulation.svg");
     stopButton->setToolTip(_("Stop simulation"));
     stopButton->sigClicked().connect([this](){ onStopSimulationClicked(); });
     stopButton->installEventFilter(this);
@@ -229,7 +230,7 @@ void SimulationBar::onStopButtonRightClicked(QMouseEvent* event)
     auto check = menuManager.addCheckItem(_("Enable Confirmation Dialog"));
     check->setChecked(isStopConfirmationEnabled);
     check->sigToggled().connect([this](bool on){ isStopConfirmationEnabled = on; });
-    menuManager.popupMenu()->popup(event->globalPos());
+    menuManager.popupMenu()->popup(getGlobalPosition(event));
 }
 
 

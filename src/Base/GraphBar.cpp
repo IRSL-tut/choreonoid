@@ -65,8 +65,6 @@ namespace cnoid {
 class GraphBarImpl
 {
 public:
-    GraphBarImpl(GraphBar* self);
-
     GraphBar* self;
 
     ToolButton* orgRenderingToggle;
@@ -76,8 +74,11 @@ public:
     ConnectionSet connections;
     GraphWidget* focusedGraphWidget;
 
-    ConfigDialog config;
-        
+    ConfigDialog* configDialog;
+
+    GraphBarImpl(GraphBar* self);
+    ~GraphBarImpl();
+    ConfigDialog* getOrCreateConfigDialog();
     void focus(GraphWidget* graphWidget, bool forceUpdate);
     void onRenderingTypesToggled();
 };
@@ -108,23 +109,22 @@ GraphBar::GraphBar() : ToolBar(N_("GraphBar"))
 
 
 GraphBarImpl::GraphBarImpl(GraphBar* self)
-    : self(self),
-      config(this)
+    : self(self)
 {
-    orgRenderingToggle = self->addToggleButton(QIcon(":/Base/icon/graph.svg"));
+    orgRenderingToggle = self->addToggleButton(":/Base/icon/graph.svg");
     orgRenderingToggle->setToolTip(_("Plot trajectories of the target data on the graph view"));
     orgRenderingToggle->setChecked(true);
     connections.add(
         orgRenderingToggle->sigToggled().connect(
             [&](bool){ onRenderingTypesToggled(); }));
 
-    velRenderingToggle = self->addToggleButton(QIcon(":/Base/icon/velocitygraph.svg"));
+    velRenderingToggle = self->addToggleButton(":/Base/icon/velocitygraph.svg");
     velRenderingToggle->setToolTip(_("Plot velocity trajectories"));
     connections.add(
         velRenderingToggle->sigToggled().connect(
             [&](bool){ onRenderingTypesToggled(); }));
 
-    accRenderingToggle = self->addToggleButton(QIcon(":/Base/icon/accgraph.svg"));
+    accRenderingToggle = self->addToggleButton(":/Base/icon/accgraph.svg");
     accRenderingToggle->setToolTip(_("Plot acceleration trajectories"));
     // Hide this button because the acc trajectory is currently not supported by the graph wieget
     accRenderingToggle->hide();
@@ -133,9 +133,14 @@ GraphBarImpl::GraphBarImpl(GraphBar* self)
         accRenderingToggle->sigToggled().connect(
             [&](bool){ onRenderingTypesToggled(); }));
 
-    auto configButton = self->addButton(QIcon(":/Base/icon/setup.svg"));
+    configDialog = nullptr;
+
+    auto configButton = self->addButton(":/Base/icon/setup.svg");
     configButton->setToolTip(_("Show the config dialog"));
-    configButton->sigClicked().connect([&](){ config.show();});
+
+    configButton->sigClicked().connect([&](){
+        getOrCreateConfigDialog()->show();
+    });
 
     self->setEnabled(false);
     
@@ -147,6 +152,23 @@ GraphBar::~GraphBar()
 {
     delete impl;
     graphBar = nullptr;
+}
+
+
+GraphBarImpl::~GraphBarImpl()
+{
+    if(configDialog){
+        delete configDialog;
+    }
+}
+
+
+ConfigDialog* GraphBarImpl::getOrCreateConfigDialog()
+{
+    if(!configDialog){
+        configDialog = new ConfigDialog(this);
+    }
+    return configDialog;
 }
 
 
@@ -177,7 +199,7 @@ void GraphBarImpl::focus(GraphWidget* graph, bool forceUpdate)
         velRenderingToggle->setChecked(vel);
         accRenderingToggle->setChecked(acc);
 
-        config.focus(graph);
+        getOrCreateConfigDialog()->focus(graph);
 
         connections.unblock();
     }

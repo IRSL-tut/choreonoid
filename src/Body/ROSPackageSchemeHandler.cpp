@@ -18,17 +18,37 @@ namespace {
 class ROSPackageSchemeHandler
 {
     vector<string> packagePaths;
+    bool has_ROS_PACKAGE_PATH;
     
 public:
     ROSPackageSchemeHandler()
     {
-        const char* str = getenv("ROS_PACKAGE_PATH");
-        if(str){
+        has_ROS_PACKAGE_PATH = false;
+        const char* rpp = getenv("ROS_PACKAGE_PATH"); // for ROS 1
+        if(rpp){
             do {
-                const char* begin = str;
-                while(*str != ':' && *str) str++;
-                packagePaths.push_back(string(begin, str));
-            } while (0 != *str++);
+                const char* begin = rpp;
+                while(*rpp != ':' && *rpp) rpp++;
+                string element(begin, rpp);
+                if(!element.empty()){
+                    packagePaths.push_back(element);
+                    has_ROS_PACKAGE_PATH = true;
+                }
+            } while (0 != *rpp++);
+        }
+        
+        const char* app = getenv("AMENT_PREFIX_PATH"); // for ROS 2
+        if(app){
+            do {
+                const char* begin = app;
+                while(*app != ':' && *app) app++;
+                string element(begin, app);
+                if(!element.empty()){
+                    filesystem::path path(element);
+                    path /= "share";
+                    packagePaths.push_back(path.string());
+                }
+            } while (0 != *app++);
         }
     }
 
@@ -39,11 +59,13 @@ public:
         if(iter == filepath.end()){
             return string();
         }
-        
-        filesystem::path directory = *iter++;
+
         filesystem::path relativePath;
-        while(iter != filepath.end()){
-            relativePath /= *iter++;
+        if(has_ROS_PACKAGE_PATH){
+            ++iter;
+            while(iter != filepath.end()){
+                relativePath /= *iter++;
+            }
         }
 
         bool found = false;
@@ -56,10 +78,12 @@ public:
                 found = true;
                 break;
             }
-            combined = packagePath / relativePath;
-            if(exists(combined)){
-                found = true;
-                break;
+            if(has_ROS_PACKAGE_PATH){
+                combined = packagePath / relativePath;
+                if(exists(combined)){
+                    found = true;
+                    break;
+                }
             }
         }
 

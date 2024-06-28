@@ -36,7 +36,6 @@ set(sources
   BodyMotionItem.cpp
   BodyMotionEngine.cpp
   MultiDeviceStateSeqItem.cpp
-  MultiDeviceStateSeqEngine.cpp
   ZMPSeqItem.cpp
   WorldLogFileItem.cpp
   IoConnectionMapItem.cpp
@@ -60,6 +59,7 @@ set(sources
   LinkPositionView.cpp
   LinkPositionWidget.cpp
   LinkPropertyView.cpp
+  LinkMassSummaryView.cpp
   JointDisplacementWidgetSet.cpp
   MultiBodyJointDisplacementWidget.cpp
   JointDisplacementView.cpp
@@ -109,7 +109,6 @@ set(headers
   GLVisionSimulatorItem.h
   BodyMotionItem.h
   ZMPSeqItem.h
-  MultiDeviceStateSeqItem.h
   WorldLogFileItem.h
   IoConnectionMapItem.h
   SensorVisualizerItem.h
@@ -144,7 +143,7 @@ set(target CnoidBodyPlugin)
 
 choreonoid_make_gettext_mo_files(${target} mofiles)
 
-qt5_add_resources(RC_SRCS BodyPlugin.qrc)
+choreonoid_qt_add_resources(RC_SRCS BodyPlugin.qrc)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
