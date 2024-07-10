@@ -24,7 +24,7 @@ GLFreeType::GLFreeType()
     face = nullptr;
     textureUnit = 0;
     textureId_ = 0;
-    textureWidth = 1024;
+    textureWidth = 6144;
     textureHeight = 1024;
     nextCharacterX = 0;
     nextCharacterY = 0;
