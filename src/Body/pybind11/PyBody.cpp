@@ -92,6 +92,7 @@ void exportPyBody(py::module& m)
             self.calcTotalMomentum(P, L);
             return py::make_tuple(P, L);
             })
+        .def("calcInverseDynamics", &Body::calcInverseDynamics)
         .def("calcForwardKinematics",
              &Body::calcForwardKinematics, py::arg("calcVelocity") = false, py::arg("calcAcceleration") = false)
         .def("clearExternalForces", &Body::clearExternalForces)

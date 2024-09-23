@@ -214,7 +214,12 @@ void exportPyLink(py::module& m)
         .def_property_readonly("info", (Mapping*(Link::*)())&Link::info)
         .def("getInfo", Link_getInfo)
         .def("floatInfo", [](Link& self, const std::string& key) { return self.info<double>(key); })
-
+        //IRSL
+        .def("initializeState", &Link::initializeState)
+        .def("setGravityAsExt", [](Link& self) {
+            Vector3 gf(0, 0, self.m() * -9.80665);
+            self.addExternalForceAtLocalPosition(gf, self.c());
+        })
         // deprecated
         .def_property_readonly("jointTypeString", [](const Link& self){ return self.jointTypeLabel(); })
         .def("isRotationalJoint", &Link::isRevoluteJoint)
