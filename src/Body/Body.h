@@ -256,7 +256,9 @@ public:
     void calcForwardKinematics(bool calcVelocity = false, bool calcAcceleration = false) {
         linkTraverse_.calcForwardKinematics(calcVelocity, calcAcceleration);
     }
-        
+    Vector6 calcInverseDynamics() {
+        return linkTraverse_.calcInverseDynamics();
+    }
     void clearExternalForces();
 
     int numExtraJoints() const { return static_cast<int>(extraJoints_.size()); }
