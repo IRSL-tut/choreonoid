@@ -252,7 +252,9 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
 
     // creates a color dictionary before parsing the robot model
     for (xml_node& materialNode : robotNode.children(MATERIAL)) {
-        updateColorMap(materialNode);
+        if (!materialNode.empty()) {
+            updateColorMap(materialNode);
+        }
     }
     for (xml_node& linkNode : robotNode.children(LINK)) {
         for (xml_node& visualNode : linkNode.children(VISUAL)) {
@@ -342,6 +344,8 @@ void URDFBodyLoader::Impl::updateColorMap(const xml_node& materialNode)
             if (!result.second) {
                 os() << "Warning: failed to add material named \""
                         << materialName << "\"." << endl;
+            } else {
+                os() << "add material : " << materialName  << endl;
             }
         }
     } else if (!textureNode.empty()) {
@@ -482,8 +486,9 @@ bool URDFBodyLoader::Impl::loadInertialTag(LinkPtr& link,
     if (mass > 0.0) {
         link->setMass(mass);
     } else {
-        os() << "Error: mass value is invalid";
-        return false;
+        link->setMass(0.00001);
+        //os() << "Error: mass value is invalid";
+        //return false;
     }
 
     // 'inertia' tag
