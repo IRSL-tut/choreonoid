@@ -11,9 +11,14 @@ Signal<bool(LocationProxyPtr location), LogicalSum> sigEditRequest;
 }
 
 
-LocationProxy::LocationProxy(LocationType type)
-    : locationType_(type)
+LocationProxy::LocationProxy(Item* locatableItem, LocationType type)
+    : locatableItem_(locatableItem),
+      locationType_(type)
 {
+    if(locatableItem){
+        itemConnection = locatableItem->sigDisconnectedFromRoot().connect(
+            [this]{ locatableItem_ = nullptr; });
+    }
     isLocked_ = false;
 }
 
@@ -24,15 +29,25 @@ LocationProxy::~LocationProxy()
 }
 
 
+void LocationProxy::setNameDependencyOnItemName()
+{
+    if(locatableItem_){
+        if(!itemNameConnection.connected()){
+            itemNameConnection = locatableItem_->sigNameChanged().connect(
+                [this](const std::string&){ notifyAttributeChange(); });
+        }
+    }
+}
+
+
 std::string LocationProxy::getName() const
 {
     auto self = const_cast<LocationProxy*>(this);
-    if(auto item = self->getCorrespondingItem()){
-        if(!itemNameConnection_.connected()){
-            self->itemNameConnection_ = item->sigNameChanged().connect(
-                [self](const std::string&){ self->notifyAttributeChange(); });
+    if(locatableItem_){
+        if(!itemNameConnection.connected()){
+            self->setNameDependencyOnItemName();
         }
-        return item->displayName();
+        return locatableItem_->displayName();
     }
     return std::string();
 }
@@ -59,8 +74,17 @@ void LocationProxy::setLocked(bool on)
 }
 
 
-bool LocationProxy::isDoingContinuousUpdate() const
+bool LocationProxy::isContinuousUpdateState() const
 {
+    auto self = const_cast<LocationProxy*>(this);
+    if(locatableItem_){
+        if(!self->continuousUpdateStateConnection.connected()){
+            self->continuousUpdateStateConnection =
+                locatableItem_->sigContinuousUpdateStateChanged().connect(
+                    [self](bool){ self->notifyAttributeChange(); });
+        }
+        return locatableItem_->isContinuousUpdateState();
+    }
     return false;
 }
 
@@ -77,16 +101,10 @@ void LocationProxy::finishLocationEditing()
 }
 
 
-Item* LocationProxy::getCorrespondingItem()
+LocationProxyPtr LocationProxy::getParentLocationProxy()
 {
-    return nullptr;
-}
-
-
-LocationProxyPtr LocationProxy::getParentLocationProxy() const
-{
-    if(auto item = const_cast<LocationProxy*>(this)->getCorrespondingItem()){
-        if(auto parentLocatableItem = item->findOwnerItem<LocatableItem>()){
+    if(locatableItem_){
+        if(auto parentLocatableItem = locatableItem_->findOwnerItem<LocatableItem>()){
             return parentLocatableItem->getLocationProxy();
         }
     }
@@ -107,7 +125,7 @@ Isometry3 LocationProxy::getGlobalLocationOf(const Isometry3 T) const
         return T;
     case ParentRelativeLocation:
     case OffsetLocation:
-        if(auto parent = getParentLocationProxy()){
+        if(auto parent = const_cast<LocationProxy*>(this)->getParentLocationProxy()){
             return parent->getGlobalLocation() * T;
         } else {
             return T;

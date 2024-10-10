@@ -69,17 +69,16 @@ public:
         unique_ptr<YAMLReader> yamlReader;
         string directory;
         string file;
-        string metadata;
+        MappingPtr metadata;
     };
     typedef ref_ptr<ResourceInfo> ResourceInfoPtr;
 
-    map<string, ResourceInfoPtr> resourceInfoMap;
+    unordered_map<string, ResourceInfoPtr> resourceInfoMap;
 
     string baseDirectory;
     SceneLoader sceneLoader;
-    bool sceneLoaderConfigurationChanged;
     unique_ptr<UriSchemeProcessor> uriSchemeProcessor;
-    typedef map<string, SgImagePtr> ImagePathToSgImageMap;
+    typedef unordered_map<string, SgImagePtr> ImagePathToSgImageMap;
     ImagePathToSgImageMap imagePathToSgImageMap;
 
     typedef SgNode* (Impl::*NodeFunction)(Mapping* info);
@@ -137,8 +136,9 @@ public:
     SgNode* readText(Mapping* info);
     SgNode* readResourceAsScene(Mapping* info);
     Resource readResourceNode(Mapping* info);
+    MappingPtr readOldFormatMetaDataString(const std::string& data);
     void extractNamedSceneNodes(Mapping* resourceNode, ResourceInfo* info, Resource& resource);
-    ResourceInfo* getOrCreateResourceInfo(Mapping* resourceNode, const string& uri, const string& metadata);
+    ResourceInfo* getOrCreateResourceInfo(Mapping* resourceNode, const string& uri, Mapping* metadata);
     stdx::filesystem::path findFileInPackage(const string& file);
     void adjustNodeCoordinate(SceneNodeInfo& info);
     void makeSceneNodeMap(ResourceInfo* info);
@@ -213,7 +213,6 @@ StdSceneReader::Impl::Impl(StdSceneReader* self)
     }
     
     os_ = &nullout();
-    sceneLoaderConfigurationChanged = false;
     imageIO.setUpsideDown(true);
 }
 
@@ -1672,7 +1671,14 @@ StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping* info)
     if(fragmentNode->isValid()){
         resource.fragment = fragmentNode->toString();
     }
-    info->read("metadata", resource.metadata);
+    auto metadataNode = info->find("metadata");
+    if(metadataNode->isValid()){
+        if(metadataNode->isMapping()){
+            resource.metadata = metadataNode->toMapping();
+        } else if(metadataNode->isString()){
+            resource.metadata = readOldFormatMetaDataString(metadataNode->toString());
+        }
+    }
     
     ResourceInfo* resourceInfo = getOrCreateResourceInfo(info, resource.uri, resource.metadata);
     if(resourceInfo){
@@ -1700,16 +1706,62 @@ StdSceneReader::Resource StdSceneReader::Impl::readResourceNode(Mapping* info)
 
         if(resource.scene){
             resource.scene = readTransformParameters(info, resource.scene);
-            if(auto uriObject = resource.scene->findObject([](SgObject* object){ return object->hasUri(); })){
-                uriObject->setUri(resource.uri, resource.file);
-                if(!resource.fragment.empty()){
-                    uriObject->setUriFragment(resource.fragment);
-                }
+
+            SgObject* uriObject = resource.scene->findObject(
+                [&resource](SgObject* object){
+                    if(object->hasUri()){
+                        size_t pos = object->uri().rfind(resource.uri);
+                        if(pos != string::npos){
+                            if(object->uri().size() - pos == resource.uri.size()){
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                });
+            
+            if(!uriObject){
+                uriObject = resource.scene;
+            }
+
+            uriObject->setUri(resource.uri, resource.file);
+            if(!resource.fragment.empty()){
+                uriObject->setUriFragment(resource.fragment);
+            }
+            if(resource.metadata){
+                uriObject->setUriMetadata(resource.metadata);
             }
         }
     }
 
     return resource;
+}
+
+
+MappingPtr StdSceneReader::Impl::readOldFormatMetaDataString(const std::string& data)
+{
+    MappingPtr metadata;
+    if(!data.empty()){
+        metadata = new Mapping;
+        size_t start;
+        size_t end = 0;
+        string symbol;
+        while((start = data.find_first_not_of(' ', end)) != std::string::npos) {
+            end = data.find(' ', start);
+            symbol = data.substr(start, end - start);
+            if(symbol == "millimeter"){
+                metadata->write("length_unit", "millimeter");
+            } else if(symbol == "inch"){
+                metadata->write("length_unit", "inch");
+            } else if(symbol == "y_upper"){
+                metadata->write("upper_axis", "Y");
+            }
+        }
+        if(metadata->empty()){
+            metadata.reset();
+        }
+    }
+    return metadata;
 }
 
 
@@ -1737,9 +1789,16 @@ void StdSceneReader::Impl::extractNamedSceneNodes
 
 
 StdSceneReader::Impl::ResourceInfo*
-StdSceneReader::Impl::getOrCreateResourceInfo(Mapping* resourceNode, const string& uri, const string& metadata)
+StdSceneReader::Impl::getOrCreateResourceInfo(Mapping* resourceNode, const string& uri, Mapping* metadata)
 {
-    auto iter = resourceInfoMap.find(uri);
+    string uriWithMetadata;
+    if(!metadata){
+        uriWithMetadata = uri;
+    } else {
+        uriWithMetadata = formatC("{0}?metadata={1:0x}", uri, metadata->getContentHash());
+    }
+    
+    auto iter = resourceInfoMap.find(uriWithMetadata);
 
     if(iter != resourceInfoMap.end()){
         return iter->second;
@@ -1768,29 +1827,10 @@ StdSceneReader::Impl::getOrCreateResourceInfo(Mapping* resourceNode, const strin
         info->yamlReader = std::move(reader);
 
     } else {
-        if(sceneLoaderConfigurationChanged){
-            sceneLoader.setLengthUnitHint(AbstractSceneLoader::Meter);
-            sceneLoader.setUpperAxisHint(AbstractSceneLoader::Z_Upper);
-            sceneLoaderConfigurationChanged = false;
-        }
-        if(!metadata.empty()){
-            size_t start;
-            size_t end = 0;
-            string symbol;
-            while((start = metadata.find_first_not_of(' ', end)) != std::string::npos) {
-                end = metadata.find(' ', start);
-                symbol = metadata.substr(start, end - start);
-                if(symbol == "millimeter"){
-                    sceneLoader.setLengthUnitHint(AbstractSceneLoader::Millimeter);
-                    sceneLoaderConfigurationChanged = true;
-                } else if(symbol == "inch"){
-                    sceneLoader.setLengthUnitHint(AbstractSceneLoader::Inch);
-                    sceneLoaderConfigurationChanged = true;
-                } else if(symbol == "y_upper"){
-                    sceneLoader.setUpperAxisHint(AbstractSceneLoader::Y_Upper);
-                    sceneLoaderConfigurationChanged = true;
-                }
-            }
+        sceneLoader.clearHintsForLoading();
+        if(metadata){
+            sceneLoader.restoreLengthUnitAndUpperAxisHints(metadata);
+            info->metadata = metadata;
         }
         SgNodePtr scene = sceneLoader.load(info->file);
         if(!scene){
@@ -1802,7 +1842,7 @@ StdSceneReader::Impl::getOrCreateResourceInfo(Mapping* resourceNode, const strin
 
     info->directory = toUTF8(filePath.parent_path().string());
     
-    resourceInfoMap[uri] = info;
+    resourceInfoMap[uriWithMetadata] = info;
 
     return info;
 }

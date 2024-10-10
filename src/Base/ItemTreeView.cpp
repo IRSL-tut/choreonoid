@@ -129,20 +129,29 @@ void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menu)
     auto selectAll = menu.addItem(_("Select all"));
     auto clearSelection = menu.addItem(_("Clear selection"));
 
-    if(!item){
+    bool isContinuousUpdateStateSubTree =
+        item ? item->isContinuousUpdateStateSubTree() : false;
+
+    if(!item || isContinuousUpdateStateSubTree){
         rename->setEnabled(false);
         cut->setEnabled(false);
         copy1->setEnabled(false);
         copy2->setEnabled(false);
+        paste->setEnabled(false);
         check->setEnabled(false);
         uncheck->setEnabled(false);
         toggleCheck->setEnabled(false);
         reload->setEnabled(false);
+        saveAs->setEnabled(false);
         clearSelection->setEnabled(false);
 
     } else {
-        rename->sigTriggered().connect(
-            [this, item](){ itemTreeWidget->editItemName(item); });
+        if(item->isSubItem() || item->hasAttribute(Item::Attached)){
+            rename->setEnabled(false);
+        } else {
+            rename->sigTriggered().connect(
+                [this, item](){ itemTreeWidget->editItemName(item); });
+        }
             
         if(itemTreeWidget->checkCuttable(item)){
             cut->sigTriggered().connect(
@@ -159,12 +168,6 @@ void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menu)
             copy1->setEnabled(false);
             copy2->setEnabled(false);
         }
-        check->sigTriggered().connect(
-            [this](){ itemTreeWidget->setSelectedItemsChecked(true); });
-        uncheck->sigTriggered().connect(
-            [this](){ itemTreeWidget->setSelectedItemsChecked(false); });
-        toggleCheck->sigTriggered().connect(
-            [this](){ itemTreeWidget->toggleSelectedItemChecks(); });
 
         if(!item->hasAttribute(Item::Reloadable)){
             reload->setEnabled(false);
@@ -187,7 +190,18 @@ void ItemTreeView::Impl::onContextMenuRequested(Item* item, MenuManager& menu)
             [this](){ itemTreeWidget->clearSelection(); });
     }
 
-    if(itemTreeWidget->checkPastable(item)){
+    if(item){
+        clearSelection->setEnabled(true);
+        check->sigTriggered().connect(
+            [this](){ itemTreeWidget->setSelectedItemsChecked(true); });
+        uncheck->sigTriggered().connect(
+            [this](){ itemTreeWidget->setSelectedItemsChecked(false); });
+        toggleCheck->sigTriggered().connect(
+            [this](){ itemTreeWidget->toggleSelectedItemChecks(); });
+    }
+
+    if(itemTreeWidget->checkPastable(item) && !isContinuousUpdateStateSubTree){
+        paste->setEnabled(true);
         paste->sigTriggered().connect(
             [this](){ itemTreeWidget->pasteItems(); });
     } else {

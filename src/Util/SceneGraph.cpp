@@ -1,6 +1,7 @@
 #include "SceneGraph.h"
 #include "SceneNodeClassRegistry.h"
 #include "CloneMap.h"
+#include "ValueTree.h"
 #include "UTF8.h"
 #include "Format.h"
 #include <cnoid/stdx/filesystem>
@@ -96,6 +97,25 @@ SgObject* SgObject::findObject_(std::function<bool(SgObject* object)>& pred)
         }
     }
     return nullptr;
+}
+
+
+bool SgObject::traverseObjects_(std::function<TraverseStatus(SgObject* object)>& pred)
+{
+    auto status = pred(this);
+    if(status == Stop){
+        return false;
+    }
+    if(status == Next){
+        return true;
+    }
+    int n = numChildObjects();
+    for(int i=0; i < n; ++i){
+        if(!childObject(i)->traverseObjects_(pred)){
+            return false;
+        }
+    }
+    return true;
 }
 
 
@@ -221,12 +241,12 @@ const std::string& SgObject::uriFragment() const
 }
 
 
-const std::string& SgObject::uriMetadataString() const
+Mapping* SgObject::uriMetadata() const
 {
-    if(!uriInfo){
-        uriInfo.reset(new UriInfo);
+    if(uriInfo){
+        return static_cast<Mapping*>(uriInfo->metadata.get());
     }
-    return uriInfo->metadata;
+    return nullptr;
 }
 
 
@@ -300,7 +320,7 @@ void SgObject::setUriFragment(const std::string& fragment)
 }
 
 
-void SgObject::setUriMetadataString(const std::string& data)
+void SgObject::setUriMetadata(Mapping* data)
 {
     if(!uriInfo){
         uriInfo.reset(new UriInfo);
@@ -425,6 +445,26 @@ SgNodePath SgNode::findNode(const std::string& name, Affine3& out_T)
 }
 
 
+bool SgNode::traverseNodes_(std::function<TraverseStatus(SgNode* node)>& pred)
+{
+    auto status = pred(this);
+    if(status == Stop){
+        return false;
+    }
+    if(status == Next){
+        return true;
+    }
+    if(auto group = toGroupNode()){
+        for(auto& child : *group){
+            if(!child->traverseNodes_(pred)){
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+
 SgGroup::SgGroup()
     : SgNode(findClassId<SgGroup>())
 {
@@ -456,15 +496,6 @@ SgGroup::SgGroup(const SgGroup& org, CloneMap* cloneMap)
                     addChild(cloneMap->getClone<SgNode>(child));
                 }
             }
-        }
-    } else {
-        // shallow copy
-        /**
-           \todo Stop the shallow copy of the child nodes.
-           Only the attributes of this node should be copied when the clone map is not used.
-        */
-        for(auto& child : org){
-            addChild(child);
         }
     }
 
@@ -657,10 +688,11 @@ void SgGroup::clearChildren(SgUpdateRef update)
 }
 
 
-void SgGroup::copyChildrenTo(SgGroup* group, SgUpdateRef update)
+void SgGroup::copyChildrenTo(SgGroup* group, SgUpdateRef update) const
 {
     for(size_t i=0; i < children.size(); ++i){
-        group->addChild(child(i), update);
+        auto node = const_cast<SgNode*>(child(i));
+        group->addChild(node, update);
     }
 }
 

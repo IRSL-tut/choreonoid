@@ -45,12 +45,6 @@ const bool TRACE_FUNCTIONS = false;
 
 vector<string> bodyFilesToLoad;
 
-class BodyStateEx : public BodyState
-{
-public:
-    Vector3 zmp;
-};
-
 class BodyLocation : public LocationProxy
 {
 public:
@@ -61,28 +55,22 @@ public:
     virtual Isometry3 getLocation() const override;
     virtual bool isLocked() const override;
     virtual void setLocked(bool on) override;
-    virtual bool isDoingContinuousUpdate() const override;
     virtual bool setLocation(const Isometry3& T) override;
     virtual void finishLocationEditing() override;
-    virtual Item* getCorrespondingItem() override;
-    virtual LocationProxyPtr getParentLocationProxy() const override;
+    virtual LocationProxyPtr getParentLocationProxy() override;
     virtual SignalProxy<void()> sigLocationChanged() override;
 };
     
 class LinkLocation : public LocationProxy
 {
 public:
-    weak_ref_ptr<BodyItem> refBodyItem;
     weak_ref_ptr<Link> refLink;
 
-    LinkLocation();
     LinkLocation(BodyItem* bodyItem, Link* link);
-    void setTarget(BodyItem* bodyItem, Link* link);
     virtual std::string getName() const override;
     virtual Isometry3 getLocation() const override;
     virtual bool isLocked() const override;
-    virtual Item* getCorrespondingItem() override;
-    virtual LocationProxyPtr getParentLocationProxy() const override;
+    virtual LocationProxyPtr getParentLocationProxy() override;
     virtual SignalProxy<void()> sigLocationChanged() override;
 };
 
@@ -103,11 +91,11 @@ class KinematicStateRecord : public EditRecord
 public:
     BodyItemPtr bodyItem;
     BodyItem::Impl* bodyItemImpl;
-    BodyStateEx newState;
-    BodyStateEx oldState;
+    BodyState newState;
+    BodyState oldState;
     
     KinematicStateRecord(BodyItem::Impl* bodyItemImpl);
-    KinematicStateRecord(BodyItem::Impl* bodyItemImpl, const BodyStateEx& oldState);
+    KinematicStateRecord(BodyItem::Impl* bodyItemImpl, const BodyState& oldState);
     KinematicStateRecord(const KinematicStateRecord& org);
 
     virtual EditRecord* clone() const override;
@@ -161,8 +149,8 @@ public:
     unique_ptr<BodyItemKinematicsKitManager> kinematicsKitManager;
     shared_ptr<PinDragIK> pinDragIK;
 
-    BodyStateEx initialState;
-    BodyStateEx lastEditState;
+    BodyState initialState;
+    BodyState lastEditState;
 
     BodyPtr exchangedMultiplexBody;
             
@@ -170,10 +158,7 @@ public:
     float transparency;
     Signal<void(int flags)> sigModelUpdated;
 
-    Signal<void(bool on)> sigContinuousKinematicUpdateStateChanged;
-
     LeggedBodyHelperPtr legged;
-    Vector3 zmp;
 
     static unique_ptr<RenderableItemUtil> renderableItemUtil;
 
@@ -188,8 +173,6 @@ public:
     void setBody(Body* body);
     void notifyModelUpdate(int flags);
     void setCurrentBaseLink(Link* link, bool forceUpdate, bool doNotify);
-    void storeKinematicStateEx(BodyStateEx& state);
-    void restoreKinematicStateEx(const BodyStateEx& state);
     bool makeRootFixed();
     bool makeRootFree();
     BodyItemKinematicsKitManager* getOrCreateKinematicsKitManager();
@@ -258,7 +241,6 @@ BodyItem::BodyItem()
     impl = new Impl(this);
     impl->init(false);
 
-    continuousKinematicUpdateCounter = 0;
     isAttachedToParentBody_ = false;
     isVisibleLinkSelectionMode_ = false;
 }
@@ -299,11 +281,8 @@ BodyItem::BodyItem(const BodyItem& org, CloneMap* cloneMap)
     impl = new Impl(this, *org.impl, cloneMap);
     impl->init(true);
 
-    continuousKinematicUpdateCounter = 0;
     isAttachedToParentBody_ = false;
     isVisibleLinkSelectionMode_ = org.isVisibleLinkSelectionMode_;
-
-    setChecked(org.isChecked());
 }
 
 
@@ -312,7 +291,6 @@ BodyItem::Impl::Impl(BodyItem* self, const Impl& org, CloneMap* cloneMap)
 {
     isAttachmentEnabled = org.isAttachmentEnabled;
     transparency = org.transparency;
-    zmp = org.zmp;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
     isSelfCollisionDetectionEnabled = org.isSelfCollisionDetectionEnabled;
 
@@ -359,7 +337,6 @@ void BodyItem::Impl::initBody(bool calledFromCopyConstructor)
 
     if(!calledFromCopyConstructor){
         setCurrentBaseLink(nullptr, true, false);
-        zmp.setZero();
         self->storeInitialState();
     }
 
@@ -402,7 +379,6 @@ bool BodyItem::Impl::doAssign(const Item* srcItem)
     isAttachmentEnabled = srcImpl->isAttachmentEnabled;
     isLocationLocked = srcImpl->isLocationLocked;
     transparency = srcImpl->transparency;
-    zmp = srcImpl->zmp;
     isCollisionDetectionEnabled = srcImpl->isCollisionDetectionEnabled;
     isSelfCollisionDetectionEnabled = srcImpl->isSelfCollisionDetectionEnabled;
     
@@ -415,15 +391,7 @@ bool BodyItem::Impl::doAssign(const Item* srcItem)
             setCurrentBaseLink(baseLink, false, false);
         }
     }
-    // copy the current kinematic state
     Body* srcBody = srcBodyItem->body();
-    for(int i=0; i < srcBody->numLinks(); ++i){
-        Link* srcLink = srcBody->link(i);
-        Link* link = body->link(srcLink->name());
-        if(link){
-            link->q() = srcLink->q();
-        }
-    }
     if(baseLink){
         baseLink->p() = srcBaseLink->p();
         baseLink->R() = srcBaseLink->R();
@@ -432,9 +400,20 @@ bool BodyItem::Impl::doAssign(const Item* srcItem)
         body->rootLink()->R() = srcBody->rootLink()->R();
     }
     
-    initialState = srcImpl->initialState;
+    // copy the current kinematic state
+    int numSrcLinks = srcBody->numLinks();
+    for(int i=0; i < numSrcLinks; ++i){
+        Link* srcLink = srcBody->link(i);
+        Link* link = body->link(srcLink->name());
+        if(link){
+            link->q() = srcLink->q();
+        }
+    }
+
+    self->calcForwardKinematics();
+    self->storeKinematicState(initialState);
     
-    self->notifyKinematicStateChange(true);
+    self->notifyKinematicStateChange();
 
     return true;
 }
@@ -462,7 +441,7 @@ void BodyItem::onTreePathChanged()
 
 void BodyItem::onConnectedToRoot()
 {
-    impl->storeKinematicStateEx(impl->lastEditState);
+    storeKinematicState(impl->lastEditState);
 }    
 
 
@@ -649,36 +628,22 @@ void BodyItem::storeKinematicState(BodyState& state)
 }
 
 
-void BodyItem::Impl::storeKinematicStateEx(BodyStateEx& state)
-{
-    state.storeMultiplexStateOfBody(body);
-    state.zmp = zmp;
-}
-
-
 void BodyItem::restoreKinematicState(const BodyState& state)
 {
     state.restoreMultiplexStateToBody(impl->body);
 }
 
 
-void BodyItem::Impl::restoreKinematicStateEx(const BodyStateEx& state)
-{
-    state.restoreMultiplexStateToBody(body);
-    zmp = state.zmp;
-}
-
-
 void BodyItem::storeInitialState()
 {
     Item::setConsistentWithProjectArchive(false);
-    impl->storeKinematicStateEx(impl->initialState);
+    storeKinematicState(impl->initialState);
 }
 
 
 void BodyItem::restoreInitialState(bool doNotify)
 {
-    impl->restoreKinematicStateEx(impl->initialState);
+    restoreKinematicState(impl->initialState);
     if(doNotify){
         notifyKinematicStateUpdate();
     }
@@ -948,8 +913,9 @@ stdx::optional<Vector3> BodyItem::getParticularPosition(PositionType position)
 void BodyItem::Impl::getParticularPosition(BodyItem::PositionType position, stdx::optional<Vector3>& pos)
 {
     if(position == BodyItem::ZERO_MOMENT_POINT){
-        pos = zmp;
-
+        if(self->isLeggedBody()){
+            pos = legged->zmp();
+        }
     } else {
         if(position == BodyItem::CM_PROJECTION){
             pos = self->centerOfMass();
@@ -973,25 +939,6 @@ void BodyItem::Impl::getParticularPosition(BodyItem::PositionType position, stdx
             (*pos).z() = 0.0;
         }
     }
-}
-
-
-const Vector3& BodyItem::zmp() const
-{
-    return impl->zmp;
-}
-
-
-void BodyItem::setZmp(const Vector3& zmp)
-{
-    impl->zmp = zmp;
-}
-
-
-void BodyItem::editZmp(const Vector3& zmp)
-{
-    setZmp(zmp);
-    notifyKinematicStateUpdate();
 }
 
 
@@ -1080,7 +1027,7 @@ void BodyItem::notifyKinematicStateUpdate(bool doNotifyStateChange)
 
     auto record = new KinematicStateRecord(impl, impl->lastEditState);
     UnifiedEditHistory::instance()->addRecord(record);
-    impl->storeKinematicStateEx(impl->lastEditState);
+    storeKinematicState(impl->lastEditState);
 }
 
 
@@ -1209,7 +1156,7 @@ LocationProxyPtr BodyItem::createLinkLocationProxy(Link* link)
 
 
 BodyLocation::BodyLocation(BodyItem::Impl* impl)
-    : LocationProxy(impl->attachmentToParent ? OffsetLocation : GlobalLocation),
+    : LocationProxy(impl->self, impl->attachmentToParent ? OffsetLocation : GlobalLocation),
       impl(impl)
 {
 
@@ -1255,12 +1202,6 @@ void BodyLocation::setLocked(bool on)
 }
 
 
-bool BodyLocation::isDoingContinuousUpdate() const
-{
-    return impl->self->isDoingContinuousKinematicUpdate();
-}
-
-
 bool BodyLocation::setLocation(const Isometry3& T)
 {
     auto rootLink = impl->body->rootLink();
@@ -1287,24 +1228,22 @@ void BodyLocation::finishLocationEditing()
 }
 
 
-Item* BodyLocation::getCorrespondingItem()
-{
-    return impl->self;
-}
-
-
-LocationProxyPtr BodyLocation::getParentLocationProxy() const
+LocationProxyPtr BodyLocation::getParentLocationProxy()
 {
     if(impl->parentBodyItem){
-        if(impl->attachmentToParent){
-            if(!impl->parentLinkLocation){
-                impl->parentLinkLocation = new LinkLocation;
-            }
-            auto parentLink = impl->body->parentBodyLink();
-            impl->parentLinkLocation->setTarget(impl->parentBodyItem, parentLink);
-            return impl->parentLinkLocation;
-        } else {
+        if(!impl->attachmentToParent){
             return impl->parentBodyItem->getLocationProxy();
+        } else {
+            auto parentLink = impl->body->parentBodyLink();
+            if(impl->parentLinkLocation){
+                if(impl->parentLinkLocation->refLink.lock() != parentLink){
+                    impl->parentLinkLocation.reset();
+                }
+            }
+            if(!impl->parentLinkLocation){
+                impl->parentLinkLocation = new LinkLocation(impl->parentBodyItem, parentLink);
+            }
+            return impl->parentLinkLocation;
         }
     }
     return nullptr;
@@ -1317,26 +1256,11 @@ SignalProxy<void()> BodyLocation::sigLocationChanged()
 }
 
 
-LinkLocation::LinkLocation()
-    : LocationProxy(GlobalLocation)
-{
-
-}
-
-
 LinkLocation::LinkLocation(BodyItem* bodyItem, Link* link)
-    : LocationProxy(GlobalLocation),
-      refBodyItem(bodyItem),
+    : LocationProxy(bodyItem, GlobalLocation),
       refLink(link)
 {
-
-}
-
-
-void LinkLocation::setTarget(BodyItem* bodyItem, Link* link)
-{
-    refBodyItem = bodyItem;
-    refLink = link;
+    setNameDependencyOnItemName();
 }
 
 
@@ -1364,16 +1288,10 @@ bool LinkLocation::isLocked() const
 }
 
 
-Item* LinkLocation::getCorrespondingItem()
+LocationProxyPtr LinkLocation::getParentLocationProxy()
 {
-    return refBodyItem.lock();
-}
-
-
-LocationProxyPtr LinkLocation::getParentLocationProxy() const
-{
-    if(auto body = refBodyItem.lock()){
-        body->getLocationProxy();
+    if(auto bodyItem = static_cast<BodyItem*>(locatableItem())){
+        bodyItem->getLocationProxy();
     }
     return nullptr;
 }
@@ -1381,7 +1299,7 @@ LocationProxyPtr LinkLocation::getParentLocationProxy() const
 
 SignalProxy<void()> LinkLocation::sigLocationChanged()
 {
-    if(auto bodyItem = refBodyItem.lock()){
+    if(auto bodyItem = static_cast<BodyItem*>(locatableItem())){
         return bodyItem->sigKinematicStateChanged();
     } else {
         static Signal<void()> dummySignal;
@@ -1567,7 +1485,7 @@ Link* BodyItem::Impl::attachToBodyItem(BodyItem* bodyItem)
     for(auto& attachment : body->devices<AttachmentDevice>()){
         if(attachment->link()->isRoot()){
             for(auto& holder : bodyItem->body()->devices<HolderDevice>()){
-                if(attachment->category() == holder->category()){
+                if(attachment->isAttachableTo(holder)){
                     holder->addAttachment(attachment);
                     holder->on(true);
                     attachment->on(true);
@@ -1613,43 +1531,6 @@ void BodyItem::Impl::onParentBodyKinematicStateChanged()
     isProcessingInverseKinematicsIncludingParentBody = false;
     //! \todo requestVelFK and requestAccFK should be set appropriately
     notifyKinematicStateChange(true, false, false, true);
-}
-
-
-BodyItem::ContinuousKinematicUpdateEntry BodyItem::startContinuousKinematicUpdate()
-{
-    return new ContinuousKinematicUpdateRef(this);
-}
-
-
-SignalProxy<void(bool on)> BodyItem::sigContinuousKinematicUpdateStateChanged()
-{
-    return impl->sigContinuousKinematicUpdateStateChanged;
-}
-
-
-BodyItem::ContinuousKinematicUpdateRef::ContinuousKinematicUpdateRef(BodyItem* item)
-    : bodyItemRef(item)
-{
-    if(++item->continuousKinematicUpdateCounter == 1){
-        item->impl->sigContinuousKinematicUpdateStateChanged(true);
-        if(auto& bodyLocation = item->impl->bodyLocation){
-            bodyLocation->notifyAttributeChange();
-        }
-    }
-}
-
-
-BodyItem::ContinuousKinematicUpdateRef::~ContinuousKinematicUpdateRef()
-{
-    if(auto item = bodyItemRef.lock()){
-        if(--item->continuousKinematicUpdateCounter == 0){
-            item->impl->sigContinuousKinematicUpdateStateChanged(false);
-            if(auto& bodyLocation = item->impl->bodyLocation){
-                bodyLocation->notifyAttributeChange();
-            }
-        }
-    }
 }
 
 
@@ -1813,8 +1694,6 @@ bool BodyItem::Impl::store(Archive& archive)
         archive.write("transparency", transparency);
     }
 
-    write(archive, "zmp", zmp);
-
     return true;
 }
 
@@ -1895,8 +1774,6 @@ bool BodyItem::Impl::restore(const Archive& archive)
     if(archive.read("transparency", t)){
         setTransparency(t);
     }
-
-    read(archive, "zmp", zmp);
 
     isUpdateNotificationOnSubTreeRestoredRequested = false;
     isNonRootLinkStateRestorationOnSubTreeRestoredRequested = false;
@@ -2080,18 +1957,18 @@ KinematicStateRecord::KinematicStateRecord(BodyItem::Impl* bodyItemImpl)
       bodyItem(bodyItemImpl->self),
       bodyItemImpl(bodyItemImpl)
 {
-    bodyItemImpl->storeKinematicStateEx(newState);
+    bodyItem->storeKinematicState(newState);
     oldState = newState;
 }
 
 
-KinematicStateRecord::KinematicStateRecord(BodyItem::Impl* bodyItemImpl, const BodyStateEx& oldState)
+KinematicStateRecord::KinematicStateRecord(BodyItem::Impl* bodyItemImpl, const BodyState& oldState)
     : EditRecord(bodyItemImpl->self),
       bodyItem(bodyItemImpl->self),
       bodyItemImpl(bodyItemImpl),
       oldState(oldState)
 {
-    bodyItemImpl->storeKinematicStateEx(newState);
+    bodyItem->storeKinematicState(newState);
 }
 
 
@@ -2124,8 +2001,8 @@ std::string KinematicStateRecord::label() const
 
 bool KinematicStateRecord::undo()
 {
-    bodyItemImpl->restoreKinematicStateEx(oldState);
-    bodyItemImpl->storeKinematicStateEx(bodyItemImpl->lastEditState);
+    bodyItem->restoreKinematicState(oldState);
+    bodyItem->storeKinematicState(bodyItemImpl->lastEditState);
     bodyItemImpl->notifyKinematicStateChange(false, false, false, true);
     return true;
 }
@@ -2133,8 +2010,8 @@ bool KinematicStateRecord::undo()
 
 bool KinematicStateRecord::redo()
 {
-    bodyItemImpl->restoreKinematicStateEx(newState);
-    bodyItemImpl->storeKinematicStateEx(bodyItemImpl->lastEditState);
+    bodyItem->restoreKinematicState(newState);
+    bodyItem->storeKinematicState(bodyItemImpl->lastEditState);
     bodyItemImpl->notifyKinematicStateChange(false, false, false, true);
     return true;
 }

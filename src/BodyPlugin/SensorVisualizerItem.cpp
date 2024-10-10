@@ -1,8 +1,3 @@
-/*!
-  @file
-  @author Shin'ichiro Nakaoka
-*/
-
 #include "SensorVisualizerItem.h"
 #include "BodyItem.h"
 #include <cnoid/ItemManager>
@@ -408,7 +403,9 @@ void SensorVisualizerItem::Impl::addSensorVisualizerItem(Body* body)
         }
         if(item->bodyItem != bodyItem){
             item->setBodyItem(bodyItem);
-            self->addSubItem(item);
+            if(item->parentItem() != self){
+                self->addSubItem(item);
+            }
         }
     }
 }
@@ -432,7 +429,9 @@ void SensorVisualizerItem::Impl::addVisionSensorVisualizerItem(Body* body)
         }
         if(item->bodyItem != bodyItem){
             item->setBodyItem(bodyItem, sensor);
-            self->addSubItem(item);
+            if(item->parentItem() != self){
+                self->addSubItem(item);
+            }
         }
     }
 }
@@ -771,13 +770,11 @@ SignalProxy<void()> CameraImageVisualizerItem::sigImageUpdated()
 
 void CameraImageVisualizerItem::setBodyItem(BodyItem* bodyItem, Camera* camera)
 {
-    if(name().empty()){
-        string name = camera->name();
-        if(dynamic_cast<RangeCamera*>(camera)){
-            name += "-Image";
-        }
-        setName(name);
+    string cameraName = camera->name();
+    if(dynamic_cast<RangeCamera*>(camera)){
+        cameraName += "-Image";
     }
+    setName(cameraName);
 
     this->camera = camera;
 
@@ -825,11 +822,8 @@ Item* PointCloudVisualizerItem::doCloneItem(CloneMap* /* cloneMap */) const
 
 void PointCloudVisualizerItem::setBodyItem(BodyItem* bodyItem, RangeCamera* rangeCamera)
 {
-    if(name().empty()){
-        setName(rangeCamera->name());
-    }
+    setName(rangeCamera->name());
     this->rangeCamera = rangeCamera;
-    
     SubSensorVisualizerItem::setBodyItem(bodyItem);
 }
 
@@ -917,11 +911,8 @@ RangeSensorVisualizerItem::RangeSensorVisualizerItem()
 
 void RangeSensorVisualizerItem::setBodyItem(BodyItem* bodyItem, RangeSensor* rangeSensor)
 {
-    if(name().empty()){
-        setName(rangeSensor->name());
-    }
+    setName(rangeSensor->name());
     this->rangeSensor = rangeSensor;
-
     SubSensorVisualizerItem::setBodyItem(bodyItem);
 }
 

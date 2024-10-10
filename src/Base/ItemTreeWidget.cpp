@@ -115,7 +115,7 @@ public:
     ItwItem* findNextItwItemInSubTree(Item* item, bool doTraverse);
     bool isItemUnderTreeWidgetInternalOperation(Item* item);
     void onSubTreeAddedOrMoved(Item* item);
-    void onSubTreeRemoved(Item* item);
+    void onSubTreeRemoved(Item* item, bool isMoving);
     void onItemAssigned(Item* assigned, const Item* srcItem);
 
     void getItemsIter(ItwItem* itwItem, ItemList<>& itemList);
@@ -169,6 +169,8 @@ public:
     ScopedConnection itemSelectionConnection;
     ScopedConnection itemCheckConnection;
     ScopedConnection displayUpdateConnection;
+    ScopedConnection continuousUpdateStateConnection;
+    bool isNameEditable;
     bool isExpandedBeforeRemoving;
     bool isTemporaryAttributeDisplay;
 
@@ -180,6 +182,7 @@ public:
 
     ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl);
     virtual ~ItwItem();
+    void updateEditFlags();
     virtual void setData(int column, int role, const QVariant& value) override;
 };
 
@@ -192,14 +195,20 @@ ItemTreeWidget::ItwItem::ItwItem(Item* item, ItemTreeWidget::Impl* widgetImpl)
 {
     widgetImpl->itemToItwItemMap[item] = this;
 
-    Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDropEnabled;
+    isNameEditable = true;
+    bool isContinuousUpdateStateSubTree = item->isContinuousUpdateStateSubTree();
+
+    Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
     if(widgetImpl->isCheckColumnShown){
         flags |= Qt::ItemIsUserCheckable;
     }
-    if(!item->hasAttribute(Item::Attached)){
-        flags |= Qt::ItemIsEditable | Qt::ItemIsDragEnabled;
-    }
     setFlags(flags);
+
+    updateEditFlags();
+
+    continuousUpdateStateConnection =
+        item->sigContinuousUpdateStateChanged().connect(
+            [this](bool){ updateEditFlags(); });
 
     setToolTip(0, QString());
 
@@ -247,6 +256,24 @@ ItemTreeWidget::ItwItem::~ItwItem()
     if(widgetImpl->lastClickedItem == item){
         widgetImpl->lastClickedItem = nullptr;
     }
+}
+
+
+void ItemTreeWidget::ItwItem::updateEditFlags()
+{
+    Qt::ItemFlags flags_ = flags() & ~(Qt::ItemIsEditable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled);
+    bool isContinuousUpdateStateSubTree = item->isContinuousUpdateStateSubTree();
+
+    if(!isContinuousUpdateStateSubTree){
+        flags_ |= Qt::ItemIsDropEnabled;
+    }
+    if(!item->isSubItem() && !item->hasAttribute(Item::Attached) && !isContinuousUpdateStateSubTree){
+        if(isNameEditable){
+            flags_ |= Qt::ItemIsEditable;
+        }
+        flags_ |= Qt::ItemIsDragEnabled;
+    }
+    setFlags(flags_);
 }
 
 
@@ -341,10 +368,9 @@ void ItemTreeWidget::Display::setStatusTip(const std::string& statusTip)
 
 void ItemTreeWidget::Display::setNameEditable(bool on)
 {
-    if(on){
-        itwItem->setFlags(itwItem->flags() | Qt::ItemIsEditable);
-    } else {
-        itwItem->setFlags(itwItem->flags() & ~Qt::ItemIsEditable);
+    if(on != itwItem->isNameEditable){
+        itwItem->isNameEditable = on;
+        itwItem->updateEditFlags();
     }
 }
 
@@ -438,7 +464,7 @@ void ItemTreeWidget::Impl::initialize()
 
     projectRootItemConnections.add(
         projectRootItem->sigSubTreeRemoved().connect(
-            [this](Item* item, bool){ onSubTreeRemoved(item); }));
+            [this](Item* item, bool isMoving){ onSubTreeRemoved(item, isMoving); }));
 
     projectRootItemConnections.add(
         projectRootItem->sigItemAssigned().connect(
@@ -937,10 +963,19 @@ void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item,
 {
     auto itwItem = findItwItem(item);
 
-    if(itwItem){
-        parentTwItem = itwItem;
+    bool doExpand = false;
 
-    } else {
+    if(itwItem){
+        if(itwItem->parent()){
+            parentTwItem = itwItem;
+        } else { // Item is moving
+            doExpand = itwItem->isExpandedBeforeRemoving;
+            delete itwItem;
+            itwItem = nullptr;
+        }
+    }
+
+    if(!itwItem){
         if(!findOrCreateLocalRootItem(false)){
             return;
         }
@@ -984,6 +1019,10 @@ void ItemTreeWidget::Impl::insertItem(QTreeWidgetItem* parentTwItem, Item* item,
         for(Item* child = item->childItem(); child; child = child->nextItem()){
             insertItem(parentTwItem, child, isTopLevelItemCandidate);
         }
+    }
+
+    if(itwItem && doExpand){
+        itwItem->setExpanded(true);
     }
 }
 
@@ -1074,7 +1113,7 @@ void ItemTreeWidget::Impl::onSubTreeAddedOrMoved(Item* item)
 }
 
 
-void ItemTreeWidget::Impl::onSubTreeRemoved(Item* item)
+void ItemTreeWidget::Impl::onSubTreeRemoved(Item* item, bool isMoving)
 {
     if(isItemUnderTreeWidgetInternalOperation(item) || !localRootItem){
         return;
@@ -1083,15 +1122,18 @@ void ItemTreeWidget::Impl::onSubTreeRemoved(Item* item)
     isChangingTreeWidgetTreeStructure++;
 
     if(auto itwItem = findItwItem(item)){
+        itwItem->isExpandedBeforeRemoving = itwItem->isExpanded();
         if(auto parentTwItem = itwItem->parent()){
             parentTwItem->removeChild(itwItem);
         } else {
             takeTopLevelItem(indexOfTopLevelItem(itwItem));
         }
-        delete itwItem;
+        if(!isMoving){
+            delete itwItem;
+        }
     } else {
         for(auto child = item->childItem(); child; child = child->nextItem()){
-            onSubTreeRemoved(child);
+            onSubTreeRemoved(child, isMoving);
         }
     }
 
@@ -1863,7 +1905,19 @@ void ItemTreeWidget::Impl::keyPressEvent(QKeyEvent* event)
         case Qt::Key_R:
             unifiedEditHistory->flushNewRecordBuffer();
             for(auto& item : getSelectedItems()){
-                item->reload();
+                if(!item->isContinuousUpdateStateSubTree()){
+                    item->reload();
+                } else {
+                    if(item->isContinuousUpdateState()){
+                        showWarningDialog(
+                            formatR(_("Item \"{0}\" cannot be reloaded currently, as it is being continuously updated."),
+                                    item->displayName()));
+                    } else {
+                        showWarningDialog(
+                            formatR(_("Item \"{0}\" cannot be reloaded currently, as it is a part of a sub-tree being continuously updated."),
+                                    item->displayName()));
+                    }
+                }
             }
             break;
             

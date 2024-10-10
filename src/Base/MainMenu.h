@@ -65,6 +65,9 @@ protected:
     void setActionAsSaveProject(Action* action);
     void setActionAsSaveProjectAs(Action* action);
     void setActionAsProjectLayoutToggle(Action* action);
+    void setActionAsShowProjectRecoveryDialog(Action* action);
+    void setActionAsShowProjectBackupConfigDialog(Action* action);
+    void setActionAsProjectBackupTest(Action* action);
     void setActionAsShowPathVariableEditor(Action* action);
     void setActionAsExitApplication(Action* action);
     void setActionAsUndo(Action* action);
@@ -79,8 +82,10 @@ protected:
     void setActionAsResetMainWindowLayout(Action* action);
     void setActionAsShowDistanceMeasurementDialog(Action* action);
     void setActionAsPutSceneStatistics(Action* action);
+    void setActionAsExportSelectedRenderableItemScene(Action* action);
     void setActionAsShowMovieRecorderDialog(Action* action);
     void setActionAsShowDialogAboutChoreonoid(Action* action);
+    void setActionAsCrashTest(Action* action);
 
 private:
     static void setCustomClassFactory(std::function<MainMenu*()> factory);

@@ -12,6 +12,7 @@
 #include "MainMenu.h"
 #include "Action.h"
 #include "CheckBox.h"
+#include <cnoid/MessageOut>
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
 #include <cnoid/Format>
@@ -837,9 +838,17 @@ ItemFileIO* ItemManager::Impl::findMatchedFileIO
 
     if(!targetFileIO){
         if(format.empty()){
-            messageView->putln(
-                formatR(_("The file format for accessing \"{0}\" cannot be determined."), filename),
-                MessageView::Error);
+            for(auto& fileIO : fileIOs){
+                if(fileIO->hasApi(ioTypeFlag)){
+                    targetFileIO = fileIO;
+                    break;
+                }
+            }
+            if(!targetFileIO){
+                messageView->putln(
+                    formatR(_("The file format for accessing \"{0}\" cannot be determined."), filename),
+                    MessageView::Error);
+            }
         } else {
             messageView->putln(
                 formatR(_("Unknown file format \"{0}\" is specified in accessing \"{1}\"."), format, filename),
@@ -932,12 +941,22 @@ void ItemManager::addSaver_
 
 
 bool ItemManager::loadItem
-(Item* item, const std::string& filename, Item* parentItem, const std::string& format, const Mapping* options)
+(Item* item, const std::string& filename, Item* parentItem, const std::string& format, const Mapping* options,
+ MessageOut* mout)
 {
+    bool loaded = false;
     if(auto fileIO = Impl::findMatchedFileIO(typeid(*item), filename, format, ItemFileIO::Load)){
-        return fileIO->loadItem(item, filename, parentItem, false, nullptr, options);
+        MessageOutPtr orgMout;
+        if(mout){
+            orgMout = fileIO->mout();
+            fileIO->setMessageOut(mout);
+        }
+        loaded = fileIO->loadItem(item, filename, parentItem, false, nullptr, options);
+        if(mout){
+            fileIO->setMessageOut(orgMout);
+        }
     }
-    return false;
+    return loaded;
 }
 
 
@@ -980,12 +999,21 @@ Item* ItemManager::findOriginalItemForReloadedItem(Item* item)
 
 
 bool ItemManager::saveItem
-(Item* item, const std::string& filename, const std::string& format, const Mapping* options)
+(Item* item, const std::string& filename, const std::string& format, const Mapping* options, MessageOut* mout)
 {
+    bool saved = false;
     if(auto fileIO = Impl::findMatchedFileIO(typeid(*item), filename, format, ItemFileIO::Save)){
-        return fileIO->saveItem(item, filename, options);
+        MessageOutPtr orgMout;
+        if(mout){
+            orgMout = fileIO->mout();
+            fileIO->setMessageOut(mout);
+        }
+        saved = fileIO->saveItem(item, filename, options);
+        if(mout){
+            fileIO->setMessageOut(orgMout);
+        }
     }
-    return false;
+    return saved;
 }
 
 
@@ -1035,7 +1063,8 @@ bool ItemManager::saveItemWithDialog(Item* item, const std::string& format, bool
 
 
 bool ItemManager::overwriteItem
-(Item* item, bool forceOverwrite, const std::string& format, bool doSaveItemWithDialog)
+(Item* item, bool forceOverwrite, const std::string& format, bool doSaveItemWithDialog, time_t cutoffTime,
+ MessageOut* mout)
 {
     if(doSaveItemWithDialog){
         if(!checkFileImmutable(item)){
@@ -1053,21 +1082,36 @@ bool ItemManager::overwriteItem
     } else {
         if(!filename.empty()){
             filesystem::path fpath(fromUTF8(filename));
-            if(!filesystem::exists(fpath) ||
-               filesystem::last_write_time_to_time_t(fpath) > item->fileModificationTime()){
+            if(!filesystem::exists(fpath)){
                 needToOverwrite = true;
-                filename.clear();
+                if(doSaveItemWithDialog){
+                    filename.clear();
+                }
+            } else if(cutoffTime == 0){
+                if(filesystem::last_write_time_to_time_t(fpath) != item->fileModificationTime()){
+                    // The actual file was replaced with another file
+                    needToOverwrite = true;
+                    if(doSaveItemWithDialog){
+                        filename.clear();
+                    }
+                }
+            } else { // The cutoff-time is specified
+                if(filesystem::last_write_time_to_time_t(fpath) < cutoffTime){
+                    needToOverwrite = true;
+                }
             }
         }
     }
-    if(!needToOverwrite && !item->isConsistentWithFile()){
-        needToOverwrite = true;
+    if(!needToOverwrite){
+        if(!item->isConsistentWithFile() || (filename.empty() && doSaveItemWithDialog)){
+            needToOverwrite = true;
+        }
     }
 
     bool synchronized = !needToOverwrite;
     if(!synchronized){
         if(!filename.empty() && format.empty()){
-            synchronized = saveItem(item, filename, lastFormat, item->fileOptions());
+            synchronized = saveItem(item, filename, lastFormat, item->fileOptions(), mout);
         } 
         if(!synchronized && doSaveItemWithDialog){
             synchronized = saveItemWithDialog(item, format, false);
@@ -1157,7 +1201,7 @@ string getOpenFileName(const string& caption, const string& extensions)
     dialog.setWindowTitle(caption.c_str());
     dialog.setNameFilter(makeNameFilterString(caption, extensions));
     dialog.setFileMode(QFileDialog::ExistingFile);
-    dialog.updatePresetDirectories();
+    dialog.updatePresetDirectories(true);
     if(dialog.exec() == QDialog::Accepted){
         filename = dialog.selectedFiles().value(0).toStdString();
     }
@@ -1172,7 +1216,7 @@ vector<string> getOpenFileNames(const string& caption, const string& extensions)
     dialog.setWindowTitle(caption.c_str());
     dialog.setNameFilter(makeNameFilterString(caption, extensions));
     dialog.setFileMode(QFileDialog::ExistingFiles);
-    dialog.updatePresetDirectories();
+    dialog.updatePresetDirectories(true);
     if(dialog.exec() == QDialog::Accepted){
         for(auto& file : dialog.selectedFiles()){
             filenames.push_back(file.toStdString());

@@ -175,10 +175,6 @@ public:
     bool isLeggedBody() const;
     bool doLegIkToMoveCm(const Vector3& c, bool onlyProjectionToFloor = false);
 
-    const Vector3& zmp() const;
-    void setZmp(const Vector3& zmp);
-    void editZmp(const Vector3& zmp);
-
     enum PositionType { CM_PROJECTION, HOME_COP, LEFT_HOME_COP, RIGHT_HOME_COP, ZERO_MOMENT_POINT };
             
     stdx::optional<Vector3> getParticularPosition(PositionType posType);
@@ -192,23 +188,27 @@ public:
     void setLocationLocked(bool on);
     LocationProxyPtr createLinkLocationProxy(Link* link);
 
-    class ContinuousKinematicUpdateRef : public Referenced
-    {
-    private:
-        ContinuousKinematicUpdateRef(BodyItem* item);
-        ~ContinuousKinematicUpdateRef();
-        weak_ref_ptr<BodyItem> bodyItemRef;
-        friend class BodyItem;
-    };
-    typedef ref_ptr<ContinuousKinematicUpdateRef> ContinuousKinematicUpdateEntry;
+    [[deprecated]]
+    typedef ContinuousUpdateEntry ContinuousKinematicUpdateEntry;
 
-    ContinuousKinematicUpdateEntry startContinuousKinematicUpdate();
-    bool isDoingContinuousKinematicUpdate() const { return continuousKinematicUpdateCounter > 0; }
+    [[deprecated]]
+    ContinuousUpdateEntry startContinuousKinematicUpdate() {
+        return Item::startContinuousUpdate();
+    }
+
+    [[deprecated]]
+    bool isDoingContinuousKinematicUpdate() const {
+        return Item::isContinuousUpdateState();
+    }
+    
     /**
        \note The sigUpdated signal is not emitted when the corresponding state changed
        becasue this is not a permenent state.
     */
-    SignalProxy<void(bool on)> sigContinuousKinematicUpdateStateChanged();
+    [[deprecated]]
+    SignalProxy<void(bool on)> sigContinuousKinematicUpdateStateChanged(){
+        return Item::sigContinuousUpdateStateChanged();
+    }
     
     // RenderableItem function
     virtual SgNode* getScene() override;
@@ -256,7 +256,6 @@ protected:
             
 private:
     Impl* impl;
-    int continuousKinematicUpdateCounter;
     bool isAttachedToParentBody_;
     bool isVisibleLinkSelectionMode_;
     std::vector<CollisionLinkPairPtr> collisions_;

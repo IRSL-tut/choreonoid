@@ -4,6 +4,7 @@
 #include "SceneLoader.h"
 #include "Triangulator.h"
 #include "ImageIO.h"
+#include "ValueTree.h"
 #include "NullOut.h"
 #include "Format.h"
 #include <unordered_map>
@@ -217,26 +218,17 @@ SgNode* ObjSceneLoader::Impl::load(const string& filename)
 
     doCoordinateConversion = false;
     scale = 1.0f;
-    string metadata;
     auto lengthUnit = self->lengthUnitHint();
     if(lengthUnit == AbstractSceneLoader::Millimeter){
         scale = 1.0e-3f;
         doCoordinateConversion = true;
-        metadata = "millimeter";
     } else if(lengthUnit == AbstractSceneLoader::Inch){
         scale = 0.0254f;
         doCoordinateConversion = true;
-        metadata = "inch";
     }
     upperAxis = self->upperAxisHint();
-    if(upperAxis != Z_Upper){
+    if(upperAxis == Y_Upper){
         doCoordinateConversion = true;
-        if(upperAxis == Y_Upper){
-            if(!metadata.empty()){
-                metadata += " ";
-            }
-            metadata += "y_upper";
-        }
     }
     
     try {
@@ -248,9 +240,7 @@ SgNode* ObjSceneLoader::Impl::load(const string& filename)
 
     if(scene){
         scene->setUriWithFilePathAndCurrentDirectory(filename);
-        if(!metadata.empty()){
-            scene->setUriMetadataString(metadata);
-        }
+        self->storeLengthUnitAndUpperAxisHintsAsMetadata(scene);
     }
 
     scanner.close();
@@ -648,7 +638,7 @@ bool ObjSceneLoader::Impl::loadMaterialTemplateLibrary(std::string filename)
 
             case 'm':
                 if(subScanner.readStringAtCurrentPosition(token)){
-                    if(token.find_first_of("map_") == 0){
+                    if(token.find("map_") == 0){
                         readTexture(token.substr(4));
                     } else {
                         isUnknownDirective = true;
@@ -786,11 +776,14 @@ void ObjSceneLoader::Impl::updateAmbientIntensities()
         auto& info = kv.second;
         auto& material = info.material;
         if(material){
-            float a = info.ambientColor.norm();
+            float intensity = 1.0f;
             float d = material->diffuseColor().norm();
-            float intensity = a / d;
-            if(intensity >= (1.0f - 1.0e-3)){
-                intensity = 1.0f;
+            if(d > 0.0f){
+                float a = info.ambientColor.norm();
+                intensity = a / d;
+                if(intensity >= (1.0f - 1.0e-3)){
+                    intensity = 1.0f;
+                }
             }
             material->setAmbientIntensity(intensity);
         }

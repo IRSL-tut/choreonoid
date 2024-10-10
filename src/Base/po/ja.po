@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-12-14 22:18+0900\n"
+"POT-Creation-Date: 2024-10-03 23:13+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -44,6 +44,87 @@ msgid ""
 msgstr ""
 "アプリケーション設定ファイル \"{0}\" を読み込むことができません．\n"
 "{1}"
+
+msgid "Note that item \"{0}\" will be saved to the original file \"{1}\"."
+msgstr "アイテム \"{0}\" は元ファイルである \"{1}\" に保存されることになります．"
+
+msgid "Name:"
+msgstr "名前："
+
+msgid "Align with the builtin camera"
+msgstr "組み込みカメラに合わせる"
+
+msgid "Camera type:"
+msgstr "カメラタイプ："
+
+msgid "Perspective"
+msgstr "透視投影"
+
+msgid "Orthographic"
+msgstr "平行投影"
+
+msgid "Position:"
+msgstr "位置："
+
+msgid "Look-at:"
+msgstr "視線方向："
+
+msgid "Up vector:"
+msgstr "上方向："
+
+msgid "Field of View:"
+msgstr "視野角："
+
+msgid "[deg]"
+msgstr ""
+
+msgid "Near Clip:"
+msgstr "近方クリップ："
+
+msgid "Far Clip:"
+msgstr "遠方クリップ："
+
+msgid "Interactive viewpoint change"
+msgstr "インタラクティブな視点変更"
+
+msgid "Activate in the scene view"
+msgstr "シーンビューで有効化"
+
+msgid "&OK"
+msgstr "&OK"
+
+msgid "Camera Creation"
+msgstr "カメラの作成"
+
+msgid "Camera"
+msgstr "カメラ"
+
+msgid "Camera Configuration"
+msgstr "カメラの設定"
+
+msgid "CameraItem"
+msgstr "カメラアイテム"
+
+msgid "Activate camera"
+msgstr "このカメラを使用"
+
+msgid "Apply to built-in camera"
+msgstr "組み込みカメラに適用"
+
+msgid "Camera configuration"
+msgstr "カメラの設定"
+
+msgid "Camera type"
+msgstr "カメラタイプ"
+
+msgid "Field Of View"
+msgstr "視野角"
+
+msgid "Near clip distance"
+msgstr "近方クリップ距離"
+
+msgid "Far clip distance"
+msgstr "近方クリップ距離"
 
 msgid "CaptureBar"
 msgstr "キャプチャバー"
@@ -144,9 +225,6 @@ msgstr "距離測定"
 msgid "Object %1"
 msgstr "対象%1"
 
-msgid "Position:"
-msgstr "位置："
-
 msgid "Pick"
 msgstr "ピック"
 
@@ -186,9 +264,6 @@ msgstr "オーバーレイ"
 msgid "Create measurement item"
 msgstr "計測アイテムの作成"
 
-msgid "Name:"
-msgstr "名前"
-
 msgid "&Measure"
 msgstr "測定"
 
@@ -207,6 +282,12 @@ msgstr "距離測定アイテム \"{0}\" はプロジェクトから削除され
 
 msgid "The distance measurement cannot be started since the target items are not specified."
 msgstr "対象アイテムが指定されていないので距離測定を開始できません．"
+
+msgid "[m]"
+msgstr ""
+
+msgid "[mm]"
+msgstr ""
 
 msgid "Distance Marker Color"
 msgstr "距離マーカの色"
@@ -277,8 +358,26 @@ msgstr "フォルダアイテム"
 msgid "The file format of \"{}\" is not supported.\n"
 msgstr "ファイルフォーマット \"{}\" はサポートされていません．\n"
 
-msgid "[ Mesh import hints ]"
-msgstr "[ メッシュインポートヒント ]"
+msgid "Load a scene file"
+msgstr "シーンファイルの読み込み"
+
+msgid "Scene file"
+msgstr "シーンファイル"
+
+msgid "Load"
+msgstr "読み込み"
+
+msgid "Loading the file \"{0}\" ..."
+msgstr "ファイル \"{0}\" を読み込み中…"
+
+msgid " OK!"
+msgstr ""
+
+msgid " Failed."
+msgstr " 失敗．"
+
+msgid "[ import hints ]"
+msgstr "[ インポートヒント ]"
 
 msgid "Unit:"
 msgstr "単位："
@@ -453,9 +552,6 @@ msgstr "{0}の読み込み"
 msgid "Import {0}"
 msgstr "{0}のインポート"
 
-msgid "Load"
-msgstr "読み込み"
-
 msgid "Import"
 msgstr "インポート"
 
@@ -489,11 +585,11 @@ msgstr "{0}を読み込むことができません: {1}"
 msgid "Loading {0} \"{1}\""
 msgstr "{0} \"{1}\" を読み込み中"
 
-msgid " -> failed.\n"
-msgstr " -> 失敗.\n"
+msgid " -> failed."
+msgstr " -> 失敗."
 
-msgid " -> ok!\n"
-msgstr " -> 完了!\n"
+msgid " -> ok!"
+msgstr " -> 完了!"
 
 msgid "{0} cannot be saved with empty filename."
 msgstr "ファイル名が指定されていないので{0}を保存できません．"
@@ -705,6 +801,15 @@ msgstr "コピーされたアイテムを \"{0}\" にペーストできません
 msgid "Paste items in {0}"
 msgstr "複数のアイテムを{0}上で貼り付け"
 
+msgid "Item \"{0}\" cannot be reloaded currently, as it is being continuously updated."
+msgstr "アイテム \"{0}\" は継続的に更新中のため、今は再読込することができません．"
+
+msgid ""
+"Item \"{0}\" cannot be reloaded currently, as it is a part of a sub-tree being continuously "
+"updated."
+msgstr ""
+"アイテム \"{0}\" は継続的に更新中のサブツリーの一部であるため、今は再読込することができません．"
+
 msgid "Drop items in {0}"
 msgstr "複数のアイテムを{0}上でドロップ"
 
@@ -876,6 +981,12 @@ msgstr "プロジェクトに名前を付けて保存"
 msgid "Project File Options"
 msgstr "プロジェクトファイルオプション"
 
+msgid "Recovery from Backup"
+msgstr "バックアップからの回復"
+
+msgid "Backup Configuration"
+msgstr "バックアップの設定"
+
 msgid "Edit Path Variables"
 msgstr "パス変数の設定"
 
@@ -929,6 +1040,9 @@ msgstr "ツール"
 
 msgid "Put Scene Statistics"
 msgstr "シーン統計情報の表示"
+
+msgid "Export Scene"
+msgstr "シーンのエクスポート"
 
 msgid "Movie Recorder"
 msgstr "動画レコーダ"
@@ -1219,8 +1333,11 @@ msgstr "パス"
 msgid "&Apply"
 msgstr "適用(&A)"
 
-msgid "{0}-plugin cannot be initialized because required plugin(s) {1} are not found.\n"
-msgstr "必要なプラグイン{1}が見つからないため，{0}プラグインの初期化ができません．\n"
+msgid "Loading {0} failed.\n"
+msgstr "{0}の読み込みに失敗しました．\n"
+
+msgid "{0}-plugin cannot be initialized because required plugin(s) {1} are not found."
+msgstr "必要なプラグイン{1}が見つからないため，{0}プラグインの初期化ができません．"
 
 msgid "Plugin file \"{}\" has already been activated.\n"
 msgstr "プラグインファイル \"{}\" は既に読み込まれています．\n"
@@ -1244,8 +1361,8 @@ msgstr ""
 "{0}プラグインの内部バージョンがシステムの内部バージョンと一致しません．\n"
 "問題を避けるため，プラグインファイル \"{1}\" は削除か更新を行なってください．\n"
 
-msgid "Plugin file \"{0}\" conflicts with \"{1}\"."
-msgstr "{0}プラグインは \"{1}\" と競合しています．"
+msgid "Plugin file \"{0}\" conflicts with \"{1}\".\n"
+msgstr "{0}プラグインは \"{1}\" と競合しています．\n"
 
 msgid "Loading the plugin failed.\n"
 msgstr "プラグインの読み込みができませんでした．\n"
@@ -1266,11 +1383,11 @@ msgstr ""
 "プラグインの読み込みができませんでした．\n"
 "{0}"
 
-msgid "{0}-plugin cannot be finalized.\n"
-msgstr "{}プラグインを終了できません．\n"
+msgid "{0}-plugin cannot be finalized."
+msgstr "{}プラグインを終了できません．"
 
-msgid "Plugin DLL \"{}\" has been unloaded.\n"
-msgstr "プラグインDLL \"{}\" が解放されました．\n"
+msgid "Plugin DLL \"{}\" has been unloaded."
+msgstr "プラグインDLL \"{}\" が解放されました．"
 
 msgid "Load plugins"
 msgstr "プラグインの読み込み"
@@ -1378,11 +1495,62 @@ msgid "Additional precision"
 msgstr "追加精度"
 
 msgid ""
-"The state of the \"{0}\" {1} was not completely restored.\n"
-"{2}"
+"The application has crashed, and auto-backup project files are available for project recovery. Do "
+"you want to show the dialog for recovery?"
 msgstr ""
-"\"{0}\" {1} の状態は完全には復帰できませんでした．\n"
-"{2}"
+"アプリケーションがクラッシュしましたが、プロジェクト回復のための自動バックアップされたプロジェクト"
+"ファイルが利用可能です。回復用のダイアログを表示しますか？"
+
+msgid "The project backup directory \"{0}\" cannot be created: {1}"
+msgstr "プロジェクトパックディレクトリ \"{0}\" を作成することができません： {1}"
+
+msgid "Automatically saving project \"{0}\" to \"{1}\" as backup ..."
+msgstr "プロジェクト \"{0}\" を \"{1}\" にバックアップとして自動保存中 …"
+
+msgid "Automatically saving project \"{0}\" to \"{1}\" as backup ... done."
+msgstr "プロジェクト \"{0}\" を \"{1}\" にバックアップとして自動保存中 … 完了．"
+
+msgid "Project Auto-Backup Configuration"
+msgstr "プロジェクト自動バックアップの設定"
+
+msgid "Enable auto backup"
+msgstr "自動バックアップの有効化"
+
+msgid "Time interval"
+msgstr "時間間隔"
+
+msgid "sec."
+msgstr "秒"
+
+msgid "Max number of backups"
+msgstr "最大バックアップ数"
+
+msgid "Pause auto backup during playback"
+msgstr "プレイバック中は自動バックアップを停止"
+
+msgid "Pause auto backup during continuous update"
+msgstr "継続更新中は自動バックアップを停止"
+
+msgid "Backup before starting continuous update"
+msgstr "継続更新開始前にバックアップ"
+
+msgid "Backup Project Recovery"
+msgstr "バックアッププロジェクトの回復"
+
+msgid "Date and Time"
+msgstr "日時"
+
+msgid "Project"
+msgstr "プロジェクト"
+
+msgid "&Recovery"
+msgstr "回復(&R)"
+
+msgid "Selected backup is not found."
+msgstr "選択されたバックアップがみつかりません．"
+
+msgid "The state of the \"{0}\" {1} was not completely restored.\n"
+msgstr "\"{0}\" {1} の状態は完全には復帰できませんでした．\n"
 
 msgid "Loading project file \"{}\" ..."
 msgstr "プロジェクトファイル \"{}\" を読み込み中…"
@@ -1392,6 +1560,12 @@ msgstr "リソース \"{}\" がみつかりません．"
 
 msgid "The project file is empty."
 msgstr "プロジェクトファイルは空です．"
+
+msgid "This is a backup of an unsaved project."
+msgstr "これは未保存プロジェクトのバックアップです．"
+
+msgid "This is a backup of \"{0}\"."
+msgstr "これは \"{0}\" のバックアップです．"
 
 msgid "{0} / {1} item(s) have been loaded."
 msgstr "{0} / {1} のアイテムが読みこまれました．"
@@ -1408,14 +1582,17 @@ msgstr "プロジェクト \"{}\" を完全に読み込みました．"
 msgid "Project \"{}\" has been partially loaded."
 msgstr "プロジェクト \"{}\" を部分的に読み込みました．"
 
+msgid "This project backup has been loaded as an unsaved project."
+msgstr "このプロジェクトバックアップは未保存プロジェクトとして読み込まれました．"
+
+msgid "This project backup has been loaded as project \"{0}\"."
+msgstr "このプロジェクトバックアップはプロジェクト \"{0}\" として読み込まれました．"
+
 msgid "Loading project \"{}\" failed. Any valid objects were not loaded."
 msgstr "プロジェクト \"{}\" の読み込みに失敗しました．いかなるオブジェクトもロードされていません．"
 
-msgid "Can't open file \"{}\" for writing.\n"
-msgstr "\"{}\" は書き込み用ファイルとして開けません．\n"
-
-msgid "Saving sub project {0} as \"{1}\" ..."
-msgstr "サブプロジェクト \"{0}\" を \"{1}\" に保存中…"
+msgid "Can't open file \"{}\" for writing."
+msgstr "\"{}\" は書き込み用ファイルとして開けません．"
 
 msgid "Saving the project as \"{}\" ..."
 msgstr "プロジェクトを \"{}\" に保存中…"
@@ -1423,8 +1600,14 @@ msgstr "プロジェクトを \"{}\" に保存中…"
 msgid "Saving the project file has been finished."
 msgstr "プロジェクトファイルの保存が完了しました."
 
+msgid "Saving the sub-project file has been finished."
+msgstr "サブプロジェクトファイルの保存が完了しました."
+
 msgid "Saving the project file failed."
 msgstr "プロジェクトファイルの保存に失敗しました．"
+
+msgid "Saving the sub-project file failed."
+msgstr "サブプロジェクトファイルの保存に失敗しました．"
 
 msgid "Open a project"
 msgstr "プロジェクトを開く"
@@ -1517,6 +1700,31 @@ msgstr "プロジェクトパック \"{0}\" はプロジェクトファイルを
 
 msgid "ReferencedObjectSeqItem"
 msgstr "参照オブジェクト時系列アイテム"
+
+msgid "Export the scene of selected items"
+msgstr "選択アイテムのシーンのエクスポート"
+
+msgid "Export"
+msgstr "エクスポート"
+
+msgid "No selected items."
+msgstr "アイテムが選択されていません．"
+
+msgid "Scene to export is empty."
+msgstr "エクスポートするシーンが空です．"
+
+msgid ""
+"Export the scene of the following items to \"{0}\":\n"
+" "
+msgstr ""
+"以下のアイテムのシーンを \"{0}\" にエクスポートします：\n"
+" "
+
+msgid "Completed!"
+msgstr "完了！"
+
+msgid "Failed."
+msgstr "失敗．"
 
 msgid "Scene statistics:"
 msgstr "シーン統計情報:"
@@ -1620,6 +1828,9 @@ msgstr "右面ビュー"
 msgid "Left view"
 msgstr "左面ビュー"
 
+msgid "Isometric view"
+msgstr "等角投影ビュー"
+
 msgid "Scene"
 msgstr "シーン"
 
@@ -1689,14 +1900,8 @@ msgstr "テクスチャ"
 msgid "Fog"
 msgstr "フォグ"
 
-msgid "Background color"
-msgstr "背景色"
-
 msgid "Background Color"
 msgstr "背景色"
-
-msgid "Default color"
-msgstr "デフォルト色"
 
 msgid "Default Color"
 msgstr "デフォルト色"
@@ -1728,9 +1933,6 @@ msgstr "シーンビュー"
 msgid "Configuration of {0}"
 msgstr "{0}の設定"
 
-msgid "Camera"
-msgstr "カメラ"
-
 msgid "Lighting"
 msgstr "ライティング"
 
@@ -1745,12 +1947,6 @@ msgstr "デバッグ"
 
 msgid "OpengGL image buffer for picking"
 msgstr "ピッキング用OpenGL画像バッファ"
-
-msgid "Perspective"
-msgstr "透視投影"
-
-msgid "Orthographic"
-msgstr "並行投影"
 
 msgid "OpenGL initialization failed."
 msgstr "OpenGLの初期化に失敗しました．"
@@ -1836,11 +2032,17 @@ msgstr "遠方"
 msgid "Vertical axis"
 msgstr "垂直軸"
 
+msgid "Background color"
+msgstr "背景色"
+
 msgid "Span"
 msgstr "長さ"
 
 msgid "Interval"
 msgstr "間隔"
+
+msgid "Default color"
+msgstr "デフォルト色"
 
 msgid "ScriptBar"
 msgstr "スクリプトバー"
@@ -1987,9 +2189,6 @@ msgstr "進行中の更新に同期"
 
 msgid "Automatically expand the time range"
 msgstr "時間範囲の自動拡張"
-
-msgid "&OK"
-msgstr "&OK"
 
 msgid "Stop animation"
 msgstr "アニメーションの停止"

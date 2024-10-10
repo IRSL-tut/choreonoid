@@ -10,6 +10,7 @@
 #include "MessageView.h"
 #include "RootItem.h"
 #include "ProjectManager.h"
+#include "ProjectBackupManager.h"
 #include "UnifiedEditHistory.h"
 #include "UnifiedEditHistoryView.h"
 #include "ItemEditRecordManager.h"
@@ -20,10 +21,11 @@
 #include "ExtCommandItem.h"
 #include "SceneItem.h"
 #include "SceneGeometryMeasurementTracker.h"
+#include "CameraItem.h"
+#include "LightingItem.h"
 #include "PointSetItem.h"
 #include "PointSetGeometryMeasurementTracker.h"
 #include "MultiPointSetItem.h"
-#include "LightingItem.h"
 #include "AbstractTextItem.h"
 #include "ScriptItem.h"
 #include "MessageLogItem.h"
@@ -261,7 +263,7 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
 #ifdef Q_OS_WIN32
     // Make a bundled Python available if it exists in the Choreonoid top directory.
     std::smatch match;
-    for(auto& dir : filesystem::directory_iterator(executableTopDirPath())){
+    for(auto& dir : stdx::filesystem::directory_iterator(executableTopDirPath())){
         static std::regex re("^Python\\d+$");
         string dirString = dir.path().filename().string();
         if(regex_match(dirString, match, re)){
@@ -386,6 +388,7 @@ void App::Impl::initialize()
     
     ItemManager::initializeClass(ext);
     ProjectManager::initializeClass(ext);
+    ProjectBackupManager::initializeClass();
     RootItem::initializeClass(ext);
     UnifiedEditHistory::initializeClass(ext);
     UnifiedEditHistoryView::initializeClass(ext);
@@ -434,13 +437,14 @@ void App::Impl::initialize()
     ReferencedObjectSeqItem::initializeClass(ext);
     SceneItem::initializeClass(ext);
     SceneGeometryMeasurementTracker::initializeClass();
+    CameraItem::initializeClass(ext);
+    LightingItem::initializeClass(ext);
     PointSetItem::initializeClass(ext);
     PointSetGeometryMeasurementTracker::initializeClass();
     MultiPointSetItem::initializeClass(ext);
     AbstractTextItem::initializeClass(ext);
     ScriptItem::initializeClass(ext);
     MessageLogItem::initializeClass(ext);
-    LightingItem::initializeClass(ext);
     CoordinateFrameListItem::initializeClass(ext);
     CoordinateFrameItem::initializeClass(ext);
     PositionTagGroupItem::initializeClass(ext);
@@ -495,9 +499,9 @@ App::~App()
 
 App::Impl::~Impl()
 {
-    AppConfig::flush();
     delete qapplication;
     delete pluginManager;
+    AppConfig::flush();
 }
 
 
@@ -586,6 +590,7 @@ int App::Impl::exec()
     RootItem::instance()->clearChildren();
     
     pluginManager->finalizePlugins();
+    ext->deleteManagedObjects();
     delete mainWindow;
     mainWindow = nullptr;
 

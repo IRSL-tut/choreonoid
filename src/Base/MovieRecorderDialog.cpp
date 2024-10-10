@@ -6,11 +6,9 @@
 #include "LineEdit.h"
 #include "CheckBox.h"
 #include "ComboBox.h"
-#include "Dialog.h"
 #include "FileDialog.h"
 #include "Separator.h"
 #include <QDialogButtonBox>
-#include <QFileDialog>
 #include "gettext.h"
 
 using namespace std;
@@ -555,7 +553,7 @@ void MovieRecorderDialog::showDirectorySelectionDialog()
     dialog.setViewMode(QFileDialog::List);
     dialog.setFileMode(QFileDialog::Directory);
     dialog.setOption(QFileDialog::ShowDirsOnly);
-    dialog.updatePresetDirectories();
+    dialog.updatePresetDirectories(true);
     dialog.setDirectory(directoryEntry->text());
 
     if(dialog.exec()){

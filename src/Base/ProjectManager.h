@@ -42,6 +42,7 @@ public:
     void loadBuiltinProject(const std::string& resourceFile, Item* parentItem = nullptr);
     bool isLoadingProject() const;
     bool saveProject(const std::string& filename, Item* item = nullptr);
+    bool saveProjectAsBackup(const std::string& filename, Item* item = nullptr);
     bool overwriteCurrentProject();
     bool tryToCloseProject();
 
@@ -75,8 +76,8 @@ public:
     ref_ptr<Mapping> storeCurrentLayout();
     void restoreLayout(Mapping* layout);
 
-    bool checkValidItemExistence() const;
-    bool checkIfItemsConsistentWithProjectArchive() const;
+    static bool checkValidItemExistence();
+    static bool checkIfItemsConsistentWithProjectArchive(Item* topItem = nullptr /* RootItem */);
 
     class Impl;
 

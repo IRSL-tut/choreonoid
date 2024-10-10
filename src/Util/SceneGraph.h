@@ -19,6 +19,7 @@ class SgNode;
 typedef ref_ptr<SgNode> SgNodePtr;
 class SgGroup;
 class SgTransform;
+class Mapping;
 
 typedef std::vector<SgNodePtr> SgNodePath;
 
@@ -79,6 +80,12 @@ public:
         return findObject_(pred);
     }
 
+    enum TraverseStatus { Continue, Next, Stop };
+
+    bool traverseObjects(std::function<TraverseStatus(SgObject* object)> pred) {
+        return traverseObjects_(pred);
+    }
+
     SignalProxy<void(const SgUpdate& update)> sigUpdated() {
         return sigUpdated_;
     }
@@ -131,8 +138,8 @@ public:
     const std::string& uriObjectName() const;
     bool hasUriFragment() const { return uriInfo && !uriInfo->fragment.empty(); }
     const std::string& uriFragment() const;
-    bool hasUriMetadataString() const { return uriInfo && !uriInfo->metadata.empty(); }
-    const std::string& uriMetadataString() const;
+
+    Mapping* uriMetadata() const;
     void setUriWithFilePathAndBaseDirectory(const std::string& filePath, const std::string& baseDirectory);
     [[deprecated("Use setUriWithFilePathAndBaseDirectory.")]]
     void setUriByFilePathAndBaseDirectory(const std::string& filePath, const std::string& baseDirectory);
@@ -142,7 +149,7 @@ public:
     void setUri(const std::string& uri, const std::string& absoluteUri);
     void setUriObjectName(const std::string& name);
     void setUriFragment(const std::string& fragment);
-    void setUriMetadataString(const std::string& data);
+    void setUriMetadata(Mapping* data);
     void clearUri() { uriInfo.reset(); }
 
     bool isNode() const { return hasAttribute(Node); }
@@ -172,12 +179,13 @@ private:
         std::string absoluteUri;
         std::string objectName;
         std::string fragment;
-        std::string metadata;
+        ReferencedPtr metadata; // Actual type is MappingPtr
     };
     
     mutable std::unique_ptr<UriInfo> uriInfo;
 
     SgObject* findObject_(std::function<bool(SgObject* object)>& pred);
+    bool traverseObjects_(std::function<TraverseStatus(SgObject* object)>& pred);
 };
 
 typedef ref_ptr<SgObject> SgObjectPtr;
@@ -229,6 +237,10 @@ public:
     void releaseDecorationReference() { --decorationRefCounter; }
     bool isDecoratedSomewhere() const { return decorationRefCounter > 0; }
 
+    bool traverseNodes(std::function<TraverseStatus(SgNode* node)> pred) {
+        return traverseNodes_(pred);
+    }
+
 protected:
     SgNode(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
@@ -237,6 +249,8 @@ private:
     int classId_;
     int decorationRefCounter;
 
+    bool traverseNodes_(std::function<TraverseStatus(SgNode* node)>& pred);
+    
     //! \deprecated
     static int registerNodeType(const std::type_info& nodeType, const std::type_info& superType);    
 };
@@ -303,7 +317,7 @@ public:
     bool removeChild(SgNode* node, SgUpdateRef update = nullptr);
     void removeChildAt(int index, SgUpdateRef update = nullptr);
     void clearChildren(SgUpdateRef update = nullptr);
-    void copyChildrenTo(SgGroup* group, SgUpdateRef update = nullptr);
+    void copyChildrenTo(SgGroup* group, SgUpdateRef update = nullptr) const;
     void moveChildrenTo(SgGroup* group, SgUpdateRef update = nullptr);
 
     [[deprecated("Use insertChild(int index, SgNode* node, SgUpdateRef update)")]]

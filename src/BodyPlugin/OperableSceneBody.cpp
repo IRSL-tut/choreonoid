@@ -35,6 +35,33 @@ namespace {
 
 enum LinkOperationType { None, FK, IK, SimInterference };
 
+class ZmpMarker : public SphereMarker
+{
+    ZmpDevicePtr zmpDevice;
+    ScopedConnection zmpDeviceConnection;
+    SgUpdate update;
+    
+public:
+    ZmpMarker(LeggedBodyHelper* legged);
+    void setActive(bool on);
+    void setZmp(const Vector3& zmp);
+};
+
+typedef ref_ptr<ZmpMarker> ZmpMarkerPtr;
+
+double calcMarkerRadius(Link* link)
+{
+    if(auto shape = link->visualShape()){
+        const BoundingBox& bb = shape->boundingBox();
+        if(bb.empty()){
+            return 1.0; // Is this OK?
+        }
+        double V = ((bb.max().x() - bb.min().x()) * (bb.max().y() - bb.min().y()) * (bb.max().z() - bb.min().z()));
+        return pow(V, 1.0 / 3.0) * 0.6;
+    }
+    return 1.0;
+}
+
 }
 
 namespace cnoid {
@@ -54,7 +81,6 @@ public:
 
     Impl(OperableSceneBody* sceneBody, OperableSceneLink* self);
     OperableSceneBody* operableSceneBody();
-    double calcMarkerRadius() const;
     void showOrigin(bool on);
     void showCenterOfMass(bool on);
 };
@@ -120,8 +146,7 @@ public:
     SgGroupPtr markerGroup;
     CrossMarkerPtr cmMarker;
     CrossMarkerPtr cmProjectionMarker;
-    SphereMarkerPtr zmpMarker;
-    Vector3 orgZmpPos;
+    ZmpMarkerPtr zmpMarker;
     double bodyMarkerRadius;
     bool isCmVisible;
     bool isCmProjectionVisible;
@@ -156,10 +181,9 @@ public:
     double calcLinkMarkerRadius(SceneLink* sceneLink) const;
     void ensureCmMarker();
     void ensureCmProjectionMarker();
-    LeggedBodyHelper* checkLeggedBody();
-    bool ensureZmpMarker();
     void showCenterOfMass(bool on);
     void showCmProjection(bool on);
+    LeggedBodyHelper* checkLeggedBody();
     void showZmp(bool on);
     void makeLinkFree(OperableSceneLink* sceneLink);
     void setBaseLink(OperableSceneLink* sceneLink);
@@ -288,20 +312,6 @@ void OperableSceneLink::setVisible(bool on)
 }
 
 
-double OperableSceneLink::Impl::calcMarkerRadius() const
-{
-    if(auto shape = self->visualShape()){
-        const BoundingBox& bb = shape->boundingBox();
-        if(bb.empty()){
-            return 1.0; // Is this OK?
-        }
-        double V = ((bb.max().x() - bb.min().x()) * (bb.max().y() - bb.min().y()) * (bb.max().z() - bb.min().z()));
-        return pow(V, 1.0 / 3.0) * 0.6;
-    }
-    return 1.0;
-}
-
-
 void OperableSceneLink::showOrigin(bool on)
 {
     impl->showOrigin(on);
@@ -366,7 +376,7 @@ void OperableSceneLink::Impl::showCenterOfMass(bool on)
     if(on != isCenterOfMassShown){
         if(on){
             if(!cmMarker){
-                auto radius = calcMarkerRadius();
+                auto radius = calcMarkerRadius(self->link());
                 cmMarker = new CrossMarker(radius, Vector3f(0.0f, 1.0f, 0.0f), 2.0);
                 cmMarker->setName("CenterOfMass");
             }
@@ -531,7 +541,7 @@ void OperableSceneBody::Impl::onSceneGraphConnection(bool on)
                 [this](){ onBodyItemUpdated(); }));
 
         connections.add(
-            bodyItem->sigContinuousKinematicUpdateStateChanged().connect(
+            bodyItem->sigContinuousUpdateStateChanged().connect(
                 [this](bool){ onBodyItemUpdated(); }));
 
         connections.add(
@@ -553,7 +563,7 @@ void OperableSceneBody::Impl::onSceneGraphConnection(bool on)
 
 void OperableSceneBody::Impl::onBodyItemUpdated()
 {
-    bool isUserInputBlocked = bodyItem->isDoingContinuousKinematicUpdate() || bodyItem->isLocationLocked();
+    bool isUserInputBlocked = bodyItem->isContinuousUpdateState() || bodyItem->isLocationLocked();
     if(isUserInputBlocked){
         if(sceneLinkForPositionDragger){
             detachPositionDragger();
@@ -619,9 +629,6 @@ void OperableSceneBody::Impl::onKinematicStateChanged()
     	Vector3 com = bodyItem->centerOfMass();
     	com(2) = 0.0;
     	cmProjectionMarker->setTranslation(com);
-    }
-    if(isZmpVisible){
-        zmpMarker->setTranslation(bodyItem->zmp());
     }
 
     if(activeSimulatorItem){
@@ -828,32 +835,6 @@ void OperableSceneBody::Impl::ensureCmProjectionMarker()
 }
 
 
-LeggedBodyHelper* OperableSceneBody::Impl::checkLeggedBody()
-{
-    auto legged = getLeggedBodyHelper(self->body());
-    if(!legged->isValid() || legged->numFeet() == 0){
-        legged = nullptr;
-    }
-    return legged;
-}
-
-
-bool OperableSceneBody::Impl::ensureZmpMarker()
-{
-    if(!zmpMarker){
-        if(auto legged = checkLeggedBody()){
-            Link* footLink = legged->footLink(0);
-            auto sceneLink = self->operableSceneLink(footLink->index());
-            double radius = sceneLink->impl->calcMarkerRadius();
-            zmpMarker = new SphereMarker(radius, Vector3f(0.0f, 1.0f, 0.0f), 0.3f);
-            zmpMarker->addChild(new CrossMarker(radius * 2.5, Vector3f(0.0f, 1.0f, 0.0f), 2.0f));
-            zmpMarker->setName("ZMP");
-        }
-    }
-    return (zmpMarker != nullptr);
-}
-
-
 void OperableSceneBody::Impl::showCenterOfMass(bool on)
 {
     isCmVisible = on;
@@ -890,21 +871,76 @@ void OperableSceneBody::Impl::showCmProjection(bool on)
 }
 
 
+LeggedBodyHelper* OperableSceneBody::Impl::checkLeggedBody()
+{
+    auto legged = getLeggedBodyHelper(self->body());
+    if(!legged->isValid() || legged->numFeet() == 0){
+        legged = nullptr;
+    }
+    return legged;
+}
+
+
 void OperableSceneBody::Impl::showZmp(bool on)
 {
     if(on){
-        if(ensureZmpMarker()){
-            zmpMarker->setTranslation(bodyItem->zmp());
+        if(auto legged = checkLeggedBody()){
+            if(!zmpMarker){
+                zmpMarker = new ZmpMarker(legged);
+            }
             markerGroup->addChildOnce(zmpMarker, update);
             isZmpVisible = true;
         }
     } else {
         if(zmpMarker){
             markerGroup->removeChild(zmpMarker, update);
-            zmpMarker.reset();
         }
         isZmpVisible = false;
     }
+}
+
+
+ZmpMarker::ZmpMarker(LeggedBodyHelper* legged)
+{
+    setName("ZMP");
+
+    Link* footLink = legged->footLink(0);
+    double radius = calcMarkerRadius(footLink);
+    setRadius(radius);
+    setColor(Vector3f(0.0f, 1.0f, 0.0f));
+    setTransparency(0.3f);
+
+    addChild(new CrossMarker(radius * 2.5, Vector3f(0.0f, 1.0f, 0.0f), 2.0f));
+
+    zmpDevice = legged->getOrCreateZmpDevice();
+
+    update.setAction(SgUpdate::GeometryModified);
+
+    sigGraphConnection().connect(
+        [this](bool on){ setActive(on); });
+}
+
+
+void ZmpMarker::setActive(bool on)
+{
+    if(on){
+        setTranslation(zmpDevice->zmp());
+        zmpDeviceConnection =
+            zmpDevice->sigStateChanged().connect(
+                [this](){
+                    setTranslation(zmpDevice->zmp());
+                    notifyUpdate(update);
+                });
+    } else {
+        zmpDeviceConnection.disconnect();
+    }
+}
+
+
+void ZmpMarker::setZmp(const Vector3& zmp)
+{
+    zmpDevice->setZmp(zmp);
+    zmpDevice->notifyStateChange();
 }
 
 
@@ -1323,7 +1359,7 @@ bool OperableSceneBody::Impl::onButtonPressEvent(SceneWidgetEvent* event)
     PointedType pointedType = findPointedObject(event->nodePath());
 
     if(pointedType == PT_ZMP && event->button() == Qt::LeftButton){
-        if(!bodyItem->isDoingContinuousKinematicUpdate()){
+        if(!bodyItem->isContinuousUpdateState()){
             startZmpTranslation(event);
             return true;
         }
@@ -1372,7 +1408,7 @@ bool OperableSceneBody::Impl::onButtonPressEvent(SceneWidgetEvent* event)
         if(event->button() == Qt::LeftButton){
             updateMarkersAndManipulators(true);
 
-            if(!bodyItem->isDoingContinuousKinematicUpdate()){
+            if(!bodyItem->isContinuousUpdateState()){
                 if(operationType == LinkOperationType::FK){
                     startFK(event);
                 } else if(operationType == LinkOperationType::IK){
@@ -2002,7 +2038,7 @@ void OperableSceneBody::Impl::finishForcedPosition()
 
 void OperableSceneBody::Impl::startZmpTranslation(SceneWidgetEvent* event)
 {
-    dragProjector.setInitialTranslation(bodyItem->zmp());
+    dragProjector.setInitialTranslation(zmpMarker->translation());
     dragProjector.setTranslationPlaneNormal(Vector3::UnitZ());
     if(dragProjector.startTranslation(event)){
         dragMode = ZMP_TRANSLATION;
@@ -2015,8 +2051,7 @@ void OperableSceneBody::Impl::dragZmpTranslation(SceneWidgetEvent* event)
     if(dragProjector.dragTranslation(event)){
         Vector3 p = dragProjector.position().translation();
         p.z() = dragProjector.initialPosition().translation().z();
-        bodyItem->setZmp(p);
-        bodyItem->notifyKinematicStateChange(true);
+        zmpMarker->setZmp(p);
         dragged = true;
     }
 }

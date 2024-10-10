@@ -21,6 +21,7 @@ class ExtensionManager;
 class PutPropertyFunction;
 class EditRecord;
 class ItemTreeWidget;
+class MessageOut;
 
 class CNOID_EXPORT Item : public ClonableReferenced
 {
@@ -465,6 +466,26 @@ public:
     std::vector<ItemAddon*> addons();
     std::vector<const ItemAddon*> addons() const;
 
+    class ContinuousUpdateRef : public Referenced
+    {
+    private:
+        ContinuousUpdateRef(Item* item);
+        ~ContinuousUpdateRef();
+        weak_ref_ptr<Item> itemRef;
+        friend class Item;
+    };
+    typedef ref_ptr<ContinuousUpdateRef> ContinuousUpdateEntry;
+
+    ContinuousUpdateEntry startContinuousUpdate();
+    bool isContinuousUpdateState() const { return continuousUpdateCounter > 0; }
+    bool isContinuousUpdateStateSubTree() const;
+    
+    /**
+       \note The sigUpdated signal is not emitted when the continuous update state is changed
+       becasue the state is not a permenent one.
+    */
+    SignalProxy<void(bool on)> sigContinuousUpdateStateChanged();
+
     /**
        This function loads the data of the item from a file by using a registered FileIO object.
        To make this function available, a FileIO object must be registered to an ItemManager
@@ -472,7 +493,7 @@ public:
     */
     bool load(
         const std::string& filename, const std::string& format = std::string(),
-        const Mapping* options = nullptr);
+        const Mapping* options = nullptr, MessageOut* mout = nullptr);
 
     /**
        An overload version of the load function.
@@ -481,7 +502,7 @@ public:
     */
     bool load(
         const std::string& filename, Item* parent, const std::string& format = std::string(),
-        const Mapping* options = nullptr);
+        const Mapping* options = nullptr, MessageOut* mout = nullptr);
 
     bool isFileSavable() const;    
     
@@ -490,35 +511,39 @@ public:
        To make this function available, a FileIO object must be registered to an ItemManager
        in advance with its registerFileIO function.
     */
-    bool save(const std::string& filename, const std::string& format = std::string(),
-              const Mapping* options = nullptr);
+    bool save(
+        const std::string& filename, const std::string& format = std::string(), const Mapping* options = nullptr,
+        MessageOut* mout = nullptr);
 
     bool saveWithFileDialog();
+
+    /**
+       This function tries to overwrite the external data file of the item.
+       If the data has not been loaded from a file, the functions do nothing and returns false.
+    */
+    bool overwrite(
+        bool forceOverwrite = false, const std::string& format = std::string(), time_t cutoffTime = 0,
+        MessageOut* mout = nullptr);
 
     /**
        This function tries to save the data of the item to the file from which the data of the item has
        been loaded. If the data has not been loaded from a file, a file save dialog for the item is shown.
     */
     bool overwriteOrSaveWithDialog(bool forceOverwrite = false, const std::string& format = std::string());
-
-    /**
-       What this funtions does is currently same as the overwriteOrSaveWithDialog function for the backward
-       compatibility. This function will be removed in a future version, and will be redefined as an
-       overwrite-only function.
-    */
-    [[deprecated("Use the overwriteOrSaveWithDialog function")]]
-    bool overwrite(bool forceOverwrite = false, const std::string& format = std::string());
     
     //! Full path file name
     const std::string& filePath() const;
     //! File name without the directory
     std::string fileName() const;
     const std::string& fileFormat() const;
+    Mapping* fileOptions();
     const Mapping* fileOptions() const;
     std::time_t fileModificationTime() const;
     bool isConsistentWithFile() const;
+    int fileConsistencyId() const;
 
-    void updateFileInformation(const std::string& filename, const std::string& format, Mapping* options = nullptr);
+    void updateFileInformation(
+        const std::string& filename, const std::string& format, Mapping* options = nullptr, bool doNotify = true);
     void setConsistentWithFile(bool isConsistent);
     void suggestFileUpdate();
 
@@ -617,6 +642,7 @@ private:
     Item* lastChild_;
     int numChildren_;
     unsigned int attributes_;
+    int continuousUpdateCounter;
     std::string name_;
     bool isSelected_;
 

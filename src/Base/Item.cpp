@@ -86,6 +86,7 @@ public:
     Signal<void(int checkId, bool on)> sigAnyCheckToggled;
     Signal<void(bool on)> sigLogicalSumOfAllChecksToggled;
     map<int, Signal<void(bool on)>> checkIdToSignalMap;
+    Signal<void(bool on)> sigContinuousUpdateStateChanged;
 
     // for file overwriting management, mainly accessed by ItemManager::Impl
     std::string filePath;
@@ -93,6 +94,7 @@ public:
     MappingPtr fileOptions;
     std::time_t fileModificationTime;
     bool isConsistentWithFile;
+    int fileConsistencyId;
     bool isConsistentWithProjectArchive;
 
     Impl(Item* self);
@@ -121,7 +123,7 @@ public:
         Item* newParentItem, Item* newNextItem, bool isManualOperation, vector<function<void()>>& callbacksWhenAdded);
     bool checkNewTreePositionAcceptanceIter(bool isManualOperation, vector<function<void()>>& callbacksWhenAdded);
     void collectSubTreeItems(vector<Item*>& items, Item* item);
-    void callFuncOnConnectedToRoot();
+    void callFuncOnConnectedToRoot(RootItem* rootItem);
     void justRemoveSelfFromParent();
     void doRemoveFromParentItem(bool isMoving, bool isParentBeingDeleted);
     void notifySubTreeItemsOfTreePositionChange(Item* prevParentItem, Item* prevNextSibling);
@@ -129,10 +131,11 @@ public:
         Item* topItem, Item* prevTopParentItem, Item* topPathChangedItem, bool isPathChanged = false);
     void addToItemsToEmitSigSubTreeChanged();
     static void emitSigSubTreeChanged();
-    void emitSigDisconnectedFromRootForSubTree();
+    void emitSigDisconnectedFromRootForSubTree(RootItem* rootItem);
     void traverse(Item* item, const std::function<bool(Item*)>& callback);
     void removeAddon(ItemAddon* addon, bool isMoving);
     ItemAddon* createAddon(const std::type_info& type);
+    void notifyContinuousUpdateStateChangeRecursively(bool on);
     static void clearItemReplacementMaps();
 };
 
@@ -168,6 +171,7 @@ Item::Item(const Item& org)
 
 Item::Impl::Impl(Item* self, const Impl& org)
     : self(self),
+      checkStates(org.checkStates),
       displayNameModifier(org.displayNameModifier)
 {
     initialize();
@@ -184,6 +188,7 @@ Item::Impl::Impl(Item* self, const Impl& org)
         }
         fileModificationTime = org.fileModificationTime;
         isConsistentWithFile = org.isConsistentWithFile;
+        fileConsistencyId = org.fileConsistencyId;
     }
 }
 
@@ -197,10 +202,12 @@ void Item::Impl::initialize()
     self->lastChild_ = nullptr;
     self->numChildren_ = 0;
     self->attributes_ = 0;
+    self->continuousUpdateCounter = 0;
     self->isSelected_ = false;
 
     fileModificationTime = 0;
-    isConsistentWithFile = false;
+    isConsistentWithFile = true;
+    fileConsistencyId = 0;
     isConsistentWithProjectArchive = false;
 }
 
@@ -655,7 +662,11 @@ Item* Item::localRootItem() const
 
 bool Item::addChildItem(Item* item, bool isManualOperation)
 {
-    return impl->doInsertChildItem(item, nullptr, isManualOperation);
+    if(item->parentItem() == this){
+        return true; // Already inserted
+    } else {
+        return impl->doInsertChildItem(item, nullptr, isManualOperation);
+    }
 }
 
 
@@ -674,7 +685,12 @@ bool Item::insertChildItem(Item* item, Item* nextItem, bool isManualOperation)
 bool Item::addSubItem(Item* item)
 {
     item->setAttribute(SubItem);
-    return impl->doInsertChildItem(item, nullptr, false);
+
+    if(item->parentItem() == this){
+        return true; // Already inserted
+    } else {
+        return impl->doInsertChildItem(item, nullptr, false);
+    }
 }
 
 
@@ -769,7 +785,7 @@ bool Item::Impl::doInsertChildItem(ItemPtr item, Item* newNextItem, bool isManua
            committed on October 31, 2018, and the reason why the order was changed at that time is not clear.
         */
         if(!isMoving){
-            item->impl->callFuncOnConnectedToRoot();
+            item->impl->callFuncOnConnectedToRoot(rootItem);
         }
 
         item->impl->notifySubTreeItemsOfTreePositionChange(prevParentItem, prevNextSibling);
@@ -910,11 +926,14 @@ void Item::Impl::collectSubTreeItems(vector<Item*>& items, Item* item)
 }
 
 
-void Item::Impl::callFuncOnConnectedToRoot()
+void Item::Impl::callFuncOnConnectedToRoot(RootItem* rootItem)
 {
     self->onConnectedToRoot();
+    if(self->isContinuousUpdateState()){
+        rootItem->incrementContinuousUpdateStateItemRef();
+    }
     for(Item* child = self->childItem(); child; child = child->nextItem()){
-        child->impl->callFuncOnConnectedToRoot();
+        child->impl->callFuncOnConnectedToRoot(rootItem);
     }
 }
 
@@ -982,7 +1001,7 @@ void Item::Impl::doRemoveFromParentItem(bool isMoving, bool isParentBeingDeleted
         rootItem->notifyEventOnSubTreeRemoved(self, isMoving);
         if(!isMoving){
             notifySubTreeItemsOfTreePositionChange(prevParent, prevNextSibling);
-            emitSigDisconnectedFromRootForSubTree();
+            emitSigDisconnectedFromRootForSubTree(rootItem);
         }
     }
 
@@ -1152,11 +1171,16 @@ void Item::Impl::emitSigSubTreeChanged()
 }
 
 
-void Item::Impl::emitSigDisconnectedFromRootForSubTree()
+void Item::Impl::emitSigDisconnectedFromRootForSubTree(RootItem* rootItem)
 {
     for(Item* child = self->childItem(); child; child = child->nextItem()){
-        child->impl->emitSigDisconnectedFromRootForSubTree();
+        child->impl->emitSigDisconnectedFromRootForSubTree(rootItem);
     }
+    
+    if(self->isContinuousUpdateState()){
+        rootItem->decrementContinuousUpdateStateItemRef();
+    }
+    
     sigDisconnectedFromRoot();
 
     self->onDisconnectedFromRoot();
@@ -1520,15 +1544,87 @@ std::vector<const ItemAddon*> Item::addons() const
 }
 
 
-bool Item::load(const std::string& filename, const std::string& format, const Mapping* options)
+Item::ContinuousUpdateEntry Item::startContinuousUpdate()
 {
-    return ItemManager::loadItem(this, filename, parentItem(), format, options);
+    return new ContinuousUpdateRef(this);
 }
 
 
-bool Item::load(const std::string& filename, Item* parent, const std::string& format, const Mapping* options)
+bool Item::isContinuousUpdateStateSubTree() const
 {
-    return ItemManager::loadItem(this, filename, parent, format, options);
+    if(isContinuousUpdateState()){
+        return true;
+    }
+    if(parent_){
+        return parent_->isContinuousUpdateStateSubTree();
+    }
+    return false;
+}
+
+
+SignalProxy<void(bool on)> Item::sigContinuousUpdateStateChanged()
+{
+    return impl->sigContinuousUpdateStateChanged;
+}
+
+
+void Item::Impl::notifyContinuousUpdateStateChangeRecursively(bool on)
+{
+    for(auto child = self->childItem(); child; child = child->nextItem()){
+        if(!child->isContinuousUpdateState()){
+            child->impl->sigContinuousUpdateStateChanged(on);
+            child->impl->notifyContinuousUpdateStateChangeRecursively(on);
+        }
+    }
+}
+
+
+Item::ContinuousUpdateRef::ContinuousUpdateRef(Item* item)
+    : itemRef(item)
+{
+    if(item->continuousUpdateCounter == 0){
+        bool hasOnInUpperNodes = item->isContinuousUpdateStateSubTree();
+        ++item->continuousUpdateCounter;
+        item->impl->sigContinuousUpdateStateChanged(true);
+        if(!hasOnInUpperNodes){
+            item->impl->notifyContinuousUpdateStateChangeRecursively(true);
+        }
+        if(auto rootItem = item->findRootItem()){
+            rootItem->incrementContinuousUpdateStateItemRef();
+        }
+    }
+}
+
+
+Item::ContinuousUpdateRef::~ContinuousUpdateRef()
+{
+    if(auto item = itemRef.lock()){
+        if(item->continuousUpdateCounter == 1){
+            bool hasOnInUpperNodes = item->isContinuousUpdateStateSubTree();
+            --item->continuousUpdateCounter;
+            item->impl->sigContinuousUpdateStateChanged(false);
+            if(!hasOnInUpperNodes){
+                item->impl->notifyContinuousUpdateStateChangeRecursively(false);
+            }
+            if(auto rootItem = item->findRootItem()){
+                rootItem->decrementContinuousUpdateStateItemRef();
+            }
+        }
+    }
+}
+
+
+bool Item::load
+(const std::string& filename, const std::string& format, const Mapping* options, MessageOut* mout)
+{
+    return ItemManager::loadItem(this, filename, parentItem(), format, options, mout);
+}
+
+
+bool Item::load
+(const std::string& filename, Item* parent, const std::string& format, const Mapping* options, MessageOut* mout)
+{
+    return ItemManager::loadItem(this, filename, parent, format, options, mout);
 }
 
 
@@ -1544,9 +1640,9 @@ bool Item::isFileSavable() const
 }
 
 
-bool Item::save(const std::string& filename, const std::string& format, const Mapping* options)
+bool Item::save(const std::string& filename, const std::string& format, const Mapping* options, MessageOut* mout)
 {
-    return ItemManager::saveItem(this, filename, format, options);
+    return ItemManager::saveItem(this, filename, format, options, mout);
 }
 
 
@@ -1556,16 +1652,15 @@ bool Item::saveWithFileDialog()
 }
 
 
-bool Item::overwriteOrSaveWithDialog(bool forceOverwrite, const std::string& format)
+bool Item::overwrite(bool forceOverwrite, const std::string& format, time_t cutoffTime, MessageOut* mout)
 {
-    return ItemManager::overwriteItemOrSaveItemWithDialog(this, forceOverwrite, format);
+    return ItemManager::overwriteItem(this, forceOverwrite, format, false, cutoffTime, mout);
 }
 
 
-bool Item::overwrite(bool forceOverwrite, const std::string& format)
+bool Item::overwriteOrSaveWithDialog(bool forceOverwrite, const std::string& format)
 {
-    // The fourth argument is currently true for the backward compatibility.
-    return ItemManager::overwriteItem(this, forceOverwrite, format, true);
+    return ItemManager::overwriteItemOrSaveItemWithDialog(this, forceOverwrite, format);
 }
 
 
@@ -1584,6 +1679,12 @@ std::string Item::fileName() const
 const std::string& Item::fileFormat() const
 {
     return impl->fileFormat;
+}
+
+
+Mapping* Item::fileOptions()
+{
+    return impl->fileOptions;
 }
 
 
@@ -1619,6 +1720,12 @@ bool Item::isConsistentWithFile() const
 }
 
 
+int Item::fileConsistencyId() const
+{
+    return impl->fileConsistencyId;
+}
+
+
 void Item::setConsistentWithFile(bool isConsistent)
 {
     impl->isConsistentWithFile = isConsistent;
@@ -1631,11 +1738,13 @@ void Item::setConsistentWithFile(bool isConsistent)
 void Item::suggestFileUpdate()
 {
     impl->isConsistentWithFile = false;
+    impl->fileConsistencyId++;
     impl->isConsistentWithProjectArchive = false;
 }
 
 
-void Item::updateFileInformation(const std::string& filename, const std::string& format, Mapping* options)
+void Item::updateFileInformation
+(const std::string& filename, const std::string& format, Mapping* options, bool doNotify)
 {
     filesystem::path fpath(fromUTF8(filename));
     if(filesystem::exists(fpath)){
@@ -1650,7 +1759,9 @@ void Item::updateFileInformation(const std::string& filename, const std::string&
     impl->fileFormat = format;
     impl->fileOptions = options;
 
-    notifyUpdate();
+    if(doNotify){
+        notifyUpdate();
+    }
 }
 
 

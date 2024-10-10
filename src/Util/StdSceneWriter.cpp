@@ -18,7 +18,6 @@
 #include "Format.h"
 #include <cnoid/stdx/filesystem>
 #include <unordered_map>
-#include <regex>
 #include "gettext.h"
 
 using namespace std;
@@ -43,6 +42,7 @@ public:
     bool isMeshEnabled;
     SgMaterialPtr defaultMaterial;
     unique_ptr<UriSchemeProcessor> uriSchemeProcessor;
+    FilePathVariableProcessorPtr filePathVariableProcessor;
     unique_ptr<YAMLWriter> yamlWriter;
     unique_ptr<StdSceneWriter> subSceneWriter;
     unique_ptr<ObjSceneWriter> objSceneWriter;
@@ -58,8 +58,6 @@ public:
     bool isOriginalSceneExtModelFileUriRewritingEnabled;
     unordered_map<SgObjectPtr, string> uriRewritingMap;
     set<string> extModelFiles;
-    regex uriSchemeRegex;
-    bool isUriSchemeRegexReady;
 
     ostream* os_;
     ostream& os() { return *os_; }
@@ -70,7 +68,7 @@ public:
     StdSceneWriter* getOrCreateSubSceneWriter();
     ObjSceneWriter* getOrCreateObjSceneWriter();
     void setOutputBaseDirectory(const std::string& directory);
-    void ensureUriSchemeProcessor(FilePathVariableProcessor* fpvp = nullptr);
+    void ensureUriSchemeProcessor();
     bool writeScene(const std::string& filename, SgNode* node, const std::vector<SgNode*>* pnodes);
     void rewriteOriginalSceneExtModelFileUris();
     pair<MappingPtr, bool> findOrCreateMapping(SgObject* object);
@@ -158,7 +156,6 @@ StdSceneWriter::Impl::Impl(StdSceneWriter* self)
     isMeshEnabled = true;
     isOriginalSceneExtModelFileUriRewritingEnabled = false;
     extModelFileMode = EmbedModels;
-    isUriSchemeRegexReady = false;
 
     os_ = &nullout();    
 }
@@ -183,6 +180,7 @@ void StdSceneWriter::Impl::copyConfigurations(const Impl* org)
     outputBaseDirPath = org->outputBaseDirPath;
     originalBaseDirPath = org->originalBaseDirPath;
     os_ = org->os_;
+    filePathVariableProcessor = org->filePathVariableProcessor;
     if(org->yamlWriter){
         getOrCreateYamlWriter()->setIndentWidth(org->yamlWriter->indentWidth());
     }
@@ -259,32 +257,33 @@ void StdSceneWriter::Impl::setOutputBaseDirectory(const std::string& directory)
 {
     outputBaseDirectory = directory;
     outputBaseDirPath = fromUTF8(directory);
-    if(uriSchemeProcessor){
-        uriSchemeProcessor->filePathVariableProcessor()->setBaseDirectory(directory);
+    if(filePathVariableProcessor){
+        filePathVariableProcessor->setBaseDirectory(directory);
     }
 }
 
 
-void StdSceneWriter::Impl::ensureUriSchemeProcessor(FilePathVariableProcessor* fpvp)
+void StdSceneWriter::Impl::ensureUriSchemeProcessor()
 {
     if(!uriSchemeProcessor){
         uriSchemeProcessor = make_unique<UriSchemeProcessor>();
-        if(!fpvp){
-            fpvp = new FilePathVariableProcessor;
-            fpvp->setBaseDirPath(outputBaseDirPath);
+        if(!filePathVariableProcessor){
+            filePathVariableProcessor = new FilePathVariableProcessor;
+            filePathVariableProcessor->setBaseDirPath(outputBaseDirPath);
         }
-    }
-    if(fpvp){
-        uriSchemeProcessor->setFilePathVariableProcessor(fpvp);
+        uriSchemeProcessor->setFilePathVariableProcessor(filePathVariableProcessor);
     }
 }
 
 
 void StdSceneWriter::setFilePathVariableProcessor(FilePathVariableProcessor* fpvp)
 {
-    impl->ensureUriSchemeProcessor(fpvp);
+    impl->filePathVariableProcessor = fpvp;
     impl->outputBaseDirectory = fpvp->baseDirectory();
     impl->outputBaseDirPath = fpvp->baseDirPath();
+    if(impl->uriSchemeProcessor){
+        impl->uriSchemeProcessor->setFilePathVariableProcessor(fpvp);
+    }
 }
 
 
@@ -378,6 +377,7 @@ void StdSceneWriter::clear()
     impl->sceneToYamlNodeMap.clear();
     impl->uriRewritingMap.clear();
     impl->extModelFiles.clear();
+    clearImageFileInformation();
 }
 
 
@@ -591,9 +591,8 @@ void StdSceneWriter::Impl::makeLinkToOriginalModelFile(Mapping* archive, SgObjec
     }
         
     archive->write("uri", uri, DOUBLE_QUOTED);
-    auto& metadata = sceneObject->uriMetadataString();
-    if(!metadata.empty()){
-        archive->write("metadata", metadata, DOUBLE_QUOTED);
+    if(auto metadata = sceneObject->uriMetadata()){
+        archive->insert("metadata", metadata);
     }
 }
 
@@ -609,9 +608,8 @@ void StdSceneWriter::Impl::copyModelFilesAndLinkToCopiedFile(Mapping* archive, S
         os() << formatR(_("Warning: Model file \"{0}\" cannot be copied."), sceneObject->uri()) << endl;
     } else {
         archive->write("uri", relativeFilePathToCopiedFile, DOUBLE_QUOTED);
-        auto& metadata = sceneObject->uriMetadataString();
-        if(!metadata.empty()){
-            archive->write("metadata", metadata, DOUBLE_QUOTED);
+        if(auto metadata = sceneObject->uriMetadata()){
+            archive->insert("metadata", metadata);
         }
     }
 }
@@ -634,8 +632,7 @@ string StdSceneWriter::Impl::copyModelFiles(SgObject* sceneObject)
                     findPathInDirectory(originalBaseDirPath, srcFilePath, relativeFilePath);
                 }
                 if(relativeFilePath.empty()){
-                    uriSchemeProcessor->detectScheme(sceneObject->uri());
-                    filesystem::path uriPath = fromUTF8(uriSchemeProcessor->path());
+                    filesystem::path uriPath = fromUTF8(uriSchemeProcessor->getFilePath(sceneObject->uri()));
                     uriPath = uriPath.lexically_normal();
                     if(uriPath.has_root_path()){
                         uriPath = uriPath.relative_path();
@@ -688,11 +685,9 @@ string StdSceneWriter::Impl::copyModelFiles(SgObject* sceneObject)
         }
     }
 
-    if(!relativeFilePathToCopiedFile.empty()){
-        int n = sceneObject->numChildObjects();
-        for(int i=0; i < n; ++i){
-            copyModelFiles(sceneObject->childObject(i));
-        }
+    int n = sceneObject->numChildObjects();
+    for(int i=0; i < n; ++i){
+        copyModelFiles(sceneObject->childObject(i));
     }
 
     return relativeFilePathToCopiedFile;
@@ -738,7 +733,7 @@ bool StdSceneWriter::Impl::replaceOriginalModelFile
     } else { // New reference
         if(objectOfUri->hasAbsoluteUri()){
             auto& absUri = objectOfUri->absoluteUri();
-            if(absUri.find_first_of("file://") == 0){
+            if(absUri.find("file://") == 0){
                 filesystem::path orgFilePath(absUri.substr(7));
                 if(filesystem::equivalent(fullPath, orgFilePath, ec)){
                     os() << formatR(_("Model file \"{0}\" cannot be replaced with the same format file in the same directory"),
@@ -1224,18 +1219,18 @@ MappingPtr StdSceneWriter::Impl::writeTexture(SgTexture* texture)
     if(auto image = texture->image()){
         if(image->hasUri()){
             filesystem::path imageDirPath = outputBaseDirPath;
+            filesystem::path mainSceneNamePath;
             if(!mainSceneName.empty()){
-                imageDirPath /= filesystem::path(fromUTF8(mainSceneName));
+                mainSceneNamePath = filesystem::path(fromUTF8(mainSceneName));
+                imageDirPath /= mainSceneNamePath;
             }
-            if(self->findOrCopyImageFile(image, toUTF8(imageDirPath.string()))){
-                ensureUriSchemeProcessor();
-                uriSchemeProcessor->detectScheme(image->uri());
-                filesystem::path path(fromUTF8(uriSchemeProcessor->path()));
-                path = imageDirPath / path.filename();
-                if(auto relPath = getRelativePath(path, outputBaseDirPath)){
-                    archive->write("uri", toUTF8(relPath->generic_string()), DOUBLE_QUOTED);
+            string copiedFile;
+            if(self->findOrCopyImageFile(image, toUTF8(imageDirPath.string()), copiedFile)){
+                filesystem::path path(fromUTF8(copiedFile));
+                if(path.is_relative() && !mainSceneName.empty()){
+                    path = mainSceneNamePath / path;
                 }
-                isValid = true;
+                archive->write("uri", toUTF8(path.generic_string()), DOUBLE_QUOTED);
                 if(texture->repeatS() == texture->repeatT()){
                     archive->write("repeat", texture->repeatS());
                 } else {
@@ -1243,6 +1238,7 @@ MappingPtr StdSceneWriter::Impl::writeTexture(SgTexture* texture)
                     repeat.append(texture->repeatS());
                     repeat.append(texture->repeatT());
                 }
+                isValid = true;
             }
         }
     }
