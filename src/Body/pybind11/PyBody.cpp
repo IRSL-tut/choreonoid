@@ -5,6 +5,7 @@
 #include <cnoid/CloneMap>
 #include <cnoid/PyUtil>
 #include <pybind11/operators.h>
+#include <pybind11/numpy.h>
 
 using namespace std;
 using namespace cnoid;
@@ -106,7 +107,223 @@ void exportPyBody(py::module& m)
         .def("resetLinkName", &Body::resetLinkName)
         .def("resetJointSpecificName", (void(Body::*)(Link *)) &Body::resetLinkName)
         .def("resetJointSpecificName", (void(Body::*)(Link *, const std::string &name)) &Body::resetLinkName)
-
+        //// numpy direct methods
+        .def("getAngles", [](Body &self) {
+            py::array_t<double> res;
+            int num = self.numJoints();
+            res.resize({ num });
+            auto buf = res.mutable_unchecked<1>();
+            for(int i = 0; i < num; i++) {
+                Link *l = self.joint(i);
+                buf(i) = l->q();
+            }
+            return res;
+        })
+        .def("getAngles", [](Body &self, py::array_t<double> &res) {
+            int num = self.numJoints();
+            if (res.size() != num) {
+                throw std::runtime_error("invalid vector length");
+            }
+            auto buf = res.mutable_unchecked<1>();
+            for(int i = 0; i < num; i++) {
+                Link *l = self.joint(i);
+                buf(i) = l->q();
+            }
+        })
+        .def("setAngles", [](Body &self, const py::array_t<double> &vec) {
+            int dim = vec.ndim();
+            if (dim != 1) {
+                throw std::runtime_error("vector expected");
+            }
+            int jnum = self.numJoints();
+            int sz = vec.shape(0);
+            int num = jnum >= sz ? sz : jnum;
+            const double *ptr = (double *)(vec.data(0));
+            for(int i = 0; i <num; i++) {
+                Link *l = self.joint(i);
+                l->q() = ptr[i];
+            }
+        })
+        .def("getVelocities", [](Body &self) {
+            py::array_t<double> res;
+            int num = self.numJoints();
+            res.resize({ num });
+            auto buf = res.mutable_unchecked<1>();
+            for(int i = 0; i < num; i++) {
+                Link *l = self.joint(i);
+                buf(i) = l->dq();
+            }
+            return res;
+        })
+        .def("getVelocities", [](Body &self, py::array_t<double> &res) {
+            int num = self.numJoints();
+            if (res.size() != num) {
+                throw std::runtime_error("invalid vector length");
+            }
+            auto buf = res.mutable_unchecked<1>();
+            for(int i = 0; i < num; i++) {
+                Link *l = self.joint(i);
+                buf(i) = l->dq();
+            }
+        })
+        .def("setVelocities", [](Body &self, const py::array_t<double> &vec) {
+            int dim = vec.ndim();
+            if (dim != 1) {
+                throw std::runtime_error("vector expected");
+            }
+            int jnum = self.numJoints();
+            int sz = vec.shape(0);
+            int num = jnum >= sz ? sz : jnum;
+            const double *ptr = (double *)(vec.data(0));
+            for(int i = 0; i <num; i++) {
+                Link *l = self.joint(i);
+                l->dq() = ptr[i];
+            }
+        })
+        .def("getAccelerations", [](Body &self) {
+            py::array_t<double> res;
+            int num = self.numJoints();
+            res.resize({ num });
+            auto buf = res.mutable_unchecked<1>();
+            for(int i = 0; i < num; i++) {
+                Link *l = self.joint(i);
+                buf(i) = l->ddq();
+            }
+            return res;
+        })
+        .def("getAccelerations", [](Body &self, py::array_t<double> &res) {
+            int num = self.numJoints();
+            if (res.size() != num) {
+                throw std::runtime_error("invalid vector length");
+            }
+            auto buf = res.mutable_unchecked<1>();
+            for(int i = 0; i < num; i++) {
+                Link *l = self.joint(i);
+                buf(i) = l->ddq();
+            }
+        })
+        .def("setAccelerations", [](Body &self, const py::array_t<double> &vec) {
+            int dim = vec.ndim();
+            if (dim != 1) {
+                throw std::runtime_error("vector expected");
+            }
+            int jnum = self.numJoints();
+            int sz = vec.shape(0);
+            int num = jnum >= sz ? sz : jnum;
+            const double *ptr = (double *)(vec.data(0));
+            for(int i = 0; i <num; i++) {
+                Link *l = self.joint(i);
+                l->ddq() = ptr[i];
+            }
+        })
+        .def("getTorques", [](Body &self) {
+            py::array_t<double> res;
+            int num = self.numJoints();
+            res.resize({ num });
+            auto buf = res.mutable_unchecked<1>();
+            for(int i = 0; i < num; i++) {
+                Link *l = self.joint(i);
+                buf(i) = l->u();
+            }
+            return res;
+        })
+        .def("getTorques", [](Body &self, py::array_t<double> &res) {
+            int num = self.numJoints();
+            if (res.size() != num) {
+                throw std::runtime_error("invalid vector length");
+            }
+            auto buf = res.mutable_unchecked<1>();
+            for(int i = 0; i < num; i++) {
+                Link *l = self.joint(i);
+                buf(i) = l->u();
+            }
+        })
+        .def("setTorques", [](Body &self, const py::array_t<double> &vec) {
+            int dim = vec.ndim();
+            if (dim != 1) {
+                throw std::runtime_error("vector expected");
+            }
+            int jnum = self.numJoints();
+            int sz = vec.shape(0);
+            int num = jnum >= sz ? sz : jnum;
+            const double *ptr = (double *)(vec.data(0));
+            for(int i = 0; i <num; i++) {
+                Link *l = self.joint(i);
+                l->u() = ptr[i];
+            }
+        })
+        .def("getTargetAngles", [](Body &self) {
+            py::array_t<double> res;
+            int num = self.numJoints();
+            res.resize({ num });
+            auto buf = res.mutable_unchecked<1>();
+            for(int i = 0; i < num; i++) {
+                Link *l = self.joint(i);
+                buf(i) = l->q_target();
+            }
+            return res;
+        })
+        .def("getTargetAngles", [](Body &self, py::array_t<double> &res) {
+            int num = self.numJoints();
+            if (res.size() != num) {
+                throw std::runtime_error("invalid vector length");
+            }
+            auto buf = res.mutable_unchecked<1>();
+            for(int i = 0; i < num; i++) {
+                Link *l = self.joint(i);
+                buf(i) = l->q_target();
+            }
+        })
+        .def("setTargetAngles", [](Body &self, const py::array_t<double> &vec) {
+            int dim = vec.ndim();
+            if (dim != 1) {
+                throw std::runtime_error("vector expected");
+            }
+            int jnum = self.numJoints();
+            int sz = vec.shape(0);
+            int num = jnum >= sz ? sz : jnum;
+            const double *ptr = (double *)(vec.data(0));
+            for(int i = 0; i <num; i++) {
+                Link *l = self.joint(i);
+                l->q_target() = ptr[i];
+            }
+        })
+        .def("getTargetVelocities", [](Body &self) {
+            py::array_t<double> res;
+            int num = self.numJoints();
+            res.resize({ num });
+            auto buf = res.mutable_unchecked<1>();
+            for(int i = 0; i < num; i++) {
+                Link *l = self.joint(i);
+                buf(i) = l->dq_target();
+            }
+            return res;
+        })
+        .def("getTargetVelocities", [](Body &self, py::array_t<double> &res) {
+            int num = self.numJoints();
+            if (res.size() != num) {
+                throw std::runtime_error("invalid vector length");
+            }
+            auto buf = res.mutable_unchecked<1>();
+            for(int i = 0; i < num; i++) {
+                Link *l = self.joint(i);
+                buf(i) = l->dq_target();
+            }
+        })
+        .def("setTargetVelocities", [](Body &self, const py::array_t<double> &vec) {
+            int dim = vec.ndim();
+            if (dim != 1) {
+                throw std::runtime_error("vector expected");
+            }
+            int jnum = self.numJoints();
+            int sz = vec.shape(0);
+            int num = jnum >= sz ? sz : jnum;
+            const double *ptr = (double *)(vec.data(0));
+            for(int i = 0; i <num; i++) {
+                Link *l = self.joint(i);
+                l->dq_target() = ptr[i];
+            }
+        })
         // deprecated
         .def("getName", &Body::name)
         .def("getModelName", &Body::modelName)
