@@ -51,7 +51,13 @@ void exportSimulationClasses(py::module m)
         .def("clearExternalForces", &SimulatorItem::clearExternalForces)
         .def("setForcedPosition", &SimulatorItem::setForcedPosition)
         .def("clearForcedPositions", &SimulatorItem::clearForcedPositions)
-
+        //
+        .def("tickRequest", &SimulatorItem::tickRequest, py::arg("wait") = false)
+        .def("tickRequested", &SimulatorItem::tickRequested)
+        //
+        .def("findSimulationBody", [](SimulatorItem &self, const std::string &name) {
+            return self.findSimulationBody(name);
+        })
         // deprecated
         .def("setRealtimeSyncMode",
              [](SimulatorItem& self, bool on){
@@ -106,6 +112,16 @@ void exportSimulationClasses(py::module m)
         .export_values();
 
     PyItemList<SimulatorItem>(m, "SimulatorItemList", simulatorItemClass);
+
+    py::class_<SimulationBody, SimulationBodyPtr, Referenced>
+        simulationBodyClass(m, "SimulationBody");
+
+    simulationBodyClass
+        .def(py::init<Body *>())
+        .def("bodyItem", &SimulationBody::bodyItem)
+        .def("body", &SimulationBody::body)
+        .def_property_readonly("numControllers", &SimulationBody::numControllers)
+        .def("controller", &SimulationBody::controller);
 
     py::class_<AISTSimulatorItem, AISTSimulatorItemPtr, SimulatorItem>
         aistSimulatorItemClass(m, "AISTSimulatorItem");

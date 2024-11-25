@@ -48,7 +48,7 @@ namespace {
 
 enum { RESOLUTION_TIMESTEP, RESOLUTION_FRAMERATE, RESOLUTION_TIMEBAR, N_TEMPORARL_RESOLUTION_TYPES };
 
-const char* realtimeSyncModeSymbols[] = { "off", "compensatory", "conservative" };
+const char* realtimeSyncModeSymbols[] = { "off", "compensatory", "conservative", "manual" };
 static const char* timeRangeModeSymbols[] = { "unlimited", "specified", "timebar" };
 
 typedef map<weak_ref_ptr<BodyItem>, SimulationBodyPtr> BodyItemToSimBodyMap;
@@ -383,6 +383,8 @@ public:
     bool restore(const Archive& archive);
     void restoreTimeSyncItemEngines(const Archive& archive);
     SimulationLogEngine* getOrCreateLogEngine();
+
+    volatile bool tickRequest;
 };
 
 }
@@ -1266,6 +1268,7 @@ SimulatorItem::Impl::Impl(SimulatorItem* self)
     realtimeSyncMode.setSymbol(NonRealtimeSync, N_("Off"));
     realtimeSyncMode.setSymbol(CompensatoryRealtimeSync, N_("On (Compensatory)"));
     realtimeSyncMode.setSymbol(ConservativeRealtimeSync, N_("On (Conservative)"));
+    realtimeSyncMode.setSymbol(ManualRealtimeSync, N_("Manual"));
     realtimeSyncMode.select(CompensatoryRealtimeSync);
 
     timeLength = 300.0; // 5 min.
@@ -2084,7 +2087,39 @@ void SimulatorItem::Impl::run()
 
     int frame = 0;
     bool isOnPause = false;
-
+    if(currentRealtimeSyncMode == ManualRealtimeSync) {
+        tickRequest = true;//???
+        while(true) {
+            if(pauseRequested){
+                if(stopRequested){
+                    break;
+                }
+                if(!isOnPause){
+                    elapsedTime += timer.elapsed();
+                    isOnPause = true;
+                    sigSimulationPaused();
+                }
+                QThread::msleep(50);
+            } else {
+                if(isOnPause){
+                    timer.start();
+                    isOnPause = false;
+                    sigSimulationResumed();
+                }
+                if (tickRequest) {
+                    tickRequest = false;
+                    if(!stepSimulationMain() || stopRequested || frame++ >= maxFrame) {
+                        break;
+                    }
+                } else {
+                    QThread::usleep(1); //// TODO: check necessity
+                    if (stopRequested) {
+                        break;
+                    }
+                }
+            }
+        }
+    } else
     if(currentRealtimeSyncMode == NonRealtimeSync){
         while(true){
             if(pauseRequested){
@@ -2946,6 +2981,20 @@ void SimulatorItem::Impl::restoreTimeSyncItemEngines(const Archive& archive)
     }
 }
 
+void SimulatorItem::tickRequest(bool wait)
+{
+    impl->tickRequest = true;
+    if (wait) {
+        while (impl->tickRequest) {
+            QThread::usleep(1); //// TODO: check necessity
+        }
+    }
+}
+
+bool SimulatorItem::tickRequested()
+{
+    return impl->tickRequest;
+}
 
 SimulationLogEngine* SimulatorItem::Impl::getOrCreateLogEngine()
 {

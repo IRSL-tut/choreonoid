@@ -85,6 +85,9 @@ public:
     bool isPausing() const;
     bool isActive() const; ///< isRunning() && !isPausing()
 
+    void tickRequest(bool wait = false);
+    bool tickRequested();
+
     //! This can only be called from the simulation thread
     int currentFrame() const;
     
@@ -152,6 +155,7 @@ public:
         NonRealtimeSync,
         CompensatoryRealtimeSync,
         ConservativeRealtimeSync,
+        ManualRealtimeSync,
         NumRealtimeSyncModes
     };
 
