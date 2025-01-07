@@ -248,7 +248,7 @@ void exportPySceneDrawables(py::module& m)
         .def_property_readonly("inertia", [](SgMesh::Box &self) { Matrix3 ret = Matrix3::Zero();
                 ret(0, 0) = (self.size[1] * self.size[1] + self.size[2] * self.size[2] ) / 12.0;
                 ret(1, 1) = (self.size[0] * self.size[0] + self.size[2] * self.size[2] ) / 12.0;
-                ret(2, 2) = (self.size[0] * self.size[0] + self.size[1] * self.size[2] ) / 12.0;
+                ret(2, 2) = (self.size[0] * self.size[0] + self.size[1] * self.size[1] ) / 12.0;
                 return ret; })
         .def_property_readonly("size", [](SgMesh::Box &self) { return self.size; })
         ;
