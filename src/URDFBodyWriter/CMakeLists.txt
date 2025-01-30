@@ -7,6 +7,10 @@ if(PUGIXML_STATIC_LIBRARY_DIRS)
   link_directories(${PUGIXML_STATIC_LIBRARY_DIRS})
 endif()
 
+if ( ${CHOREONOID_VERSION_STRING} VERSION_LESS "2.1.0" )
+  add_definitions(-DUSE_OLD_OPTION)
+endif()
+
 choreonoid_add_library(CnoidURDFBodyWriter SHARED URDFBodyWriter.cpp HEADERS URDFBodyWriter.h)
 target_link_libraries(CnoidURDFBodyWriter CnoidBody ${PUGIXML_STATIC_LIBRARIES} CnoidAssimpSceneWriter)
 
