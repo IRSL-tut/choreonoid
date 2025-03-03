@@ -26,8 +26,8 @@ int main(int argc, char **argv)
     bool verbose   = false;
     bool export_devices = false;
     bool use_primitive = true;
-    std::string file_prefix_;
-    std::string url_prefix_;
+    std::string file_prefix_ = "/tmp/";
+    std::string url_prefix_  = "file:///tmp/";
 #ifdef USE_OLD_OPTION
     options_description desc("$ body2urdf [options] inputfile.body");
     desc.add_options()
