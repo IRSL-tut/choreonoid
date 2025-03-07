@@ -179,5 +179,10 @@ PYBIND11_MODULE(Body, m)
         })
     .def("setExtModelFileMode", &StdBodyWriter::setExtModelFileMode)
     .def("extModelFileMode", &StdBodyWriter::extModelFileMode)
+    .def("setOriginalShapeExtModelFileUriRewritingEnabled", &StdBodyWriter::setOriginalShapeExtModelFileUriRewritingEnabled)
+    .def("isOriginalShapeExtModelFileUriRewritingEnabled", &StdBodyWriter::isOriginalShapeExtModelFileUriRewritingEnabled)
+    .def("setOriginalBaseDirectory", &StdBodyWriter::setOriginalBaseDirectory)
+    .def("setTransformIntegrationEnabled", &StdBodyWriter::setTransformIntegrationEnabled)
+    .def("isTransformIntegrationEnabled", &StdBodyWriter::isTransformIntegrationEnabled)
     ;
 }
