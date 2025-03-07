@@ -55,6 +55,9 @@ void exportBodyItem(py::module m)
 
         .def("notifyModelUpdate", &BodyItem::notifyModelUpdate)
         .def("setBody", &BodyItem::setBody)
+        //
+        .def("setTransparency", &BodyItem::setTransparency)
+        .def_property_readonly("transparency", &BodyItem::transparency)
         // deprecated
         .def("enableCollisionDetection", &BodyItem::setCollisionDetectionEnabled)
         .def("enableSelfCollisionDetection", &BodyItem::setSelfCollisionDetectionEnabled)
