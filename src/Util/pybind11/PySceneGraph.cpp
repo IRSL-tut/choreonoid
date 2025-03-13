@@ -113,6 +113,11 @@ void exportPySceneGraph(py::module& m)
         .def("isEmpty", &SgGroup::empty)
         .def("getNumChildren", &SgGroup::numChildren)
         .def("getChild", (SgNode*(SgGroup::*)(int)) &SgGroup::child)
+        //
+        .def("clone", [](const SgGroup &self) {
+            CloneMap map;
+            return new SgGroup(self, &map);
+        })
         ;
     
     py::class_<SgTransform, SgTransformPtr, SgGroup>(m, "SgTransform");
@@ -149,6 +154,11 @@ void exportPySceneGraph(py::module& m)
         .def("getPosition", [](SgPosTransform& self) -> Isometry3::MatrixType& { return self.T().matrix(); })
         .def("getTranslation", (Isometry3::TranslationPart (SgPosTransform::*)()) &SgPosTransform::translation)
         .def("getRotation", (Isometry3::LinearPart (SgPosTransform::*)()) &SgPosTransform::rotation)
+        //
+        .def("clone", [](const SgPosTransform &self) {
+            CloneMap map;
+            return new SgPosTransform(self, &map);
+        })
         ;
 
     py::class_<SgScaleTransform, SgScaleTransformPtr, SgTransform>(m, "SgScaleTransform")
