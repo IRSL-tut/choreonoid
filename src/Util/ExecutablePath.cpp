@@ -12,7 +12,7 @@
 #include <windows.h>
 #endif
 
-#ifdef __linux__
+#if defined(__linux__) || defined(EMSCRIPTEN)
 #include <sys/utsname.h>
 #include <unistd.h>
 #include <dlfcn.h>
@@ -27,6 +27,13 @@
 
 #ifdef MACOSX
 #include <mach-o/dyld.h>
+#endif
+
+#if defined(EMSCRIPTEN)
+#include <emscripten.h>
+#include <emscripten/bind.h>
+#include <iostream>
+using namespace emscripten;
 #endif
 
 using namespace std;
@@ -46,7 +53,47 @@ namespace filesystem = stdx::filesystem;
 
 void detectExecutableFile()
 {
-#ifdef __linux__
+#if defined(EMSCRIPTEN)
+    char *cstr = (char *) EM_ASM_PTR({
+            var jsString = FS.cwd();
+            var lengthBytes = lengthBytesUTF8(jsString)+1;
+            return stringToNewUTF8(jsString);
+        });
+    std::string em_path(cstr);
+    std::cout << "em:" << em_path << std::endl;
+    filesystem::path path(em_path);
+    path = stdx::filesystem::lexically_normal(path);
+
+    executableFile_ = em_path + "/choreonoid.js";
+    free(cstr);
+
+    {
+    executableFile_ = toUTF8(executableFile_);
+
+    auto topPath = path.parent_path();;
+    executableTopDir_ = toUTF8(topPath.string());
+
+    auto executableDirPath = topPath / "bin";
+    executableDir_ = toUTF8(executableDirPath.string());
+
+    filesystem::path pluginPath = topPath / CNOID_PLUGIN_SUBDIR;
+    pluginDir_ = toUTF8(pluginPath.make_preferred().string());
+
+    filesystem::path sharePath = topPath / CNOID_SHARE_SUBDIR;
+    if(filesystem::is_directory(sharePath)){
+        shareDir_ = toUTF8(sharePath.make_preferred().string());
+    } else if(filesystem::is_directory(sharePath.parent_path())){
+        shareDir_ = toUTF8(sharePath.parent_path().make_preferred().string());
+    } else if(topPath.has_parent_path()){ // case of a sub build directory
+        sharePath = topPath.parent_path() / "share";
+        if(filesystem::is_directory(sharePath)){
+            shareDir_ = toUTF8(sharePath.make_preferred().string());
+        }
+    }
+    executableBasename_ = path.filename().string();
+    }
+    return;
+#elif defined(__linux__)
 
     Dl_info dlInfo;
     if(dladdr((void*)(&detectExecutableFile), &dlInfo) == 0){
@@ -94,7 +141,6 @@ void detectExecutableFile()
     //filesystem::path path = filesystem::canonical(filesystem::path(executableFile_));
     
 #endif
-
     if(path.empty()){
         throw std::runtime_error("The executable path cannot be detected.");
     }

@@ -3,6 +3,7 @@
 #include "ForceSensor.h"
 #include "RateGyroSensor.h"
 #include "AccelerationSensor.h"
+#include "Imu.h"
 #include "Camera.h"
 #include "RangeCamera.h"
 #include "RangeSensor.h"
@@ -110,6 +111,7 @@ public:
     static ForceSensorPtr createForceSensor(VRMLProtoInstance* node);
     static RateGyroSensorPtr createRateGyroSensor(VRMLProtoInstance* node);
     static AccelerationSensorPtr createAccelerationSensor(VRMLProtoInstance* node);
+    static ImuPtr createImu(VRMLProtoInstance* node);
     static CameraPtr createCamera(VRMLProtoInstance* node);
     static RangeSensorPtr createRangeSensor(VRMLProtoInstance* node);
     static void readLightDeviceCommonParameters(Light& light, VRMLProtoInstance* node);
@@ -299,6 +301,7 @@ VRMLBodyLoaderImpl::VRMLBodyLoaderImpl()
         deviceFactories["ForceSensor"]        = &VRMLBodyLoaderImpl::createForceSensor;
         deviceFactories["Gyro"]               = &VRMLBodyLoaderImpl::createRateGyroSensor;
         deviceFactories["AccelerationSensor"] = &VRMLBodyLoaderImpl::createAccelerationSensor;
+        deviceFactories["Imu"] = &VRMLBodyLoaderImpl::createImu;
         //sensorTypeMap["PressureSensor"]     = Sensor::PRESSURE;
         //sensorTypeMap["PhotoInterrupter"]   = Sensor::PHOTO_INTERRUPTER;
         //sensorTypeMap["TorqueSensor"]       = Sensor::TORQUE;
@@ -652,8 +655,9 @@ void VRMLBodyLoaderImpl::readHumanoidNode(VRMLProtoInstance* humanoidNode)
                     }
                 }
             }
-
+#if 0
             body->installCustomizer();
+#endif
         }
     }
 }
@@ -1084,6 +1088,17 @@ AccelerationSensorPtr VRMLBodyLoaderImpl::createAccelerationSensor(VRMLProtoInst
     return sensor;
 }
 
+ImuPtr VRMLBodyLoaderImpl::createImu(VRMLProtoInstance* node)
+{
+    ImuPtr sensor = new Imu();
+    readDeviceCommonParameters(*sensor, node);
+
+    //SFVec3f dv_max;
+    //if(checkAndReadVRMLfield(node, "maxAngularVelocity", dv_max)){
+    //    sensor->dv_max() = dv_max;
+    //}
+    return sensor;
+}
 
 CameraPtr VRMLBodyLoaderImpl::createCamera(VRMLProtoInstance* node)
 {

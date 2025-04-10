@@ -98,7 +98,9 @@ void DyWorldBase::initialize()
 void DyWorldBase::setVirtualJointForces()
 {
     for(auto& body : bodiesWithVirtualJointForces_){
+#if 0
         body->setVirtualJointForces(timeStep_);
+#endif
     }
 }
 
@@ -125,10 +127,11 @@ int DyWorldBase::addBody(DyBody* body)
     int index = bodies_.size();
     
     bodies_.push_back(body);
+#if 0
     if(body->hasVirtualJointForces()){
         bodiesWithVirtualJointForces_.push_back(body);
     }
-
+#endif
     body->initializeSubBodies();
 
     for(auto& subBody : body->subBodies()){

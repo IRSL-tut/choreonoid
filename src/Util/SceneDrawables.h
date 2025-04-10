@@ -244,7 +244,8 @@ typedef std::vector<int> SgIndexArray;
 
 class CNOID_EXPORT SgMeshBase : public SgObject
 {
-protected:
+//protected:
+public:
     SgMeshBase();
     SgMeshBase(const SgMeshBase& org, CloneMap* cloneMap = nullptr);
     ~SgMeshBase();

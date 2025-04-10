@@ -2,7 +2,9 @@
 #include "Jacobian.h"
 #include "Body.h"
 #include "CustomJointPathHandler.h"
+#if 0
 #include "BodyCustomizerInterface.h"
+#endif
 #include <cnoid/EigenUtil>
 #include <cnoid/TruncatedSVD>
 
@@ -499,7 +501,7 @@ std::ostream& operator<<(std::ostream& os, JointPath& path)
     return os;
 }
 
-
+#if 0
 namespace {
 
 // deprecated
@@ -563,10 +565,11 @@ public:
 };
 
 }
-
+#endif
 
 std::shared_ptr<JointPath> JointPath::getCustomPath(Link* baseLink, Link* endLink)
 {
+#if 0
     auto body = baseLink->body();
     auto customJointPathHandler = body->findHandler<CustomJointPathHandler>();
     if(customJointPathHandler){
@@ -580,7 +583,7 @@ std::shared_ptr<JointPath> JointPath::getCustomPath(Link* baseLink, Link* endLin
     if(body->customizerInterface() && body->customizerInterface()->initializeAnalyticIk){
         return make_shared<JointPathWithCustomizerIk>(body, baseLink, endLink);
     }
-
+#endif
     return make_shared<JointPath>(baseLink, endLink);
 }
 

@@ -14,11 +14,11 @@ class Body;
 class BodyHandler;
 class Link;
 class Mapping;
-
+#if 0
 struct BodyInterface;
 struct BodyCustomizerInterface;
 typedef void* BodyCustomizerHandle;
-
+#endif
 typedef ref_ptr<Body> BodyPtr;
 
 class CNOID_EXPORT Body : public ClonableReferenced
@@ -376,7 +376,7 @@ public:
 
     int numHandlers() const;
     BodyHandler* handler(int index);
-    
+#if 0
     // The following functions for the body customizer are deprecated
     BodyCustomizerHandle customizerHandle() const;
     BodyCustomizerInterface* customizerInterface() const;
@@ -386,7 +386,7 @@ public:
     void setVirtualJointForces(double timeStep = 0.0);
     static void addCustomizerDirectory(const std::string& path);
     static BodyInterface* bodyInterface();
-
+#endif
     void resetLinkName(Link* link, const std::string& name);
     void resetJointSpecificName(Link* link);
     void resetJointSpecificName(Link* link, const std::string& name);

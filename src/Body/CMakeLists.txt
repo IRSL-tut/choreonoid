@@ -18,7 +18,7 @@ set(sources
   CustomJointPathBase.cpp
   JointSpaceConfigurationHandler.cpp
   LinkedJointHandler.cpp
-  BodyCustomizerInterface.cpp
+  #BodyCustomizerInterface.cpp
   Material.cpp
   ContactMaterial.cpp
   MaterialTable.cpp
@@ -48,7 +48,7 @@ set(sources
   PointLight.cpp
   SpotLight.cpp
   MarkerDevice.cpp
-  MultiDeviceStateSeq.cpp
+  #MultiDeviceStateSeq.cpp
   SceneCollision.cpp
   InverseKinematics.cpp
   CompositeIK.cpp
@@ -62,8 +62,8 @@ set(sources
   BodyCollisionDetectorUtil.cpp
   BodyState.cpp
   BodyStateSeq.cpp
-  BodyMotion.cpp
-  BodyMotionPoseProvider.cpp
+  #BodyMotion.cpp
+  #BodyMotionPoseProvider.cpp
   ExtraBodyStateAccessor.cpp
   ZMPSeq.cpp
   ForwardDynamics.cpp
@@ -170,32 +170,32 @@ set(headers
   SimpleController.h
   exportdecl.h
   )
+add_library(${target} SHARED ${sources})
+#choreonoid_make_gettext_mo_files(${target} mofiles)
+#choreonoid_add_library(${target} SHARED ${sources} ${mofiles} HEADERS ${headers})
 
-choreonoid_make_gettext_mo_files(${target} mofiles)
-choreonoid_add_library(${target} SHARED ${sources} ${mofiles} HEADERS ${headers})
+#set(libraries PUBLIC CnoidUtil CnoidAISTCollisionDetector)
+#if(UNIX)
+#  set(libraries ${libraries} PRIVATE dl)
+#endif()
+#target_link_libraries(${target} ${libraries})
 
-set(libraries PUBLIC CnoidUtil CnoidAISTCollisionDetector)
-if(UNIX)
-  set(libraries ${libraries} PRIVATE dl)
-endif()
-target_link_libraries(${target} ${libraries})
+#include(ChoreonoidBodyBuildFunctions.cmake)
+#if(CHOREONOID_INSTALL_SDK)
+#  install(FILES ChoreonoidBodyBuildFunctions.cmake DESTINATION ${CHOREONOID_CMAKE_CONFIG_SUBDIR}/ext)
+#endif()
 
-include(ChoreonoidBodyBuildFunctions.cmake)
-if(CHOREONOID_INSTALL_SDK)
-  install(FILES ChoreonoidBodyBuildFunctions.cmake DESTINATION ${CHOREONOID_CMAKE_CONFIG_SUBDIR}/ext)
-endif()
+#set(BODY_CUSTOMIZERS ${BODY_CUSTOMIZERS} CACHE FILEPATH "Source files of body customizers")
 
-set(BODY_CUSTOMIZERS ${BODY_CUSTOMIZERS} CACHE FILEPATH "Source files of body customizers")
+#if(BODY_CUSTOMIZERS)
+#  foreach(src ${BODY_CUSTOMIZERS})
+#    get_filename_component(customizer ${src} NAME_WE)
+#    choreonoid_add_body_customizer(${customizer} ${src})
+#  endforeach()
+#endif()
 
-if(BODY_CUSTOMIZERS)
-  foreach(src ${BODY_CUSTOMIZERS})
-    get_filename_component(customizer ${src} NAME_WE)
-    choreonoid_add_body_customizer(${customizer} ${src})
-  endforeach()
-endif()
-
-if(ENABLE_PYTHON)
-  add_subdirectory(pybind11)
-endif()
-
-add_subdirectory(lua)
+#if(ENABLE_PYTHON)
+#  add_subdirectory(pybind11)
+#endif()
+#
+#add_subdirectory(lua)

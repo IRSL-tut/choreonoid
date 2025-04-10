@@ -638,7 +638,7 @@ string StdSceneWriter::Impl::copyModelFiles(SgObject* sceneObject)
                         uriPath = uriPath.relative_path();
                     }
                     // Remove ".." elements
-                    for(auto& element : uriPath){
+                    for(const auto& element : uriPath){
                         if(element != ".."){
                             relativeFilePath /= element;
                         }

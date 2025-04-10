@@ -1,8 +1,9 @@
 #set(CMAKE_BUILD_TYPE Debug)
 #set_source_files_properties(SceneGraph.cpp PROPERTIES COMPILE_FLAGS "-O0 -g")
 
-set(CNOID_ENABLE_GETTEXT ${CHOREONOID_ENABLE_GETTEXT})
-set(CNOID_ENABLE_GPERFTOOLS_PROFILER ${ENABLE_GPERFTOOLS_PROFILER})
+#set(CNOID_ENABLE_GETTEXT ${CHOREONOID_ENABLE_GETTEXT})
+#set(CNOID_ENABLE_GPERFTOOLS_PROFILER ${ENABLE_GPERFTOOLS_PROFILER})
+project(cnoidUtil)
 configure_file(Config.h.in Config.h)
 
 set(sources
@@ -25,14 +26,14 @@ set(sources
   YAMLWriter.cpp
   EigenUtil.cpp
   EigenArchive.cpp
-  Uuid.cpp
+  #Uuid.cpp
   GeneralId.cpp
   Selection.cpp
   AbstractSeq.cpp
-  MultiValueSeq.cpp
-  MultiSE3Seq.cpp
-  MultiSE3MatrixSeq.cpp
-  MultiVector3Seq.cpp
+  #MultiValueSeq.cpp
+  #MultiSE3Seq.cpp
+  #MultiSE3MatrixSeq.cpp
+  #MultiVector3Seq.cpp
   Vector3Seq.cpp
   ReferencedObjectSeq.cpp
   GeneralSeqReader.cpp
@@ -87,13 +88,13 @@ set(sources
   )
 
 
-if(CMAKE_SYSTEM_NAME STREQUAL Linux)
-  set(sources ${sources} JoystickLinux.cpp)
-elseif(WIN32)
-  set(sources ${sources} JoystickWindows.cpp)
-elseif(APPLE)
-  set(sources ${sources} JoystickOSX.cpp ysjoyreader-objc.m)
-endif()
+#if(CMAKE_SYSTEM_NAME STREQUAL Linux)
+#  set(sources ${sources} JoystickLinux.cpp)
+#elseif(WIN32)
+#  set(sources ${sources} JoystickWindows.cpp)
+#elseif(APPLE)
+#  set(sources ${sources} JoystickOSX.cpp ysjoyreader-objc.m)
+#endif()
 
 set(headers
   ${CMAKE_CURRENT_BINARY_DIR}/Config.h
@@ -206,63 +207,64 @@ set(headers
   ZipArchiver.h
   exportdecl.h
   )
-
-set(include_dirs ${LIBYAML_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${JPEG_INCLUDE_DIRS} ${LIBUUID_INCLUDE_DIRS})
-if(MSVC)
-  include_directories(BEFORE ${include_dirs})
-else()
-  include_directories(${include_dirs})
-endif()
-include_directories(BEFORE ${PROJECT_SOURCE_DIR}/thirdparty/fast_float-0.8.0/include)
-link_directories(${LIBYAML_LIBRARY_DIRS})
-
-
-if(ENABLE_GPERFTOOLS_PROFILER)
-  include_directories(${GPREFTOOLS_PROFILER_INCLUDE_DIRS})
-  link_directories(${GPREFTOOLS_PROFILER_LIBRARY_DIRS})
-  set(sources ${sources} ProfilerUtil.cpp)
-endif()
-
-set(target CnoidUtil)
-make_gettext_mofiles(${target} mofiles)
-choreonoid_add_library(${target} SHARED ${sources} ${mofiles} HEADERS ${headers})
-
-set(libraries
-  PUBLIC fmt::fmt ${GETTEXT_LIBRARIES}
-  PRIVATE ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES} ${libzip_LIBRARIES})
-
-if(UNIX)
-  set(libraries ${libraries}
-    PUBLIC ${CMAKE_THREAD_LIBS_INIT} m dl
-    PRIVATE ${LIBUUID_LIBRARIES}
-    )
-  if(FILESYSTEM_LIBRARY)
-    set(libraries ${libraries} PUBLIC ${FILESYSTEM_LIBRARY})
-  endif()
-  if(ENABLE_GPERFTOOLS_PROFILER)
-    set(libraries ${libraries} PRIVATE ${GPREFTOOLS_PROFILER_LIBRARIES})
-  endif()
-
-elseif(MSVC)
-  set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "YAML_DECLARE_STATIC")
-  set(libraries ${libraries} PRIVATE winmm Rpcrt4)
-  find_file(XINPUT_DLL "XInput1_4.dll")
-  if(XINPUT_DLL)
-    set(libraries ${libraries} PRIVATE XInput)
-    add_definitions(-DUSE_XINPUT)
-  else()
-    find_file(XINPUT_DLL "XInput9_1_0.dll")
-    if(XINPUT_DLL)
-      set(libraries ${libraries} XInput9_1_0)
-      add_definitions(-DUSE_XINPUT)
-    endif()
-  endif()
-endif()
-
-target_link_libraries(${target} ${libraries})
-
-if(ENABLE_PYTHON)
-  add_subdirectory(pybind11)
-endif()
-
-add_subdirectory(lua)
+set(include_dirs /tmp/em/include)
+add_library(CnoidUtil SHARED ${sources})
+#set(include_dirs ${LIBYAML_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${JPEG_INCLUDE_DIRS} ${LIBUUID_INCLUDE_DIRS})
+#if(MSVC)
+#  include_directories(BEFORE ${include_dirs})
+#else()
+#  include_directories(${include_dirs})
+#endif()
+#include_directories(BEFORE ${PROJECT_SOURCE_DIR}/thirdparty/fast_float-0.8.0/include)
+#link_directories(${LIBYAML_LIBRARY_DIRS})
+#
+#
+#if(ENABLE_GPERFTOOLS_PROFILER)
+#  include_directories(${GPREFTOOLS_PROFILER_INCLUDE_DIRS})
+#  link_directories(${GPREFTOOLS_PROFILER_LIBRARY_DIRS})
+#  set(sources ${sources} ProfilerUtil.cpp)
+#endif()
+#
+#set(target CnoidUtil)
+#make_gettext_mofiles(${target} mofiles)
+#choreonoid_add_library(${target} SHARED ${sources} ${mofiles} HEADERS ${headers})
+#
+#set(libraries
+#  PUBLIC fmt::fmt ${GETTEXT_LIBRARIES}
+#  PRIVATE ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES} ${libzip_LIBRARIES})
+#
+#if(UNIX)
+#  set(libraries ${libraries}
+#    PUBLIC ${CMAKE_THREAD_LIBS_INIT} m dl
+#    PRIVATE ${LIBUUID_LIBRARIES}
+#    )
+#  if(FILESYSTEM_LIBRARY)
+#    set(libraries ${libraries} PUBLIC ${FILESYSTEM_LIBRARY})
+#  endif()
+#  if(ENABLE_GPERFTOOLS_PROFILER)
+#    set(libraries ${libraries} PRIVATE ${GPREFTOOLS_PROFILER_LIBRARIES})
+#  endif()
+#
+#elseif(MSVC)
+#  set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "YAML_DECLARE_STATIC")
+#  set(libraries ${libraries} PRIVATE winmm Rpcrt4)
+#  find_file(XINPUT_DLL "XInput1_4.dll")
+#  if(XINPUT_DLL)
+#    set(libraries ${libraries} PRIVATE XInput)
+#    add_definitions(-DUSE_XINPUT)
+#  else()
+#    find_file(XINPUT_DLL "XInput9_1_0.dll")
+#    if(XINPUT_DLL)
+#      set(libraries ${libraries} XInput9_1_0)
+#      add_definitions(-DUSE_XINPUT)
+#    endif()
+#  endif()
+#endif()
+#
+#target_link_libraries(${target} ${libraries})
+#
+#if(ENABLE_PYTHON)
+#  add_subdirectory(pybind11)
+#endif()
+#
+#add_subdirectory(lua)

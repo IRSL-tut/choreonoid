@@ -4,7 +4,9 @@
 #include "UTF8.h"
 #include "Format.h"
 #include <cnoid/stdx/filesystem>
+#define __x86_64
 #include <fast_float/fast_float.h>
+#undef __x86_64
 #include <fstream>
 #include <stdexcept>
 #include <cstdlib>
