@@ -1,0 +1,423 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{15F50350-C45B-3849-B418-B03149468708}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>zip</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\lib\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">zip.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">zipd</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\lib\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">zip.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">zip</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\lib\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">zip.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">zip</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\lib\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">zip.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">zip</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /source-charset:utf-8</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>4018;4068;4244;4250;4251;4267;4275;4800;4819</DisableSpecificWarnings>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;CNOID_DEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;CNOID_DEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /source-charset:utf-8</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <DisableSpecificWarnings>4018;4068;4244;4250;4251;4267;4275;4800;4819</DisableSpecificWarnings>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /source-charset:utf-8</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <DisableSpecificWarnings>4018;4068;4244;4250;4251;4267;4275;4800;4819</DisableSpecificWarnings>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MinSpace</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;CMAKE_INTDIR="MinSizeRel"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /source-charset:utf-8</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>4018;4068;4244;4250;4251;4267;4275;4800;4819</DisableSpecificWarnings>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\CMakeLists.txt">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/thirdparty/libzip-1.9.2/lib/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/thirdparty/libzip-1.9.2/lib/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\thirdparty\libzip-1.9.2\lib\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/thirdparty/libzip-1.9.2/lib/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/thirdparty/libzip-1.9.2/lib/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\thirdparty\libzip-1.9.2\lib\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/thirdparty/libzip-1.9.2/lib/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/thirdparty/libzip-1.9.2/lib/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\thirdparty\libzip-1.9.2\lib\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/thirdparty/libzip-1.9.2/lib/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/thirdparty/libzip-1.9.2/lib/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\thirdparty\libzip-1.9.2\lib\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_add.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_add_dir.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_add_entry.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_algorithm_deflate.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_buffer.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_close.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_delete.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_dir_add.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_dirent.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_discard.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_entry.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_error.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_error_clear.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_error_get.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_error_get_sys_type.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_error_strerror.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_error_to_str.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_extra_field.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_extra_field_api.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_fclose.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_fdopen.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_file_add.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_file_error_clear.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_file_error_get.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_file_get_comment.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_file_get_external_attributes.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_file_get_offset.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_file_rename.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_file_replace.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_file_set_comment.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_file_set_encryption.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_file_set_external_attributes.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_file_set_mtime.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_file_strerror.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_fopen.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_fopen_encrypted.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_fopen_index.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_fopen_index_encrypted.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_fread.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_fseek.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_ftell.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_get_archive_comment.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_get_archive_flag.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_get_encryption_implementation.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_get_file_comment.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_get_name.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_get_num_entries.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_get_num_files.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_hash.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_io_util.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_libzip_version.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_memdup.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_name_locate.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_new.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_open.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_pkware.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_progress.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_rename.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_replace.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_set_archive_comment.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_set_archive_flag.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_set_default_password.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_set_file_comment.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_set_file_compression.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_set_name.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_accept_empty.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_begin_write.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_begin_write_cloning.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_buffer.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_call.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_close.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_commit_write.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_compress.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_crc.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_error.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_file_common.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_file_stdio.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_free.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_function.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_get_file_attributes.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_is_deleted.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_layered.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_open.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_pkware_decode.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_pkware_encode.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_read.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_remove.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_rollback_write.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_seek.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_seek_write.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_stat.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_supports.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_tell.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_tell_write.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_window.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_write.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_zip.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_zip_new.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_stat.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_stat_index.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_stat_init.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_strerror.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_string.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_unchange.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_unchange_all.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_unchange_archive.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_unchange_data.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_utf-8.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_err_str.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_file_win32.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_file_win32_named.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_file_win32_utf16.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_file_win32_utf8.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_file_win32_ansi.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_random_win32.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_crypto_win.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_winzip_aes.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_winzip_aes_decode.c" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib\zip_source_winzip_aes_encode.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\ZERO_CHECK.vcxproj">
+      <Project>{3EB235B1-FCEC-3B05-A8A2-6684BD3E3841}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\thirdparty\zlib-1.2.13\zlib.vcxproj">
+      <Project>{B16DB920-4466-358E-AA6B-2194604C33C2}</Project>
+      <Name>zlib</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

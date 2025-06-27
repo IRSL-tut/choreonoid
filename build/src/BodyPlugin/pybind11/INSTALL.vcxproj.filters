@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\b259eb0edeb35ab661c72bccc334fa7c\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{FD88A93D-DC7A-3D48-B533-79F2D4B5D8FB}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

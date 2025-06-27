@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PythonPlugin\PythonPlugin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PythonPlugin\PythonExecutor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PythonPlugin\PythonScriptItem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PythonPlugin\PythonScriptItemImpl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PythonPlugin\PythonConsoleView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\PythonPlugin\PythonPlugin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\PythonPlugin\PythonExecutor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\PythonPlugin\PythonScriptItem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\PythonPlugin\PythonScriptItemImpl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\PythonPlugin\PythonConsoleView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\d8aa7adc89989fef7124c6c01fc7c63d\CnoidPythonPlugin-2.0.mo.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\src\PythonPlugin\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\irsl\VR\src\choreonoid\build\share\locale\ja\LC_MESSAGES\CnoidPythonPlugin-2.0.mo" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{FD88A93D-DC7A-3D48-B533-79F2D4B5D8FB}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{2E9277A8-362C-3631-9C79-7CD01F345E13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{DB9E72E8-4012-348A-ABDC-7A20B624E650}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,16 @@
+# pkg-config source file
+
+prefix=C:/Program Files/Choreonoid
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+subdir=choreonoid-2.0
+includedir=${prefix}/include
+sharedir=C:/Program Files/Choreonoid/share
+
+Name: choreonoid-util
+Description: Choreonoid Util library
+Version: 2.0.0
+Requires: 
+Conflicts:
+Libs: -L${libdir} -lCnoidUtil -lboost_filesystem -lboost_system
+Cflags: -I${includedir}

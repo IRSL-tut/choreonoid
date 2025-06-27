@@ -1,0 +1,20 @@
+^C:\USERS\IRSL\VR\SRC\CHOREONOID\EXT\ROBOT_ASSEMBLER_PLUGIN\SRC\RA.QRC
+setlocal
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\rcc.exe --name RA --output C:/Users/irsl/VR/src/choreonoid/build/ext/robot_assembler_plugin/qrc_RA.cpp C:/Users/irsl/VR/src/choreonoid/ext/robot_assembler_plugin/src/RA.qrc
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\IRSL\VR\SRC\CHOREONOID\EXT\ROBOT_ASSEMBLER_PLUGIN\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/ext/robot_assembler_plugin/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

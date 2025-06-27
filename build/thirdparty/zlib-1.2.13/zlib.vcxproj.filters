@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\adler32.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\compress.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\crc32.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\deflate.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\gzclose.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\gzlib.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\gzread.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\gzwrite.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\inflate.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\infback.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\inftrees.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\inffast.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\trees.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\uncompr.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\zutil.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\zconf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\zlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\crc32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\deflate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\gzguts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\inffast.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\inffixed.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\inflate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\inftrees.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\trees.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\zutil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{2E9277A8-362C-3631-9C79-7CD01F345E13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{DB9E72E8-4012-348A-ABDC-7A20B624E650}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,1878 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{49BA9D03-EEC9-30B5-AE66-D2E7BBB92205}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>CnoidBase</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\bin\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CnoidBase.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CnoidBased</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.dll</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\bin\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CnoidBase.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CnoidBase</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.dll</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\bin\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">CnoidBase.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">CnoidBase</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.dll</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\bin\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CnoidBase.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CnoidBase</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.dll</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</GenerateManifest>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtCore" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/./mkspecs/win32-msvc" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtGui" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtANGLE" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtWidgets" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtNetwork" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtSvg" /Zc:__cplusplus /source-charset:utf-8</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>4018;4068;4244;4250;4251;4267;4275;4800;4819</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;QT_NO_KEYWORDS;QT_NO_OPENGL_ES_2;CNOID_DEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;FMT_LOCALE;QT_CORE_LIB;QT_GUI_LIB;QT_WIDGETS_LIB;QT_NETWORK_LIB;QT_SVG_LIB;CMAKE_INTDIR="Debug";CnoidBase_EXPORTS</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;QT_NO_KEYWORDS;QT_NO_OPENGL_ES_2;CNOID_DEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;FMT_LOCALE;QT_CORE_LIB;QT_GUI_LIB;QT_WIDGETS_LIB;QT_NETWORK_LIB;QT_SVG_LIB;CMAKE_INTDIR=\"Debug\";CnoidBase_EXPORTS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtCore;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\.\mkspecs\win32-msvc;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtGui;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtANGLE;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtWidgets;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtNetwork;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtSvg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtCore;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\.\mkspecs\win32-msvc;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtGui;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtANGLE;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtWidgets;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtNetwork;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtSvg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Networkd.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Svgd.lib;..\..\lib\Debug\CnoidGLSceneRendererd.lib;..\..\lib\Debug\zipd.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Widgetsd.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Guid.lib;..\..\lib\Debug\CnoidUtild.lib;..\..\lib\Debug\fmtd.lib;libintl-8.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Cored.lib;glu32.lib;opengl32.lib;..\..\lib\Debug\zlibd.lib;advapi32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/irsl/VR/src/choreonoid/build/lib;C:/Users/irsl/VR/src/choreonoid/build/lib/$(Configuration);C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0;C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib/$(Configuration);C:/local/boost_1_81_0/lib64-msvc-14.2;C:/local/boost_1_81_0/lib64-msvc-14.2/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>C:/Users/irsl/VR/src/choreonoid/build/lib/Debug/CnoidBased.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/irsl/VR/src/choreonoid/build/bin/Debug/CnoidBased.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtCore" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/./mkspecs/win32-msvc" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtGui" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtANGLE" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtWidgets" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtNetwork" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtSvg" /Zc:__cplusplus /source-charset:utf-8</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <DisableSpecificWarnings>4018;4068;4244;4250;4251;4267;4275;4800;4819</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;QT_NO_KEYWORDS;QT_NO_OPENGL_ES_2;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;FMT_LOCALE;QT_CORE_LIB;QT_NO_DEBUG;QT_GUI_LIB;QT_WIDGETS_LIB;QT_NETWORK_LIB;QT_SVG_LIB;CMAKE_INTDIR="Release";CnoidBase_EXPORTS</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;QT_NO_KEYWORDS;QT_NO_OPENGL_ES_2;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;FMT_LOCALE;QT_CORE_LIB;QT_NO_DEBUG;QT_GUI_LIB;QT_WIDGETS_LIB;QT_NETWORK_LIB;QT_SVG_LIB;CMAKE_INTDIR=\"Release\";CnoidBase_EXPORTS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtCore;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\.\mkspecs\win32-msvc;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtGui;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtANGLE;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtWidgets;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtNetwork;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtSvg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtCore;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\.\mkspecs\win32-msvc;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtGui;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtANGLE;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtWidgets;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtNetwork;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtSvg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Network.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Svg.lib;..\..\lib\Release\CnoidGLSceneRenderer.lib;..\..\lib\Release\zip.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Widgets.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Gui.lib;..\..\lib\Release\CnoidUtil.lib;..\..\lib\Release\fmt.lib;libintl-8.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Core.lib;glu32.lib;opengl32.lib;..\..\lib\Release\zlib.lib;advapi32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/irsl/VR/src/choreonoid/build/lib;C:/Users/irsl/VR/src/choreonoid/build/lib/$(Configuration);C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0;C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib/$(Configuration);C:/local/boost_1_81_0/lib64-msvc-14.2;C:/local/boost_1_81_0/lib64-msvc-14.2/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>C:/Users/irsl/VR/src/choreonoid/build/lib/Release/CnoidBase.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/irsl/VR/src/choreonoid/build/bin/Release/CnoidBase.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtCore" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/./mkspecs/win32-msvc" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtGui" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtANGLE" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtWidgets" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtNetwork" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtSvg" /Zc:__cplusplus /source-charset:utf-8</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <DisableSpecificWarnings>4018;4068;4244;4250;4251;4267;4275;4800;4819</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MinSpace</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;QT_NO_KEYWORDS;QT_NO_OPENGL_ES_2;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;FMT_LOCALE;QT_CORE_LIB;QT_NO_DEBUG;QT_GUI_LIB;QT_WIDGETS_LIB;QT_NETWORK_LIB;QT_SVG_LIB;CMAKE_INTDIR="MinSizeRel";CnoidBase_EXPORTS</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;QT_NO_KEYWORDS;QT_NO_OPENGL_ES_2;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;FMT_LOCALE;QT_CORE_LIB;QT_NO_DEBUG;QT_GUI_LIB;QT_WIDGETS_LIB;QT_NETWORK_LIB;QT_SVG_LIB;CMAKE_INTDIR=\"MinSizeRel\";CnoidBase_EXPORTS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtCore;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\.\mkspecs\win32-msvc;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtGui;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtANGLE;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtWidgets;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtNetwork;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtSvg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtCore;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\.\mkspecs\win32-msvc;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtGui;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtANGLE;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtWidgets;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtNetwork;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtSvg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Network.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Svg.lib;..\..\lib\MinSizeRel\CnoidGLSceneRenderer.lib;..\..\lib\MinSizeRel\zip.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Widgets.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Gui.lib;..\..\lib\MinSizeRel\CnoidUtil.lib;..\..\lib\MinSizeRel\fmt.lib;libintl-8.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Core.lib;glu32.lib;opengl32.lib;..\..\lib\MinSizeRel\zlib.lib;advapi32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/irsl/VR/src/choreonoid/build/lib;C:/Users/irsl/VR/src/choreonoid/build/lib/$(Configuration);C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0;C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib/$(Configuration);C:/local/boost_1_81_0/lib64-msvc-14.2;C:/local/boost_1_81_0/lib64-msvc-14.2/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>C:/Users/irsl/VR/src/choreonoid/build/lib/MinSizeRel/CnoidBase.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/irsl/VR/src/choreonoid/build/bin/MinSizeRel/CnoidBase.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtCore" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/./mkspecs/win32-msvc" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtGui" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtANGLE" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtWidgets" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtNetwork" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtSvg" /Zc:__cplusplus /source-charset:utf-8</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>4018;4068;4244;4250;4251;4267;4275;4800;4819</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;QT_NO_KEYWORDS;QT_NO_OPENGL_ES_2;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;FMT_LOCALE;QT_CORE_LIB;QT_NO_DEBUG;QT_GUI_LIB;QT_WIDGETS_LIB;QT_NETWORK_LIB;QT_SVG_LIB;CMAKE_INTDIR="RelWithDebInfo";CnoidBase_EXPORTS</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;QT_NO_KEYWORDS;QT_NO_OPENGL_ES_2;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;FMT_LOCALE;QT_CORE_LIB;QT_NO_DEBUG;QT_GUI_LIB;QT_WIDGETS_LIB;QT_NETWORK_LIB;QT_SVG_LIB;CMAKE_INTDIR=\"RelWithDebInfo\";CnoidBase_EXPORTS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtCore;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\.\mkspecs\win32-msvc;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtGui;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtANGLE;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtWidgets;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtNetwork;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtSvg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtCore;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\.\mkspecs\win32-msvc;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtGui;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtANGLE;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtWidgets;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtNetwork;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtSvg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Network.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Svg.lib;..\..\lib\RelWithDebInfo\CnoidGLSceneRenderer.lib;..\..\lib\RelWithDebInfo\zip.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Widgets.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Gui.lib;..\..\lib\RelWithDebInfo\CnoidUtil.lib;..\..\lib\RelWithDebInfo\fmt.lib;libintl-8.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Core.lib;glu32.lib;opengl32.lib;..\..\lib\RelWithDebInfo\zlib.lib;advapi32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/irsl/VR/src/choreonoid/build/lib;C:/Users/irsl/VR/src/choreonoid/build/lib/$(Configuration);C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0;C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib/$(Configuration);C:/local/boost_1_81_0/lib64-msvc-14.2;C:/local/boost_1_81_0/lib64-msvc-14.2/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>C:/Users/irsl/VR/src/choreonoid/build/lib/RelWithDebInfo/CnoidBase.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/irsl/VR/src/choreonoid/build/bin/RelWithDebInfo/CnoidBase.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\f9b9b265934ff8c55a3e56ab9bab7ae7\moc_Menu.cpp.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating moc_Menu.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Menu.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Menu.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Menu.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating moc_Menu.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Menu.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Menu.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Menu.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating moc_Menu.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Menu.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Menu.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Menu.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating moc_Menu.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Menu.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Menu.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Menu.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\f9b9b265934ff8c55a3e56ab9bab7ae7\moc_ToolBar.cpp.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating moc_ToolBar.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_ToolBar.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\ToolBar.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ToolBar.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating moc_ToolBar.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_ToolBar.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\ToolBar.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ToolBar.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating moc_ToolBar.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_ToolBar.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\ToolBar.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ToolBar.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating moc_ToolBar.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_ToolBar.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\ToolBar.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ToolBar.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\f9b9b265934ff8c55a3e56ab9bab7ae7\moc_Process.cpp.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating moc_Process.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Process.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Process.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Process.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating moc_Process.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Process.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Process.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Process.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating moc_Process.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Process.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Process.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Process.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating moc_Process.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Process.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Process.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Process.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\f9b9b265934ff8c55a3e56ab9bab7ae7\moc_Action.cpp.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating moc_Action.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Action.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Action.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Action.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating moc_Action.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Action.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Action.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Action.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating moc_Action.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Action.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Action.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Action.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating moc_Action.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Action.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Action.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Action.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\f9b9b265934ff8c55a3e56ab9bab7ae7\moc_ActionGroup.cpp.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating moc_ActionGroup.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_ActionGroup.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\ActionGroup.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ActionGroup.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating moc_ActionGroup.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_ActionGroup.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\ActionGroup.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ActionGroup.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating moc_ActionGroup.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_ActionGroup.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\ActionGroup.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ActionGroup.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating moc_ActionGroup.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_ActionGroup.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\ActionGroup.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ActionGroup.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\f9b9b265934ff8c55a3e56ab9bab7ae7\moc_Widget.cpp.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating moc_Widget.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Widget.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Widget.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Widget.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating moc_Widget.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Widget.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Widget.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Widget.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating moc_Widget.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Widget.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Widget.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Widget.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating moc_Widget.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Widget.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Widget.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Widget.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\f9b9b265934ff8c55a3e56ab9bab7ae7\moc_FloatingNumberBox.cpp.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating moc_FloatingNumberBox.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_FloatingNumberBox.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\FloatingNumberBox.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_FloatingNumberBox.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating moc_FloatingNumberBox.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_FloatingNumberBox.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\FloatingNumberBox.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_FloatingNumberBox.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating moc_FloatingNumberBox.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_FloatingNumberBox.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\FloatingNumberBox.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_FloatingNumberBox.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating moc_FloatingNumberBox.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_FloatingNumberBox.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\FloatingNumberBox.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_FloatingNumberBox.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\f9b9b265934ff8c55a3e56ab9bab7ae7\moc_ScrollBar.cpp.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating moc_ScrollBar.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_ScrollBar.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\ScrollBar.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ScrollBar.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating moc_ScrollBar.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_ScrollBar.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\ScrollBar.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ScrollBar.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating moc_ScrollBar.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_ScrollBar.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\ScrollBar.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ScrollBar.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating moc_ScrollBar.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_ScrollBar.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\ScrollBar.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ScrollBar.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\f9b9b265934ff8c55a3e56ab9bab7ae7\moc_Splitter.cpp.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating moc_Splitter.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Splitter.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Splitter.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Splitter.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating moc_Splitter.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Splitter.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Splitter.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Splitter.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating moc_Splitter.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Splitter.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Splitter.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Splitter.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating moc_Splitter.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Splitter.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Splitter.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Splitter.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\f9b9b265934ff8c55a3e56ab9bab7ae7\moc_TreeView.cpp.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating moc_TreeView.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_TreeView.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\TreeView.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_TreeView.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating moc_TreeView.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_TreeView.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\TreeView.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_TreeView.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating moc_TreeView.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_TreeView.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\TreeView.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_TreeView.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating moc_TreeView.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_TreeView.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\TreeView.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_TreeView.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\f9b9b265934ff8c55a3e56ab9bab7ae7\moc_ItemSelectionModel.cpp.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating moc_ItemSelectionModel.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_ItemSelectionModel.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\ItemSelectionModel.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ItemSelectionModel.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating moc_ItemSelectionModel.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_ItemSelectionModel.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\ItemSelectionModel.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ItemSelectionModel.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating moc_ItemSelectionModel.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_ItemSelectionModel.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\ItemSelectionModel.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ItemSelectionModel.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating moc_ItemSelectionModel.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_ItemSelectionModel.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\ItemSelectionModel.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ItemSelectionModel.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\f9b9b265934ff8c55a3e56ab9bab7ae7\moc_Timer.cpp.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating moc_Timer.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Timer.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Timer.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Timer.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating moc_Timer.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Timer.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Timer.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Timer.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating moc_Timer.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Timer.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Timer.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Timer.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating moc_Timer.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_Timer.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Timer.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Timer.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\f9b9b265934ff8c55a3e56ab9bab7ae7\moc_SocketNotifier.cpp.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating moc_SocketNotifier.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_SocketNotifier.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\SocketNotifier.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_SocketNotifier.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating moc_SocketNotifier.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_SocketNotifier.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\SocketNotifier.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_SocketNotifier.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating moc_SocketNotifier.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_SocketNotifier.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\SocketNotifier.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_SocketNotifier.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating moc_SocketNotifier.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_SocketNotifier.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\SocketNotifier.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_SocketNotifier.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\f9b9b265934ff8c55a3e56ab9bab7ae7\moc_StringListComboBox.cpp.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating moc_StringListComboBox.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_StringListComboBox.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\StringListComboBox.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_StringListComboBox.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating moc_StringListComboBox.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_StringListComboBox.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\StringListComboBox.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_StringListComboBox.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating moc_StringListComboBox.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_StringListComboBox.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\StringListComboBox.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_StringListComboBox.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating moc_StringListComboBox.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_StringListComboBox.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\StringListComboBox.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_StringListComboBox.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\f9b9b265934ff8c55a3e56ab9bab7ae7\moc_TextEdit.cpp.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating moc_TextEdit.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_TextEdit.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\TextEdit.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_TextEdit.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating moc_TextEdit.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_TextEdit.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\TextEdit.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_TextEdit.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating moc_TextEdit.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_TextEdit.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\TextEdit.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_TextEdit.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating moc_TextEdit.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+cd C:\Users\irsl\VR\src\choreonoid\build\src\Base
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\moc.exe @C:/Users/irsl/VR/src/choreonoid/build/src/Base/moc_TextEdit.cpp_parameters
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\TextEdit.h;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_TextEdit.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\d8aa7adc89989fef7124c6c01fc7c63d\CnoidBase-2.0.mo.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating ../../share/locale/ja/LC_MESSAGES/CnoidBase-2.0.mo</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\bin\msgfmt.exe -o C:/Users/irsl/VR/src/choreonoid/build/share/locale/ja/LC_MESSAGES/CnoidBase-2.0.mo C:/Users/irsl/VR/src/choreonoid/src/Base/po/ja.po
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\po\ja.po;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\share\locale\ja\LC_MESSAGES\CnoidBase-2.0.mo</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating ../../share/locale/ja/LC_MESSAGES/CnoidBase-2.0.mo</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\bin\msgfmt.exe -o C:/Users/irsl/VR/src/choreonoid/build/share/locale/ja/LC_MESSAGES/CnoidBase-2.0.mo C:/Users/irsl/VR/src/choreonoid/src/Base/po/ja.po
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\po\ja.po;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\share\locale\ja\LC_MESSAGES\CnoidBase-2.0.mo</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating ../../share/locale/ja/LC_MESSAGES/CnoidBase-2.0.mo</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\bin\msgfmt.exe -o C:/Users/irsl/VR/src/choreonoid/build/share/locale/ja/LC_MESSAGES/CnoidBase-2.0.mo C:/Users/irsl/VR/src/choreonoid/src/Base/po/ja.po
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\po\ja.po;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\share\locale\ja\LC_MESSAGES\CnoidBase-2.0.mo</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating ../../share/locale/ja/LC_MESSAGES/CnoidBase-2.0.mo</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\bin\msgfmt.exe -o C:/Users/irsl/VR/src/choreonoid/build/share/locale/ja/LC_MESSAGES/CnoidBase-2.0.mo C:/Users/irsl/VR/src/choreonoid/src/Base/po/ja.po
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\po\ja.po;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\share\locale\ja\LC_MESSAGES\CnoidBase-2.0.mo</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Base.qrc">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating qrc_Base.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\rcc.exe --name Base --output C:/Users/irsl/VR/src/choreonoid/build/src/Base/qrc_Base.cpp C:/Users/irsl/VR/src/choreonoid/src/Base/Base.qrc
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\project\layout.cnoid;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\choreonoid.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\setup.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\projectsave.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\play.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\resume.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\stop.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\refresh.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\script.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\sceneedit.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\walkthrough.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\viewfitting.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\vertex.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\wireframe.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\solidwireframe.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\solidpolygon.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\highlight.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\visualshape.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\shapeflip.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\collisionshape.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\collisionlines.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\frontview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\backview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\leftview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\rightview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\topview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\bottomview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\global.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\scenecapture.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\record.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\record2.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\recordtarget.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\graph.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\velocitygraph.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\accgraph.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\eraser-cursor.png;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\adjustsize.svg;C:\Users\irsl\VR\src\choreonoid\LICENSE;C:\Users\irsl\VR\src\choreonoid\build\src\Base\Base.qrc.depends;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\qrc_Base.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating qrc_Base.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\rcc.exe --name Base --output C:/Users/irsl/VR/src/choreonoid/build/src/Base/qrc_Base.cpp C:/Users/irsl/VR/src/choreonoid/src/Base/Base.qrc
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\project\layout.cnoid;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\choreonoid.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\setup.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\projectsave.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\play.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\resume.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\stop.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\refresh.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\script.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\sceneedit.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\walkthrough.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\viewfitting.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\vertex.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\wireframe.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\solidwireframe.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\solidpolygon.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\highlight.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\visualshape.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\shapeflip.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\collisionshape.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\collisionlines.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\frontview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\backview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\leftview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\rightview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\topview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\bottomview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\global.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\scenecapture.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\record.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\record2.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\recordtarget.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\graph.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\velocitygraph.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\accgraph.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\eraser-cursor.png;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\adjustsize.svg;C:\Users\irsl\VR\src\choreonoid\LICENSE;C:\Users\irsl\VR\src\choreonoid\build\src\Base\Base.qrc.depends;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\qrc_Base.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating qrc_Base.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\rcc.exe --name Base --output C:/Users/irsl/VR/src/choreonoid/build/src/Base/qrc_Base.cpp C:/Users/irsl/VR/src/choreonoid/src/Base/Base.qrc
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\project\layout.cnoid;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\choreonoid.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\setup.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\projectsave.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\play.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\resume.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\stop.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\refresh.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\script.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\sceneedit.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\walkthrough.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\viewfitting.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\vertex.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\wireframe.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\solidwireframe.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\solidpolygon.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\highlight.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\visualshape.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\shapeflip.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\collisionshape.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\collisionlines.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\frontview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\backview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\leftview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\rightview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\topview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\bottomview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\global.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\scenecapture.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\record.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\record2.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\recordtarget.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\graph.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\velocitygraph.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\accgraph.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\eraser-cursor.png;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\adjustsize.svg;C:\Users\irsl\VR\src\choreonoid\LICENSE;C:\Users\irsl\VR\src\choreonoid\build\src\Base\Base.qrc.depends;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\qrc_Base.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating qrc_Base.cpp</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\bin\rcc.exe --name Base --output C:/Users/irsl/VR/src/choreonoid/build/src/Base/qrc_Base.cpp C:/Users/irsl/VR/src/choreonoid/src/Base/Base.qrc
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\project\layout.cnoid;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\choreonoid.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\setup.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\projectsave.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\play.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\resume.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\stop.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\refresh.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\script.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\sceneedit.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\walkthrough.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\viewfitting.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\vertex.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\wireframe.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\solidwireframe.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\solidpolygon.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\highlight.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\visualshape.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\shapeflip.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\collisionshape.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\collisionlines.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\frontview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\backview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\leftview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\rightview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\topview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\bottomview.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\global.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\scenecapture.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\record.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\record2.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\recordtarget.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\graph.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\velocitygraph.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\accgraph.svg;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\eraser-cursor.png;C:\Users\irsl\VR\src\choreonoid\src\Base\icon\adjustsize.svg;C:\Users\irsl\VR\src\choreonoid\LICENSE;C:\Users\irsl\VR\src\choreonoid\build\src\Base\Base.qrc.depends;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\qrc_Base.cpp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\src\Base\CMakeLists.txt">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/src/Base/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/src/Base/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Base.qrc;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/src/Base/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/src/Base/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Base.qrc;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/src/Base/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/src/Base/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Base.qrc;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/src/Base/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/src/Base/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Base\Base.qrc;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Base\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\App.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MenuManager.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Menu.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MainMenu.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ProjectManager.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ProjectPacker.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\PathVariableEditor.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\PluginManager.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MainWindow.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ViewArea.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ToolBarArea.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\InfoBar.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ViewManager.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\View.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\LayoutSwitcher.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MessageView.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemManager.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemClassRegistry.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemFileIO.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemFileDialog.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Item.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemAddon.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\LocatableItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\RenderableItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\RenderableItemUtil.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\RenderableItemSceneStatistics.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\PolymorphicItemFunctionSet.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\PutPropertyFunction.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\RootItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemList.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemPath.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemTreeWidget.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemTreeView.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemTreePanelDialog.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemPropertyWidget.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemPropertyView.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\TargetItemPicker.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\UnifiedEditHistory.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\EditRecord.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemEditRecordManager.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\UnifiedEditHistoryView.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\StringListComboBox.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\DisplayValueFormat.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\PositionWidget.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\LocationView.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MultiSeqItemCreationPanel.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ToolBar.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\TimeBar.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ScriptBar.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\FileBar.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\CaptureBar.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\DisplayValueFormatBar.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\GraphWidget.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\GraphBar.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\GraphViewBase.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MultiValueSeqGraphView.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MultiSE3SeqGraphView.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Process.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Action.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\CheckBoxAction.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ActionGroup.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Widget.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SpinBox.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\DoubleSpinBox.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\LengthSpinBox.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\FloatingNumberBox.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ScrollBar.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Slider.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Dial.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Splitter.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\PushButton.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ToggleButton.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\RadioButton.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ToolButton.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ToggleToolButton.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ButtonGroup.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\CheckBox.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\LineEdit.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ComboBox.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Dialog.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\FileDialog.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\DescriptionDialog.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Timer.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SocketNotifier.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ImageWidget.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\TreeView.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\TreeWidget.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemSelectionModel.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ExtensionManager.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\OptionManager.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Plugin.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\FolderItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SubProjectItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\AbstractSeqItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MultiValueSeqItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MultiSE3SeqItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MultiSE3MatrixSeqItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Vector3SeqItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MultiVector3SeqItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ReferencedObjectSeqItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\CoordinateFrameListItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\CoordinateFrameItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ExtCommandItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\AbstractTextItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ScriptItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\TimeSyncItemEngine.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\AppConfig.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Archive.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemTreeArchiver.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\LazyCaller.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\LazySignal.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Licenses.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneRendererConfig.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneWidget.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneWidgetEvent.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneWidgetEventHandler.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneWidgetConfig.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ScenePointSelectionMode.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\InteractiveCameraTransform.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneProjector.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneDragProjector.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\PositionDragger.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\RectRegionMarker.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\CoordinateFrameMarker.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneView.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneViewConfig.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneBar.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneItemFileIO.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\GeneralSceneFileImporterBase.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\PointSetItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MultiPointSetItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\PositionTagGroupItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\PositionTagListWidget.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\GeometryMeasurementTracker.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\DistanceMeasurementItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\DistanceMeasurementDialog.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MovieRecorder.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MovieRecorderBar.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MovieRecorderDialog.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\TextEditView.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\GeneralSliderView.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ImageView.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\TextEdit.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\CoordinateFrameListView.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\TaskView.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\VirtualJoystickView.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MessageLogItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Base\LightingItem.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Menu.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ToolBar.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Process.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Action.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ActionGroup.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Widget.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_FloatingNumberBox.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ScrollBar.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Splitter.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_TreeView.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_ItemSelectionModel.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_Timer.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_SocketNotifier.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_StringListComboBox.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\moc_TextEdit.cpp" />
+    <None Include="C:\Users\irsl\VR\src\choreonoid\build\share\locale\ja\LC_MESSAGES\CnoidBase-2.0.mo">
+    </None>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\qrc_Base.cpp" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\App.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\AppCustomizationUtil.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MainWindow.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Process.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Action.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\CheckBoxAction.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ActionGroup.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Widget.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SpinBox.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\DoubleSpinBox.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\LengthSpinBox.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\FloatingNumberBox.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ScrollBar.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Slider.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Dial.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Splitter.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Separator.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\PushButton.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ToggleButton.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\RadioButton.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ToolButton.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ToggleToolButton.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Buttons.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ButtonGroup.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\CheckBox.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\LineEdit.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ComboBox.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Dialog.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\FileDialog.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\DescriptionDialog.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Timer.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SocketNotifier.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ImageWidget.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\TreeView.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\TreeWidget.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemSelectionModel.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MenuManager.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Menu.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MainMenu.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ToolBar.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\View.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ViewArea.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\InfoBar.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ViewManager.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\LayoutSwitcher.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\GraphWidget.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\GraphViewBase.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ExtensionManager.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\OptionManager.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ProjectManager.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ProjectPacker.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\PluginManager.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Plugin.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MessageView.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemTreeWidget.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemTreeView.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemTreePanelDialog.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemPropertyWidget.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemList.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Item.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemAddon.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\LocatableItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\RenderableItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\RenderableItemUtil.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ImageableItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\TargetItemPicker.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\UnifiedEditHistory.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\EditRecord.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemEditRecordManager.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\StringListComboBox.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\DisplayValueFormat.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\PositionWidget.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\LocationView.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MultiSeqItemCreationPanel.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\PutPropertyFunction.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\RootItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\FolderItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SubProjectItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\AbstractSeqItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MultiSeqItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MultiValueSeqItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MultiSE3SeqItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MultiSE3MatrixSeqItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Vector3SeqItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ReferencedObjectSeqItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\CoordinateFrameListItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\CoordinateFrameItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ExtCommandItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\AbstractTextItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ScriptItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemPath.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\TimeBar.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\TimeSyncItemEngine.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\GraphBar.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemManager.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemClassRegistry.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemFileIO.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemFileDialog.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\PolymorphicItemFunctionSet.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\AppConfig.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\AppUtil.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\Archive.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ItemTreeArchiver.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\LazySignal.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\LazyCaller.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneWidget.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneWidgetEvent.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneWidgetEventHandler.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneWidgetConfig.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneProjector.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneDragProjector.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\PositionDragger.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneBar.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ScenePointSelectionMode.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\InteractiveCameraTransform.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\RectRegionMarker.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\CoordinateFrameMarker.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneRendererConfig.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneView.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneViewConfig.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\SceneItemFileIO.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\GeneralSceneFileImporterBase.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\PointSetItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MultiPointSetItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\PositionTagGroupItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\PositionTagListWidget.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\GeometryMeasurementTracker.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\DistanceMeasurementItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\DistanceMeasurementDialog.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MovieRecorder.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MovieRecorderBar.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MovieRecorderDialog.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\TextEditView.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\GeneralSliderView.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\ImageView.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\JoystickCapture.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\TextEdit.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\TaskView.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\MessageLogItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\LightingItem.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Base\exportdecl.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\ZERO_CHECK.vcxproj">
+      <Project>{3EB235B1-FCEC-3B05-A8A2-6684BD3E3841}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\GLSceneRenderer\CnoidGLSceneRenderer.vcxproj">
+      <Project>{CACFBD2A-17BA-354C-AD70-7F7E2851AEB5}</Project>
+      <Name>CnoidGLSceneRenderer</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\Util\CnoidUtil.vcxproj">
+      <Project>{B82F5686-43A1-38FC-9DFF-26737E5272B5}</Project>
+      <Name>CnoidUtil</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\thirdparty\fmt-7.1.3\fmt.vcxproj">
+      <Project>{4D93FDFB-2890-3588-A4AD-EE2A8430F6CB}</Project>
+      <Name>fmt</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\thirdparty\libzip-1.9.2\lib\zip.vcxproj">
+      <Project>{15F50350-C45B-3849-B418-B03149468708}</Project>
+      <Name>zip</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\thirdparty\zlib-1.2.13\zlib.vcxproj">
+      <Project>{B16DB920-4466-358E-AA6B-2194604C33C2}</Project>
+      <Name>zlib</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

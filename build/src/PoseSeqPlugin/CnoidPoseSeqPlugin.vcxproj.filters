@@ -1,0 +1,112 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\PoseSeqPlugin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\AbstractPose.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\BodyKeyPose.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\SequentialPose.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\PoseSeq.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\PoseSeqInterpolator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\PronunSymbol.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\PoseFilters.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\LipSyncTranslator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\PoseSeqItem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\PoseSeqEngine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\PoseSeqViewBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\PoseRollView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\BodyMotionGenerationBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\BodyKeyPoseSelectionDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\FcpFileLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\FootFixFilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\build\src\PoseSeqPlugin\qrc_PoseSeqPlugin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\AbstractPose.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\BodyKeyPose.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\SequentialPose.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\PoseSeq.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\PoseSeqInterpolator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\PoseFilters.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\PoseSeqItem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\PoseRollView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\BodyMotionGenerationBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\exportdecl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\d8aa7adc89989fef7124c6c01fc7c63d\CnoidPoseSeqPlugin-2.0.mo.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\PoseSeqPlugin.qrc" />
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\src\PoseSeqPlugin\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\irsl\VR\src\choreonoid\build\share\locale\ja\LC_MESSAGES\CnoidPoseSeqPlugin-2.0.mo" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{FD88A93D-DC7A-3D48-B533-79F2D4B5D8FB}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{2E9277A8-362C-3631-9C79-7CD01F345E13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{DB9E72E8-4012-348A-ABDC-7A20B624E650}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

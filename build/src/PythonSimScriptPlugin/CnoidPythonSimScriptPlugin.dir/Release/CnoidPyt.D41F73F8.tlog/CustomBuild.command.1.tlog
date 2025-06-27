@@ -1,0 +1,20 @@
+^C:\USERS\IRSL\VR\SRC\CHOREONOID\BUILD\CMAKEFILES\D8AA7ADC89989FEF7124C6C01FC7C63D\CNOIDPYTHONSIMSCRIPTPLUGIN-2.0.MO.RULE
+setlocal
+C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\bin\msgfmt.exe -o C:/Users/irsl/VR/src/choreonoid/build/share/locale/ja/LC_MESSAGES/CnoidPythonSimScriptPlugin-2.0.mo C:/Users/irsl/VR/src/choreonoid/src/PythonSimScriptPlugin/po/ja.po
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\IRSL\VR\SRC\CHOREONOID\SRC\PYTHONSIMSCRIPTPLUGIN\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/src/PythonSimScriptPlugin/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

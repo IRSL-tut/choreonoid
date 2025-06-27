@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\AISTCollisionDetector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\ColdetModel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\ColdetModelPair.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\StdCollisionPairInserter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\TriOverlap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\SSVTreeCollider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\DistFuncs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\Ice\IceAABB.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\Ice\IceContainer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\Ice\IceIndexedTriangle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\Ice\IceMatrix3x3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\Ice\IceMatrix4x4.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\Ice\IceRevisitedRadix.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\Ice\IceHPoint.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\Ice\IceRandom.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\Ice\IcePoint.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\Ice\IcePlane.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\OPC_AABBTree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\OPC_BaseModel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\OPC_Collider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\OPC_Common.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\OPC_MeshInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\OPC_Model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\OPC_OptimizedTree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\OPC_TreeBuilders.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\OPC_TreeCollider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\OPC_VolumeCollider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\OPC_RayCollider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\OPC_SphereCollider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\OPC_Picking.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\Opcode\OPC_PlanesCollider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\AISTCollisionDetector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\CollisionData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\ColdetModel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\ColdetModelPair.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\CollisionPairInserter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\exportdecl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\src\AISTCollisionDetector\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{2E9277A8-362C-3631-9C79-7CD01F345E13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{DB9E72E8-4012-348A-ABDC-7A20B624E650}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

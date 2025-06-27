@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\ext\robot_assembler_plugin\src\RobotAssemblerSettings.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\ext\robot_assembler_plugin\src\RobotAssembler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\ext\robot_assembler_plugin\src\RobotAssemblerBody.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\ext\robot_assembler_plugin\src\RobotAssemblerHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\ext\robot_assembler_plugin\src\RobotAssemblerInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\build\ext\robot_assembler_plugin\qrc_RA.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\ext\robot_assembler_plugin\src\RobotAssemblerSettings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\ext\robot_assembler_plugin\src\RobotAssembler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\ext\robot_assembler_plugin\src\RobotAssemblerBody.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\ext\robot_assembler_plugin\src\RobotAssemblerHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\ext\robot_assembler_plugin\src\RobotAssemblerInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\ext\robot_assembler_plugin\src\ValueTreeUtil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\ext\robot_assembler_plugin\src\exportdecl_lib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\ext\robot_assembler_plugin\src\RA.qrc" />
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\ext\robot_assembler_plugin\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{2E9277A8-362C-3631-9C79-7CD01F345E13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{DB9E72E8-4012-348A-ABDC-7A20B624E650}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

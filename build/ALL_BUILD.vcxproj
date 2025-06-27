@@ -1,0 +1,460 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ResolveNugetPackages>false</ResolveNugetPackages>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{E7D539B6-2D39-3296-9411-02924A573A42}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>ALL_BUILD</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\CMakeLists.txt">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeCInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeCXXInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeCheckCompilerFlagCommonPatterns.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeFindFrameworks.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeLanguageInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeParseArguments.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeRCInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckCSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckCXXCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckCXXSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckIncludeFile.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckIncludeFiles.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckLibraryExists.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Compiler\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Compiler\MSVC.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindBoost.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindOpenGL.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindPkgConfig.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindPythonLibs.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindThreads.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\InstallRequiredSystemLibraries.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Internal\CheckCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Internal\CheckFlagCommonConfig.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Internal\CheckSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\WindowsPaths.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\SelectLibraryConfigurations.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5\Qt5Config.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5\Qt5ConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5\Qt5ModuleLocation.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreConfigExtras.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreMacros.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5GuiConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5GuiConfigExtras.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5GuiConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QGifPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QICNSPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QICOPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QJpegPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QMinimalIntegrationPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QOffscreenIntegrationPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QTgaPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QTiffPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QTuioTouchPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QWbmpPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QWebpPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QWindowsDirect2DIntegrationPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QWindowsIntegrationPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QXdgDesktopPortalThemePlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Network\Qt5NetworkConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Network\Qt5NetworkConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Network\Qt5Network_QGenericEnginePlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Svg\Qt5SvgConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Svg\Qt5SvgConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Svg\Qt5Svg_QSvgIconPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Svg\Qt5Svg_QSvgPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5WidgetsConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5WidgetsConfigExtras.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5WidgetsConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5WidgetsMacros.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5Widgets_QWindowsVistaStylePlugin.cmake;C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\3.27.6\CMakeCCompiler.cmake;C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\3.27.6\CMakeCXXCompiler.cmake;C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\3.27.6\CMakeRCCompiler.cmake;C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\3.27.6\CMakeSystem.cmake;C:\Users\irsl\VR\src\choreonoid\cmake\ChoreonoidBasicBuildFunctions.cmake;C:\Users\irsl\VR\src\choreonoid\cmake\ChoreonoidFindQt.cmake;C:\Users\irsl\VR\src\choreonoid\cmake\ChoreonoidPythonBuildFunctions.cmake;C:\open_vr\lib\cmake\assimp-5.4\assimpConfig.cmake;C:\open_vr\lib\cmake\assimp-5.4\assimpConfigVersion.cmake;C:\open_vr\lib\cmake\assimp-5.4\assimpTargets-release.cmake;C:\open_vr\lib\cmake\assimp-5.4\assimpTargets.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeCInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeCXXInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeCheckCompilerFlagCommonPatterns.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeFindFrameworks.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeLanguageInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeParseArguments.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeRCInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckCSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckCXXCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckCXXSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckIncludeFile.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckIncludeFiles.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckLibraryExists.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Compiler\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Compiler\MSVC.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindBoost.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindOpenGL.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindPkgConfig.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindPythonLibs.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindThreads.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\InstallRequiredSystemLibraries.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Internal\CheckCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Internal\CheckFlagCommonConfig.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Internal\CheckSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\WindowsPaths.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\SelectLibraryConfigurations.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5\Qt5Config.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5\Qt5ConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5\Qt5ModuleLocation.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreConfigExtras.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreMacros.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5GuiConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5GuiConfigExtras.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5GuiConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QGifPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QICNSPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QICOPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QJpegPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QMinimalIntegrationPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QOffscreenIntegrationPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QTgaPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QTiffPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QTuioTouchPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QWbmpPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QWebpPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QWindowsDirect2DIntegrationPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QWindowsIntegrationPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QXdgDesktopPortalThemePlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Network\Qt5NetworkConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Network\Qt5NetworkConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Network\Qt5Network_QGenericEnginePlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Svg\Qt5SvgConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Svg\Qt5SvgConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Svg\Qt5Svg_QSvgIconPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Svg\Qt5Svg_QSvgPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5WidgetsConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5WidgetsConfigExtras.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5WidgetsConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5WidgetsMacros.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5Widgets_QWindowsVistaStylePlugin.cmake;C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\3.27.6\CMakeCCompiler.cmake;C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\3.27.6\CMakeCXXCompiler.cmake;C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\3.27.6\CMakeRCCompiler.cmake;C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\3.27.6\CMakeSystem.cmake;C:\Users\irsl\VR\src\choreonoid\cmake\ChoreonoidBasicBuildFunctions.cmake;C:\Users\irsl\VR\src\choreonoid\cmake\ChoreonoidFindQt.cmake;C:\Users\irsl\VR\src\choreonoid\cmake\ChoreonoidPythonBuildFunctions.cmake;C:\open_vr\lib\cmake\assimp-5.4\assimpConfig.cmake;C:\open_vr\lib\cmake\assimp-5.4\assimpConfigVersion.cmake;C:\open_vr\lib\cmake\assimp-5.4\assimpTargets-release.cmake;C:\open_vr\lib\cmake\assimp-5.4\assimpTargets.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeCInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeCXXInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeCheckCompilerFlagCommonPatterns.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeFindFrameworks.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeLanguageInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeParseArguments.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeRCInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckCSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckCXXCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckCXXSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckIncludeFile.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckIncludeFiles.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckLibraryExists.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Compiler\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Compiler\MSVC.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindBoost.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindOpenGL.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindPkgConfig.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindPythonLibs.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindThreads.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\InstallRequiredSystemLibraries.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Internal\CheckCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Internal\CheckFlagCommonConfig.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Internal\CheckSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\WindowsPaths.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\SelectLibraryConfigurations.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5\Qt5Config.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5\Qt5ConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5\Qt5ModuleLocation.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreConfigExtras.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreMacros.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5GuiConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5GuiConfigExtras.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5GuiConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QGifPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QICNSPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QICOPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QJpegPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QMinimalIntegrationPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QOffscreenIntegrationPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QTgaPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QTiffPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QTuioTouchPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QWbmpPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QWebpPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QWindowsDirect2DIntegrationPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QWindowsIntegrationPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QXdgDesktopPortalThemePlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Network\Qt5NetworkConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Network\Qt5NetworkConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Network\Qt5Network_QGenericEnginePlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Svg\Qt5SvgConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Svg\Qt5SvgConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Svg\Qt5Svg_QSvgIconPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Svg\Qt5Svg_QSvgPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5WidgetsConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5WidgetsConfigExtras.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5WidgetsConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5WidgetsMacros.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5Widgets_QWindowsVistaStylePlugin.cmake;C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\3.27.6\CMakeCCompiler.cmake;C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\3.27.6\CMakeCXXCompiler.cmake;C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\3.27.6\CMakeRCCompiler.cmake;C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\3.27.6\CMakeSystem.cmake;C:\Users\irsl\VR\src\choreonoid\cmake\ChoreonoidBasicBuildFunctions.cmake;C:\Users\irsl\VR\src\choreonoid\cmake\ChoreonoidFindQt.cmake;C:\Users\irsl\VR\src\choreonoid\cmake\ChoreonoidPythonBuildFunctions.cmake;C:\open_vr\lib\cmake\assimp-5.4\assimpConfig.cmake;C:\open_vr\lib\cmake\assimp-5.4\assimpConfigVersion.cmake;C:\open_vr\lib\cmake\assimp-5.4\assimpTargets-release.cmake;C:\open_vr\lib\cmake\assimp-5.4\assimpTargets.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeCInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeCXXInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeCheckCompilerFlagCommonPatterns.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeFindFrameworks.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeLanguageInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeParseArguments.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeRCInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckCSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckCXXCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckCXXSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckIncludeFile.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckIncludeFiles.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\CheckLibraryExists.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Compiler\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Compiler\MSVC.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindBoost.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindOpenGL.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindPkgConfig.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindPythonLibs.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\FindThreads.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\InstallRequiredSystemLibraries.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Internal\CheckCompilerFlag.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Internal\CheckFlagCommonConfig.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Internal\CheckSourceCompiles.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\Platform\WindowsPaths.cmake;C:\Program Files\CMake\share\cmake-3.27\Modules\SelectLibraryConfigurations.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5\Qt5Config.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5\Qt5ConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5\Qt5ModuleLocation.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreConfigExtras.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Core\Qt5CoreMacros.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5GuiConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5GuiConfigExtras.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5GuiConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QGifPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QICNSPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QICOPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QJpegPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QMinimalIntegrationPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QOffscreenIntegrationPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QTgaPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QTiffPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QTuioTouchPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QWbmpPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QWebpPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QWindowsDirect2DIntegrationPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QWindowsIntegrationPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Gui\Qt5Gui_QXdgDesktopPortalThemePlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Network\Qt5NetworkConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Network\Qt5NetworkConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Network\Qt5Network_QGenericEnginePlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Svg\Qt5SvgConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Svg\Qt5SvgConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Svg\Qt5Svg_QSvgIconPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Svg\Qt5Svg_QSvgPlugin.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5WidgetsConfig.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5WidgetsConfigExtras.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5WidgetsConfigVersion.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5WidgetsMacros.cmake;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\cmake\Qt5Widgets\Qt5Widgets_QWindowsVistaStylePlugin.cmake;C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\3.27.6\CMakeCCompiler.cmake;C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\3.27.6\CMakeCXXCompiler.cmake;C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\3.27.6\CMakeRCCompiler.cmake;C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\3.27.6\CMakeSystem.cmake;C:\Users\irsl\VR\src\choreonoid\cmake\ChoreonoidBasicBuildFunctions.cmake;C:\Users\irsl\VR\src\choreonoid\cmake\ChoreonoidFindQt.cmake;C:\Users\irsl\VR\src\choreonoid\cmake\ChoreonoidPythonBuildFunctions.cmake;C:\open_vr\lib\cmake\assimp-5.4\assimpConfig.cmake;C:\open_vr\lib\cmake\assimp-5.4\assimpConfigVersion.cmake;C:\open_vr\lib\cmake\assimp-5.4\assimpTargets-release.cmake;C:\open_vr\lib\cmake\assimp-5.4\assimpTargets.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\ZERO_CHECK.vcxproj">
+      <Project>{3EB235B1-FCEC-3B05-A8A2-6684BD3E3841}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\AizuSpiderController.vcxproj">
+      <Project>{0B4EFBCF-A038-31CD-9831-02E51F71559B}</Project>
+      <Name>AizuSpiderController</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\AizuWheelController.vcxproj">
+      <Project>{AD5BB0DA-7010-3931-94FC-DDA8045A29C2}</Project>
+      <Name>AizuWheelController</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\CameraSampleController.vcxproj">
+      <Project>{FD26C7F4-A742-38A6-A3FD-4DDB37CDA9CF}</Project>
+      <Name>CameraSampleController</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\general\ClosedLinkSampleHandler.vcxproj">
+      <Project>{E40233AD-CF17-360F-AF6C-3D4AD3A47108}</Project>
+      <Name>ClosedLinkSampleHandler</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\AISTCollisionDetector\CnoidAISTCollisionDetector.vcxproj">
+      <Project>{D06230A9-CAC5-3661-9056-73FF159FAECF}</Project>
+      <Name>CnoidAISTCollisionDetector</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\ext\assembler_vr_plugin\CnoidAssemblerVRPlugin.vcxproj">
+      <Project>{9B6D8FEB-5D35-3448-A1D0-FB199BDE4D7D}</Project>
+      <Name>CnoidAssemblerVRPlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\AssimpPlugin\CnoidAssimpPlugin.vcxproj">
+      <Project>{692CA0A1-60B9-3A21-A7B3-2DBE487E7239}</Project>
+      <Name>CnoidAssimpPlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\AssimpSceneLoader\CnoidAssimpSceneLoader.vcxproj">
+      <Project>{8D56F54A-2C62-37FD-A13E-04FE2C205911}</Project>
+      <Name>CnoidAssimpSceneLoader</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\AssimpSceneWriter\CnoidAssimpSceneWriter.vcxproj">
+      <Project>{3E2C7429-D503-3D80-BEF7-3CFE78E89AD2}</Project>
+      <Name>CnoidAssimpSceneWriter</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\BalancerPlugin\CnoidBalancerPlugin.vcxproj">
+      <Project>{D34BC22D-E334-38A5-A8B8-63B7BCDCCD20}</Project>
+      <Name>CnoidBalancerPlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\CnoidBase.vcxproj">
+      <Project>{49BA9D03-EEC9-30B5-AE66-D2E7BBB92205}</Project>
+      <Name>CnoidBase</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\Body\CnoidBody.vcxproj">
+      <Project>{C8916B54-1D24-319E-B79C-55954E9E3607}</Project>
+      <Name>CnoidBody</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\BodyPlugin\CnoidBodyPlugin.vcxproj">
+      <Project>{102C6EFA-8AE4-3274-A8E4-230CCE7062A9}</Project>
+      <Name>CnoidBodyPlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\GLSceneRenderer\CnoidGLSceneRenderer.vcxproj">
+      <Project>{CACFBD2A-17BA-354C-AD70-7F7E2851AEB5}</Project>
+      <Name>CnoidGLSceneRenderer</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\ext\openvr_plugin\CnoidOpenVRPlugin.vcxproj">
+      <Project>{B525C74D-843D-364F-BB80-25C12C57FC92}</Project>
+      <Name>CnoidOpenVRPlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\PoseSeqPlugin\CnoidPoseSeqPlugin.vcxproj">
+      <Project>{BBCB437B-F4E6-3B00-B92F-BE7E6945D6F0}</Project>
+      <Name>CnoidPoseSeqPlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\pybind11\CnoidPyBase.vcxproj">
+      <Project>{0E58A4F3-E7AB-3401-8D14-B1CE63B15BE7}</Project>
+      <Name>CnoidPyBase</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\Util\pybind11\CnoidPyUtil.vcxproj">
+      <Project>{A5EA0F72-F7F6-3F84-89F8-30D00E36810E}</Project>
+      <Name>CnoidPyUtil</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\PythonPlugin\CnoidPythonPlugin.vcxproj">
+      <Project>{1D485FF9-C041-3DCC-8CDC-F0E82642CF48}</Project>
+      <Name>CnoidPythonPlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\PythonSimScriptPlugin\CnoidPythonSimScriptPlugin.vcxproj">
+      <Project>{D41F73F8-2291-34EF-A146-617804E7D495}</Project>
+      <Name>CnoidPythonSimScriptPlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\ext\robot_assembler_plugin\CnoidRobotAssemblerPlugin.vcxproj">
+      <Project>{06FA42EB-8F72-3D73-882F-654FDD843C8D}</Project>
+      <Name>CnoidRobotAssemblerPlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\URDFBodyLoader\CnoidURDFBodyLoader.vcxproj">
+      <Project>{C5A70074-1AEA-36F9-99DE-37BA9BB68D54}</Project>
+      <Name>CnoidURDFBodyLoader</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\URDFBodyWriter\CnoidURDFBodyWriter.vcxproj">
+      <Project>{33C741C0-E02B-3EF3-937A-E01894FEC6BD}</Project>
+      <Name>CnoidURDFBodyWriter</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\URDFPlugin\CnoidURDFPlugin.vcxproj">
+      <Project>{9362E2FC-78B6-3EC4-824D-C73EC681BE21}</Project>
+      <Name>CnoidURDFPlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\Util\CnoidUtil.vcxproj">
+      <Project>{B82F5686-43A1-38FC-9DFF-26737E5272B5}</Project>
+      <Name>CnoidUtil</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\ConveyorController.vcxproj">
+      <Project>{56231264-F6E8-3E2D-9677-B6D904192C6A}</Project>
+      <Name>ConveyorController</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\DoubleArmV7Controller.vcxproj">
+      <Project>{2DE2CACB-84AB-348F-9EF4-C31765FA0E37}</Project>
+      <Name>DoubleArmV7Controller</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\FourWheelCarJoystickController.vcxproj">
+      <Project>{458B492E-DE4B-3EFC-A451-C4FC4DFFC196}</Project>
+      <Name>FourWheelCarJoystickController</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\HandyRockDrillController.vcxproj">
+      <Project>{C8362474-0A32-3E45-8E30-D7C27DB0F083}</Project>
+      <Name>HandyRockDrillController</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\Jaco2Controller.vcxproj">
+      <Project>{234067CC-F671-3067-9740-28102ABCD94D}</Project>
+      <Name>Jaco2Controller</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\customizer\Labo1Customizer.vcxproj">
+      <Project>{57EA2076-E696-3932-BBBC-092291ADDB5A}</Project>
+      <Name>Labo1Customizer</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\LinkForceController.vcxproj">
+      <Project>{A5035AA6-B71D-3478-969E-A6D017582C0C}</Project>
+      <Name>LinkForceController</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\LinkPositionController.vcxproj">
+      <Project>{7D576451-81E6-3323-9EC1-08F0E8D5673B}</Project>
+      <Name>LinkPositionController</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\PA10PickupController.vcxproj">
+      <Project>{0D468449-70C0-39F2-B080-E5FC64D8314E}</Project>
+      <Name>PA10PickupController</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\PendulumSampleController.vcxproj">
+      <Project>{3E76EDA4-640D-391B-9F28-6BF65C9FCE19}</Project>
+      <Name>PendulumSampleController</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\ext\assembler_vr_plugin\pybind11\PyAssemblerVR.vcxproj">
+      <Project>{A9FE8F1E-95C8-31C4-8D69-05A14A16C693}</Project>
+      <Name>PyAssemblerVR</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\AssimpPlugin\pybind11\PyAssimpPlugin.vcxproj">
+      <Project>{A2D56411-53EB-3637-AAB3-A1ADD076113D}</Project>
+      <Name>PyAssimpPlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\pybind11\PyBase.vcxproj">
+      <Project>{D4D2C6B3-22AD-356B-9A0B-043F590F42E3}</Project>
+      <Name>PyBase</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\Body\pybind11\PyBody.vcxproj">
+      <Project>{83B29994-BD48-334E-9210-49BBFA1AE195}</Project>
+      <Name>PyBody</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\BodyPlugin\pybind11\PyBodyPlugin.vcxproj">
+      <Project>{EF248EBB-3E36-3041-8411-2EDCA9462ABB}</Project>
+      <Name>PyBodyPlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\PoseSeqPlugin\pybind11\PyPoseSeqPlugin.vcxproj">
+      <Project>{FD501F08-81CC-3831-A43A-15AC884BBCF2}</Project>
+      <Name>PyPoseSeqPlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\PythonPlugin\pybind11\PyPythonPlugin.vcxproj">
+      <Project>{827EBE2F-84EF-3589-AEC7-38A64C5CA22B}</Project>
+      <Name>PyPythonPlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\PythonSimScriptPlugin\pybind11\PyPythonSimScriptPlugin.vcxproj">
+      <Project>{DDCB8C07-1D6E-3DCF-8554-6A1A79272717}</Project>
+      <Name>PyPythonSimScriptPlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\pybind11\PyQtCore.vcxproj">
+      <Project>{6E75FB77-DB87-30D1-9B8A-0D19B552B825}</Project>
+      <Name>PyQtCore</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\pybind11\PyQtGui.vcxproj">
+      <Project>{FC53D376-59A3-3E96-8701-9D15393808A4}</Project>
+      <Name>PyQtGui</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\pybind11\PyQtWidgets.vcxproj">
+      <Project>{6A16DBF0-45D3-3DC7-B9D2-4CBA5622B08A}</Project>
+      <Name>PyQtWidgets</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\ext\robot_assembler_plugin\pybind11\PyRobotAssembler.vcxproj">
+      <Project>{1D03F716-2EF8-32F5-BD5A-B9DC5550958A}</Project>
+      <Name>PyRobotAssembler</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\URDFPlugin\pybind11\PyURDFPlugin.vcxproj">
+      <Project>{B8302E98-C9C6-3ADF-B3F3-E77D421B2F99}</Project>
+      <Name>PyURDFPlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\Util\pybind11\PyUtil.vcxproj">
+      <Project>{5F9B9BA3-1B18-39DE-890D-1D65B4180A28}</Project>
+      <Name>PyUtil</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\ext\robot_assembler_plugin\RobotAssembler.vcxproj">
+      <Project>{FDDAF054-C8C4-32E3-B0BB-5CCD205264A4}</Project>
+      <Name>RobotAssembler</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\SR1LiftupController.vcxproj">
+      <Project>{F522D054-9CCE-3C13-A7C0-602B1E85F1D5}</Project>
+      <Name>SR1LiftupController</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\SR1MinimumController.vcxproj">
+      <Project>{59AD6D99-BE06-3B70-8D2C-3E279BE5FAF1}</Project>
+      <Name>SR1MinimumController</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\SR1WalkGraspController.vcxproj">
+      <Project>{057C1CDA-8434-3A1B-BF92-9136483875D5}</Project>
+      <Name>SR1WalkGraspController</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\SR1WalkPatternController.vcxproj">
+      <Project>{A74A7213-0AD2-31DF-86E1-F2F977E6CA75}</Project>
+      <Name>SR1WalkPatternController</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\SampleCrawlerController.vcxproj">
+      <Project>{711CD2C9-1805-3C5D-8481-763830FE7260}</Project>
+      <Name>SampleCrawlerController</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\SampleCrawlerJoystickController.vcxproj">
+      <Project>{A84F5250-9C61-3C69-8814-88A9E4B72DA2}</Project>
+      <Name>SampleCrawlerJoystickController</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\SpringModelController.vcxproj">
+      <Project>{8318C327-5A5C-30CD-98CB-E91F4731D351}</Project>
+      <Name>SpringModelController</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\general\SpringModelCustomizer.vcxproj">
+      <Project>{FC86C4A9-2372-3F1A-B921-D45E9860BF24}</Project>
+      <Name>SpringModelCustomizer</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\TankJoystickController.vcxproj">
+      <Project>{9E708706-A57F-3C24-A18C-BDD58A0023E8}</Project>
+      <Name>TankJoystickController</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\sample\SimpleController\UniversalRobotPickupController.vcxproj">
+      <Project>{FEC7F651-03E3-3764-9F8B-097EEDA22BF9}</Project>
+      <Name>UniversalRobotPickupController</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\Choreonoid\choreonoid.vcxproj">
+      <Project>{F1C0D4B2-64FE-3623-9007-996085291398}</Project>
+      <Name>choreonoid</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\Choreonoid\choreonoid-info.vcxproj">
+      <Project>{6A97EFDF-E350-3553-92E4-39CB2E443FC8}</Project>
+      <Name>choreonoid-info</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\URDFBodyWriter\choreonoid_body2urdf.vcxproj">
+      <Project>{C5A66C74-2EB6-3A96-AAC5-E85D13A23527}</Project>
+      <Name>choreonoid_body2urdf</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\thirdparty\fmt-7.1.3\fmt.vcxproj">
+      <Project>{4D93FDFB-2890-3588-A4AD-EE2A8430F6CB}</Project>
+      <Name>fmt</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\thirdparty\jpeg-9c\jpeg.vcxproj">
+      <Project>{93DEB0CD-2EC4-345D-81E7-BC8136FBF7C0}</Project>
+      <Name>jpeg</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\thirdparty\lpng1232\png.vcxproj">
+      <Project>{EB5E9508-E17F-3CC7-B187-0BEFBD3705CD}</Project>
+      <Name>png</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\thirdparty\pugixml-1.11\pugixml.vcxproj">
+      <Project>{4413EAE9-A06E-3C32-8EBA-84365F10122C}</Project>
+      <Name>pugixml</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\thirdparty\libyaml-0.2.5\yaml.vcxproj">
+      <Project>{B2E7C9DA-D2A5-3C1C-AB79-71946F1C589B}</Project>
+      <Name>yaml</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\thirdparty\libzip-1.9.2\lib\zip.vcxproj">
+      <Project>{15F50350-C45B-3849-B418-B03149468708}</Project>
+      <Name>zip</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\thirdparty\zlib-1.2.13\zlib.vcxproj">
+      <Project>{B16DB920-4466-358E-AA6B-2194604C33C2}</Project>
+      <Name>zlib</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,449 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{D34BC22D-E334-38A5-A8B8-63B7BCDCCD20}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>CnoidBalancerPlugin</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\lib\choreonoid-2.0\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CnoidBalancerPlugin.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CnoidBalancerPlugind</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.dll</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\lib\choreonoid-2.0\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CnoidBalancerPlugin.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CnoidBalancerPlugin</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.dll</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\lib\choreonoid-2.0\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">CnoidBalancerPlugin.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">CnoidBalancerPlugin</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.dll</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\lib\choreonoid-2.0\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CnoidBalancerPlugin.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CnoidBalancerPlugin</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.dll</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</GenerateManifest>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtCore" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/./mkspecs/win32-msvc" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtGui" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtANGLE" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtWidgets" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtNetwork" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtSvg" /Zc:__cplusplus /source-charset:utf-8</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>4018;4068;4244;4250;4251;4267;4275;4800;4819</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;CNOID_USE_GETTEXT_WRAPPER;CNOID_DEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;QT_NO_KEYWORDS;QT_NO_OPENGL_ES_2;FMT_LOCALE;QT_CORE_LIB;QT_GUI_LIB;QT_WIDGETS_LIB;QT_NETWORK_LIB;QT_SVG_LIB;CMAKE_INTDIR="Debug";CnoidBalancerPlugin_EXPORTS</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;CNOID_USE_GETTEXT_WRAPPER;CNOID_DEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;QT_NO_KEYWORDS;QT_NO_OPENGL_ES_2;FMT_LOCALE;QT_CORE_LIB;QT_GUI_LIB;QT_WIDGETS_LIB;QT_NETWORK_LIB;QT_SVG_LIB;CMAKE_INTDIR=\"Debug\";CnoidBalancerPlugin_EXPORTS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtCore;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\.\mkspecs\win32-msvc;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtGui;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtANGLE;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtWidgets;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtNetwork;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtSvg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtCore;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\.\mkspecs\win32-msvc;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtGui;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtANGLE;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtWidgets;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtNetwork;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtSvg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>..\..\lib\choreonoid-2.0\Debug\CnoidPoseSeqPlugind.lib;..\..\lib\choreonoid-2.0\Debug\CnoidBodyPlugind.lib;..\..\lib\Debug\CnoidBased.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Networkd.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Svgd.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Widgetsd.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Guid.lib;..\..\lib\Debug\CnoidBodyd.lib;..\..\lib\Debug\CnoidAISTCollisionDetectord.lib;..\..\lib\Debug\CnoidGLSceneRendererd.lib;..\..\lib\Debug\CnoidUtild.lib;..\..\lib\Debug\fmtd.lib;libintl-8.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Cored.lib;glu32.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/irsl/VR/src/choreonoid/build/lib;C:/Users/irsl/VR/src/choreonoid/build/lib/$(Configuration);C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0;C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib/$(Configuration);C:/local/boost_1_81_0/lib64-msvc-14.2;C:/local/boost_1_81_0/lib64-msvc-14.2/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/Debug/CnoidBalancerPlugind.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/Debug/CnoidBalancerPlugind.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtCore" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/./mkspecs/win32-msvc" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtGui" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtANGLE" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtWidgets" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtNetwork" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtSvg" /Zc:__cplusplus /source-charset:utf-8</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <DisableSpecificWarnings>4018;4068;4244;4250;4251;4267;4275;4800;4819</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;CNOID_USE_GETTEXT_WRAPPER;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;QT_NO_KEYWORDS;QT_NO_OPENGL_ES_2;FMT_LOCALE;QT_CORE_LIB;QT_NO_DEBUG;QT_GUI_LIB;QT_WIDGETS_LIB;QT_NETWORK_LIB;QT_SVG_LIB;CMAKE_INTDIR="Release";CnoidBalancerPlugin_EXPORTS</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;CNOID_USE_GETTEXT_WRAPPER;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;QT_NO_KEYWORDS;QT_NO_OPENGL_ES_2;FMT_LOCALE;QT_CORE_LIB;QT_NO_DEBUG;QT_GUI_LIB;QT_WIDGETS_LIB;QT_NETWORK_LIB;QT_SVG_LIB;CMAKE_INTDIR=\"Release\";CnoidBalancerPlugin_EXPORTS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtCore;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\.\mkspecs\win32-msvc;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtGui;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtANGLE;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtWidgets;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtNetwork;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtSvg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtCore;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\.\mkspecs\win32-msvc;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtGui;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtANGLE;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtWidgets;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtNetwork;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtSvg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>..\..\lib\choreonoid-2.0\Release\CnoidPoseSeqPlugin.lib;..\..\lib\choreonoid-2.0\Release\CnoidBodyPlugin.lib;..\..\lib\Release\CnoidBase.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Network.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Svg.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Widgets.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Gui.lib;..\..\lib\Release\CnoidBody.lib;..\..\lib\Release\CnoidAISTCollisionDetector.lib;..\..\lib\Release\CnoidGLSceneRenderer.lib;..\..\lib\Release\CnoidUtil.lib;..\..\lib\Release\fmt.lib;libintl-8.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Core.lib;glu32.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/irsl/VR/src/choreonoid/build/lib;C:/Users/irsl/VR/src/choreonoid/build/lib/$(Configuration);C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0;C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib/$(Configuration);C:/local/boost_1_81_0/lib64-msvc-14.2;C:/local/boost_1_81_0/lib64-msvc-14.2/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/Release/CnoidBalancerPlugin.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/Release/CnoidBalancerPlugin.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtCore" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/./mkspecs/win32-msvc" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtGui" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtANGLE" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtWidgets" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtNetwork" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtSvg" /Zc:__cplusplus /source-charset:utf-8</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <DisableSpecificWarnings>4018;4068;4244;4250;4251;4267;4275;4800;4819</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MinSpace</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;CNOID_USE_GETTEXT_WRAPPER;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;QT_NO_KEYWORDS;QT_NO_OPENGL_ES_2;FMT_LOCALE;QT_CORE_LIB;QT_NO_DEBUG;QT_GUI_LIB;QT_WIDGETS_LIB;QT_NETWORK_LIB;QT_SVG_LIB;CMAKE_INTDIR="MinSizeRel";CnoidBalancerPlugin_EXPORTS</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;CNOID_USE_GETTEXT_WRAPPER;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;QT_NO_KEYWORDS;QT_NO_OPENGL_ES_2;FMT_LOCALE;QT_CORE_LIB;QT_NO_DEBUG;QT_GUI_LIB;QT_WIDGETS_LIB;QT_NETWORK_LIB;QT_SVG_LIB;CMAKE_INTDIR=\"MinSizeRel\";CnoidBalancerPlugin_EXPORTS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtCore;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\.\mkspecs\win32-msvc;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtGui;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtANGLE;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtWidgets;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtNetwork;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtSvg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtCore;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\.\mkspecs\win32-msvc;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtGui;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtANGLE;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtWidgets;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtNetwork;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtSvg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>..\..\lib\choreonoid-2.0\MinSizeRel\CnoidPoseSeqPlugin.lib;..\..\lib\choreonoid-2.0\MinSizeRel\CnoidBodyPlugin.lib;..\..\lib\MinSizeRel\CnoidBase.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Network.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Svg.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Widgets.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Gui.lib;..\..\lib\MinSizeRel\CnoidBody.lib;..\..\lib\MinSizeRel\CnoidAISTCollisionDetector.lib;..\..\lib\MinSizeRel\CnoidGLSceneRenderer.lib;..\..\lib\MinSizeRel\CnoidUtil.lib;..\..\lib\MinSizeRel\fmt.lib;libintl-8.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Core.lib;glu32.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/irsl/VR/src/choreonoid/build/lib;C:/Users/irsl/VR/src/choreonoid/build/lib/$(Configuration);C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0;C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib/$(Configuration);C:/local/boost_1_81_0/lib64-msvc-14.2;C:/local/boost_1_81_0/lib64-msvc-14.2/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/MinSizeRel/CnoidBalancerPlugin.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/MinSizeRel/CnoidBalancerPlugin.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtCore" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/./mkspecs/win32-msvc" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtGui" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtANGLE" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtWidgets" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtNetwork" /external:I "C:/Qt/Qt5.12.12/5.12.12/msvc2017_64/include/QtSvg" /Zc:__cplusplus /source-charset:utf-8</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>4018;4068;4244;4250;4251;4267;4275;4800;4819</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;CNOID_USE_GETTEXT_WRAPPER;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;QT_NO_KEYWORDS;QT_NO_OPENGL_ES_2;FMT_LOCALE;QT_CORE_LIB;QT_NO_DEBUG;QT_GUI_LIB;QT_WIDGETS_LIB;QT_NETWORK_LIB;QT_SVG_LIB;CMAKE_INTDIR="RelWithDebInfo";CnoidBalancerPlugin_EXPORTS</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;CNOID_USE_GETTEXT_WRAPPER;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;QT_NO_KEYWORDS;QT_NO_OPENGL_ES_2;FMT_LOCALE;QT_CORE_LIB;QT_NO_DEBUG;QT_GUI_LIB;QT_WIDGETS_LIB;QT_NETWORK_LIB;QT_SVG_LIB;CMAKE_INTDIR=\"RelWithDebInfo\";CnoidBalancerPlugin_EXPORTS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtCore;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\.\mkspecs\win32-msvc;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtGui;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtANGLE;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtWidgets;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtNetwork;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtSvg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtCore;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\.\mkspecs\win32-msvc;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtGui;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtANGLE;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtWidgets;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtNetwork;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\include\QtSvg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>..\..\lib\choreonoid-2.0\RelWithDebInfo\CnoidPoseSeqPlugin.lib;..\..\lib\choreonoid-2.0\RelWithDebInfo\CnoidBodyPlugin.lib;..\..\lib\RelWithDebInfo\CnoidBase.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Network.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Svg.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Widgets.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Gui.lib;..\..\lib\RelWithDebInfo\CnoidBody.lib;..\..\lib\RelWithDebInfo\CnoidAISTCollisionDetector.lib;..\..\lib\RelWithDebInfo\CnoidGLSceneRenderer.lib;..\..\lib\RelWithDebInfo\CnoidUtil.lib;..\..\lib\RelWithDebInfo\fmt.lib;libintl-8.lib;C:\Qt\Qt5.12.12\5.12.12\msvc2017_64\lib\Qt5Core.lib;glu32.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/irsl/VR/src/choreonoid/build/lib;C:/Users/irsl/VR/src/choreonoid/build/lib/$(Configuration);C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0;C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib/$(Configuration);C:/local/boost_1_81_0/lib64-msvc-14.2;C:/local/boost_1_81_0/lib64-msvc-14.2/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/RelWithDebInfo/CnoidBalancerPlugin.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/RelWithDebInfo/CnoidBalancerPlugin.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\d8aa7adc89989fef7124c6c01fc7c63d\CnoidBalancerPlugin-2.0.mo.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating ../../share/locale/ja/LC_MESSAGES/CnoidBalancerPlugin-2.0.mo</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\bin\msgfmt.exe -o C:/Users/irsl/VR/src/choreonoid/build/share/locale/ja/LC_MESSAGES/CnoidBalancerPlugin-2.0.mo C:/Users/irsl/VR/src/choreonoid/src/BalancerPlugin/po/ja.po
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\BalancerPlugin\po\ja.po;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\share\locale\ja\LC_MESSAGES\CnoidBalancerPlugin-2.0.mo</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating ../../share/locale/ja/LC_MESSAGES/CnoidBalancerPlugin-2.0.mo</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\bin\msgfmt.exe -o C:/Users/irsl/VR/src/choreonoid/build/share/locale/ja/LC_MESSAGES/CnoidBalancerPlugin-2.0.mo C:/Users/irsl/VR/src/choreonoid/src/BalancerPlugin/po/ja.po
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\BalancerPlugin\po\ja.po;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\share\locale\ja\LC_MESSAGES\CnoidBalancerPlugin-2.0.mo</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating ../../share/locale/ja/LC_MESSAGES/CnoidBalancerPlugin-2.0.mo</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\bin\msgfmt.exe -o C:/Users/irsl/VR/src/choreonoid/build/share/locale/ja/LC_MESSAGES/CnoidBalancerPlugin-2.0.mo C:/Users/irsl/VR/src/choreonoid/src/BalancerPlugin/po/ja.po
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\BalancerPlugin\po\ja.po;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\share\locale\ja\LC_MESSAGES\CnoidBalancerPlugin-2.0.mo</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating ../../share/locale/ja/LC_MESSAGES/CnoidBalancerPlugin-2.0.mo</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\bin\msgfmt.exe -o C:/Users/irsl/VR/src/choreonoid/build/share/locale/ja/LC_MESSAGES/CnoidBalancerPlugin-2.0.mo C:/Users/irsl/VR/src/choreonoid/src/BalancerPlugin/po/ja.po
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\BalancerPlugin\po\ja.po;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\share\locale\ja\LC_MESSAGES\CnoidBalancerPlugin-2.0.mo</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\src\BalancerPlugin\CMakeLists.txt">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/src/BalancerPlugin/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/src/BalancerPlugin/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\BalancerPlugin\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/src/BalancerPlugin/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/src/BalancerPlugin/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\BalancerPlugin\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/src/BalancerPlugin/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/src/BalancerPlugin/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\BalancerPlugin\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/src/BalancerPlugin/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/src/BalancerPlugin/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\BalancerPlugin\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\BalancerPlugin\BalancerPlugin.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\BalancerPlugin\WaistBalancer.cpp" />
+    <None Include="C:\Users\irsl\VR\src\choreonoid\build\share\locale\ja\LC_MESSAGES\CnoidBalancerPlugin-2.0.mo">
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\ZERO_CHECK.vcxproj">
+      <Project>{3EB235B1-FCEC-3B05-A8A2-6684BD3E3841}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\AISTCollisionDetector\CnoidAISTCollisionDetector.vcxproj">
+      <Project>{D06230A9-CAC5-3661-9056-73FF159FAECF}</Project>
+      <Name>CnoidAISTCollisionDetector</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\Base\CnoidBase.vcxproj">
+      <Project>{49BA9D03-EEC9-30B5-AE66-D2E7BBB92205}</Project>
+      <Name>CnoidBase</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\Body\CnoidBody.vcxproj">
+      <Project>{C8916B54-1D24-319E-B79C-55954E9E3607}</Project>
+      <Name>CnoidBody</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\BodyPlugin\CnoidBodyPlugin.vcxproj">
+      <Project>{102C6EFA-8AE4-3274-A8E4-230CCE7062A9}</Project>
+      <Name>CnoidBodyPlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\GLSceneRenderer\CnoidGLSceneRenderer.vcxproj">
+      <Project>{CACFBD2A-17BA-354C-AD70-7F7E2851AEB5}</Project>
+      <Name>CnoidGLSceneRenderer</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\PoseSeqPlugin\CnoidPoseSeqPlugin.vcxproj">
+      <Project>{BBCB437B-F4E6-3B00-B92F-BE7E6945D6F0}</Project>
+      <Name>CnoidPoseSeqPlugin</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\Util\CnoidUtil.vcxproj">
+      <Project>{B82F5686-43A1-38FC-9DFF-26737E5272B5}</Project>
+      <Name>CnoidUtil</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\thirdparty\fmt-7.1.3\fmt.vcxproj">
+      <Project>{4D93FDFB-2890-3588-A4AD-EE2A8430F6CB}</Project>
+      <Name>fmt</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

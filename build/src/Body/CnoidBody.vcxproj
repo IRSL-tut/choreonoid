@@ -1,0 +1,579 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{C8916B54-1D24-319E-B79C-55954E9E3607}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>CnoidBody</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\bin\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CnoidBody.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CnoidBodyd</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.dll</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\bin\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CnoidBody.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CnoidBody</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.dll</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\bin\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">CnoidBody.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">CnoidBody</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.dll</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\bin\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CnoidBody.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CnoidBody</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.dll</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</GenerateManifest>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /Zc:__cplusplus /source-charset:utf-8</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>4018;4068;4244;4250;4251;4267;4275;4800;4819</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;CNOID_DEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;FMT_LOCALE;CMAKE_INTDIR="Debug";CnoidBody_EXPORTS</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;CNOID_DEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;FMT_LOCALE;CMAKE_INTDIR=\"Debug\";CnoidBody_EXPORTS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>..\..\lib\Debug\CnoidAISTCollisionDetectord.lib;..\..\lib\Debug\CnoidUtild.lib;..\..\lib\Debug\fmtd.lib;libintl-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/irsl/VR/src/choreonoid/build/lib;C:/Users/irsl/VR/src/choreonoid/build/lib/$(Configuration);C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0;C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib/$(Configuration);C:/local/boost_1_81_0/lib64-msvc-14.2;C:/local/boost_1_81_0/lib64-msvc-14.2/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>C:/Users/irsl/VR/src/choreonoid/build/lib/Debug/CnoidBodyd.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/irsl/VR/src/choreonoid/build/bin/Debug/CnoidBodyd.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /Zc:__cplusplus /source-charset:utf-8</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <DisableSpecificWarnings>4018;4068;4244;4250;4251;4267;4275;4800;4819</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;FMT_LOCALE;CMAKE_INTDIR="Release";CnoidBody_EXPORTS</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;FMT_LOCALE;CMAKE_INTDIR=\"Release\";CnoidBody_EXPORTS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>..\..\lib\Release\CnoidAISTCollisionDetector.lib;..\..\lib\Release\CnoidUtil.lib;..\..\lib\Release\fmt.lib;libintl-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/irsl/VR/src/choreonoid/build/lib;C:/Users/irsl/VR/src/choreonoid/build/lib/$(Configuration);C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0;C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib/$(Configuration);C:/local/boost_1_81_0/lib64-msvc-14.2;C:/local/boost_1_81_0/lib64-msvc-14.2/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>C:/Users/irsl/VR/src/choreonoid/build/lib/Release/CnoidBody.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/irsl/VR/src/choreonoid/build/bin/Release/CnoidBody.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /Zc:__cplusplus /source-charset:utf-8</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <DisableSpecificWarnings>4018;4068;4244;4250;4251;4267;4275;4800;4819</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MinSpace</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;FMT_LOCALE;CMAKE_INTDIR="MinSizeRel";CnoidBody_EXPORTS</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;FMT_LOCALE;CMAKE_INTDIR=\"MinSizeRel\";CnoidBody_EXPORTS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>..\..\lib\MinSizeRel\CnoidAISTCollisionDetector.lib;..\..\lib\MinSizeRel\CnoidUtil.lib;..\..\lib\MinSizeRel\fmt.lib;libintl-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/irsl/VR/src/choreonoid/build/lib;C:/Users/irsl/VR/src/choreonoid/build/lib/$(Configuration);C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0;C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib/$(Configuration);C:/local/boost_1_81_0/lib64-msvc-14.2;C:/local/boost_1_81_0/lib64-msvc-14.2/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>C:/Users/irsl/VR/src/choreonoid/build/lib/MinSizeRel/CnoidBody.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/irsl/VR/src/choreonoid/build/bin/MinSizeRel/CnoidBody.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /Zc:__cplusplus /source-charset:utf-8</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>4018;4068;4244;4250;4251;4267;4275;4800;4819</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;FMT_LOCALE;CMAKE_INTDIR="RelWithDebInfo";CnoidBody_EXPORTS</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_ENABLE_EXTENDED_ALIGNED_STORAGE;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WIN64;NOMINMAX;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;HAVE_SNPRINTF;BOOST_ALL_DYN_LINK;FMT_LOCALE;CMAKE_INTDIR=\"RelWithDebInfo\";CnoidBody_EXPORTS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\irsl\VR\src\choreonoid\build;C:\Users\irsl\VR\src\choreonoid\build\include;C:\Users\irsl\VR\src\choreonoid;C:\Users\irsl\VR\src\choreonoid\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\include;C:\Python38\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\pybind11-2.10.3\include;C:\local\boost_1_81_0;C:\Users\irsl\VR\src\choreonoid\thirdparty\eigen-3.2.10;C:\Users\irsl\VR\src\choreonoid\thirdparty\windows64\include;C:\Users\irsl\VR\src\choreonoid\thirdparty\zlib-1.2.13;C:\Users\irsl\VR\src\choreonoid\thirdparty\libzip-1.9.2\lib;C:\Users\irsl\VR\src\choreonoid\thirdparty\fmt-7.1.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>..\..\lib\RelWithDebInfo\CnoidAISTCollisionDetector.lib;..\..\lib\RelWithDebInfo\CnoidUtil.lib;..\..\lib\RelWithDebInfo\fmt.lib;libintl-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:/Users/irsl/VR/src/choreonoid/build/lib;C:/Users/irsl/VR/src/choreonoid/build/lib/$(Configuration);C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0;C:/Users/irsl/VR/src/choreonoid/build/lib/choreonoid-2.0/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/gettext-0.21/lib/$(Configuration);C:/local/boost_1_81_0/lib64-msvc-14.2;C:/local/boost_1_81_0/lib64-msvc-14.2/$(Configuration);C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib;C:/Users/irsl/VR/src/choreonoid/thirdparty/windows64/lib/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>C:/Users/irsl/VR/src/choreonoid/build/lib/RelWithDebInfo/CnoidBody.lib</ImportLibrary>
+      <ProgramDataBaseFile>C:/Users/irsl/VR/src/choreonoid/build/bin/RelWithDebInfo/CnoidBody.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\build\CMakeFiles\d8aa7adc89989fef7124c6c01fc7c63d\CnoidBody-2.0.mo.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating ../../share/locale/ja/LC_MESSAGES/CnoidBody-2.0.mo</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\bin\msgfmt.exe -o C:/Users/irsl/VR/src/choreonoid/build/share/locale/ja/LC_MESSAGES/CnoidBody-2.0.mo C:/Users/irsl/VR/src/choreonoid/src/Body/po/ja.po
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Body\po\ja.po;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\share\locale\ja\LC_MESSAGES\CnoidBody-2.0.mo</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating ../../share/locale/ja/LC_MESSAGES/CnoidBody-2.0.mo</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\bin\msgfmt.exe -o C:/Users/irsl/VR/src/choreonoid/build/share/locale/ja/LC_MESSAGES/CnoidBody-2.0.mo C:/Users/irsl/VR/src/choreonoid/src/Body/po/ja.po
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Body\po\ja.po;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\share\locale\ja\LC_MESSAGES\CnoidBody-2.0.mo</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating ../../share/locale/ja/LC_MESSAGES/CnoidBody-2.0.mo</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\bin\msgfmt.exe -o C:/Users/irsl/VR/src/choreonoid/build/share/locale/ja/LC_MESSAGES/CnoidBody-2.0.mo C:/Users/irsl/VR/src/choreonoid/src/Body/po/ja.po
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Body\po\ja.po;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\share\locale\ja\LC_MESSAGES\CnoidBody-2.0.mo</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating ../../share/locale/ja/LC_MESSAGES/CnoidBody-2.0.mo</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+C:\Users\irsl\VR\src\choreonoid\thirdparty\gettext-0.21\bin\msgfmt.exe -o C:/Users/irsl/VR/src/choreonoid/build/share/locale/ja/LC_MESSAGES/CnoidBody-2.0.mo C:/Users/irsl/VR/src/choreonoid/src/Body/po/ja.po
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Body\po\ja.po;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\share\locale\ja\LC_MESSAGES\CnoidBody-2.0.mo</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\irsl\VR\src\choreonoid\src\Body\CMakeLists.txt">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/src/Body/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/src/Body/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\src\Body\ChoreonoidBodyBuildFunctions.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Body\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/src/Body/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/src/Body/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\src\Body\ChoreonoidBodyBuildFunctions.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Body\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/src/Body/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/src/Body/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\src\Body\ChoreonoidBodyBuildFunctions.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Body\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule C:/Users/irsl/VR/src/choreonoid/src/Body/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-file C:/Users/irsl/VR/src/choreonoid/build/src/Body/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\src\Body\ChoreonoidBodyBuildFunctions.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\irsl\VR\src\choreonoid\build\src\Body\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\Body.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\Link.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ExtraJoint.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\LinkTraverse.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\LinkPath.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\JointTraverse.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\JointPath.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\LinkGroup.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\Jacobian.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyHandler.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyHandlerManager.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\CustomJointPathBase.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\JointSpaceConfigurationHandler.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\LinkedJointHandler.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyCustomizerInterface.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\Material.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ContactMaterial.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\MaterialTable.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\SceneBody.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\SceneDevice.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\AbstractBodyLoader.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyLoader.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\StdBodyLoader.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\StdBodyWriter.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\Device.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\HolderDevice.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\AttachmentDevice.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\DigitalIoDevice.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\IoConnectionMap.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ForceSensor.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\RateGyroSensor.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\AccelerationSensor.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\Imu.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BasicSensorSimulationHelper.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\VisionSensor.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\Camera.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\RangeCamera.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\RangeSensor.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\Light.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\PointLight.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\SpotLight.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\MarkerDevice.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\MultiDeviceStateSeq.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\SceneCollision.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\InverseKinematics.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\CompositeIK.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\PinDragIK.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyKinematicsKit.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\KinematicBodySet.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\LeggedBodyHelper.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyCollisionLinkFilter.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyCollisionDetector.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyCollisionDetectorUtil.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyMotion.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyPositionSeq.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyMotionPoseProvider.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyState.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ExtraBodyStateAccessor.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ZMPSeq.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ForwardDynamics.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ForwardDynamicsABM.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ForwardDynamicsCBM.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\DyBody.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\DyWorld.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\MassMatrix.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ConstraintForceSolver.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\InverseDynamics.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\PenetrationBlocker.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\VRMLBodyLoader.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\VRMLBody.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\PoseProviderToBodyMotionConverter.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyMotionUtil.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ControllerIO.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\SimpleController.cpp" />
+    <ClCompile Include="C:\Users\irsl\VR\src\choreonoid\src\Body\CnoidBody.cpp" />
+    <None Include="C:\Users\irsl\VR\src\choreonoid\build\share\locale\ja\LC_MESSAGES\CnoidBody-2.0.mo">
+    </None>
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\Body.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyHandler.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyHandlerManager.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\CustomJointPathHandler.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\CustomJointPathBase.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\JointSpaceConfigurationHandler.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\LinkedJointHandler.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyCustomizerInterface.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\VRMLBody.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\AbstractBodyLoader.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\VRMLBodyLoader.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyLoader.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\StdBodyLoader.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\StdBodyWriter.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\StdBodyFileUtil.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ZMPSeq.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\Link.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ExtraJoint.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\LinkTraverse.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\LinkPath.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\JointTraverse.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\JointPath.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\LinkGroup.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\Material.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ContactMaterial.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\MaterialTable.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyCollisionLinkFilter.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyCollisionDetector.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyCollisionDetectorUtil.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\MultiDeviceStateSeq.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\Device.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\DeviceList.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\HolderDevice.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\AttachmentDevice.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\DigitalIoDevice.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\IoConnectionMap.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ForceSensor.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\RateGyroSensor.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\AccelerationSensor.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\Imu.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BasicSensorSimulationHelper.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\VisionSensor.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\Camera.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\RangeCamera.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\RangeSensor.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\Light.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\PointLight.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\SpotLight.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\MarkerDevice.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\SceneBody.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\SceneDevice.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\SceneCollision.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\InverseKinematics.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\CompositeIK.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\CompositeBodyIK.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\PinDragIK.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyKinematicsKit.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\KinematicBodySet.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\LeggedBodyHelper.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\PenetrationBlocker.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ForwardDynamics.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ForwardDynamicsABM.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ForwardDynamicsCBM.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\DyBody.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\DyWorld.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\InverseDynamics.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\Jacobian.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\MassMatrix.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ConstraintForceSolver.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\PoseProvider.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyMotion.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyPositionSeq.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyMotionPoseProvider.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\PoseProviderToBodyMotionConverter.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyMotionUtil.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\BodyState.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ExtraBodyStateAccessor.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\CollisionLinkPair.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\ControllerIO.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\SimpleController.h" />
+    <ClInclude Include="C:\Users\irsl\VR\src\choreonoid\src\Body\exportdecl.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\ZERO_CHECK.vcxproj">
+      <Project>{3EB235B1-FCEC-3B05-A8A2-6684BD3E3841}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\AISTCollisionDetector\CnoidAISTCollisionDetector.vcxproj">
+      <Project>{D06230A9-CAC5-3661-9056-73FF159FAECF}</Project>
+      <Name>CnoidAISTCollisionDetector</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\src\Util\CnoidUtil.vcxproj">
+      <Project>{B82F5686-43A1-38FC-9DFF-26737E5272B5}</Project>
+      <Name>CnoidUtil</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\irsl\VR\src\choreonoid\build\thirdparty\fmt-7.1.3\fmt.vcxproj">
+      <Project>{4D93FDFB-2890-3588-A4AD-EE2A8430F6CB}</Project>
+      <Name>fmt</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

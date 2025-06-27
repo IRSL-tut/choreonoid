@@ -1,0 +1,10 @@
+^C:\USERS\IRSL\VR\SRC\CHOREONOID\BUILD\CMAKEFILES\FAD6FE94DF600CD373FD727699CCC7F9\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/irsl/VR/src/choreonoid -BC:/Users/irsl/VR/src/choreonoid/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/irsl/VR/src/choreonoid/build/Choreonoid.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

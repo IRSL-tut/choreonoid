@@ -1,0 +1,18 @@
+# pkg-config source file
+
+prefix=C:/Program Files/Choreonoid
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+subdir=choreonoid-2.0
+sharedir=C:/Program Files/Choreonoid/share
+plugindir=${exec_prefix}/lib/choreonoid-2.0
+simplecontrollerdir=${plugindir}/simplecontroller
+customizerdir=${plugindir}/simplecontroller/customizer
+
+Name: choreonoid-body
+Description: Choreonoid Body library
+Version: 2.0.0
+Requires: choreonoid-util = 2.0.0
+Conflicts:
+Libs: -lCnoidBody
