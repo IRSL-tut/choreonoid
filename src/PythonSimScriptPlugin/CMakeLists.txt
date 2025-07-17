@@ -2,6 +2,10 @@ if(NOT ENABLE_PYTHON OR NOT ENABLE_GUI)
   return()
 endif()
 
+if(NOT BUILD_PYTHON_PLUGIN)
+  return()
+endif()
+
 set(target CnoidPythonSimScriptPlugin)
 
 set(sources

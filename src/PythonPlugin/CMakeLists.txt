@@ -2,6 +2,11 @@ if(NOT ENABLE_PYTHON OR NOT ENABLE_GUI)
   return()
 endif()
 
+option(BUILD_PYTHON_PLUGIN "Building PythonPlugin" ON)
+if(NOT BUILD_PYTHON_PLUGIN)
+  return()
+endif()
+
 set(target CnoidPythonPlugin)
 
 set(sources
