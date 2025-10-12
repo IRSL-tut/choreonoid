@@ -30,10 +30,10 @@ set(sources
   GeneralId.cpp
   Selection.cpp
   AbstractSeq.cpp
-  #MultiValueSeq.cpp
-  #MultiSE3Seq.cpp
-  #MultiSE3MatrixSeq.cpp
-  #MultiVector3Seq.cpp
+  MultiValueSeq.cpp
+  MultiSE3Seq.cpp
+  MultiSE3MatrixSeq.cpp
+  MultiVector3Seq.cpp
   Vector3Seq.cpp
   ReferencedObjectSeq.cpp
   GeneralSeqReader.cpp

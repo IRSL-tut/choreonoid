@@ -238,11 +238,24 @@ private:
         const int newNumFrames = numFrames();
         const int newNumParts = numParts();
         if(newNumParts != prevNumParts){
+#if EMSCRIPTEN
+            for (auto it = Container::begin(); it != Container::end(); it+=1) {
+                *it = defaultValue();
+            }
+#else
             std::fill(Container::begin(), Container::end(), defaultValue());
+#endif
         } else {
             if(newNumFrames > prevNumFrames){
                 if(prevNumFrames == 0){
+#if EMSCRIPTEN
+                    for (auto it = Container::begin() + prevNumFrames * newNumParts;
+                         it != Container::end(); it+=1) {
+                        *it = defaultValue();
+                    }
+#else
                     std::fill(Container::begin() + prevNumFrames * newNumParts, Container::end(), defaultValue());
+#endif
                 } else {
                     Frame last = frame(prevNumFrames - 1);
                     for(int i=prevNumFrames; i < newNumFrames; ++i){
