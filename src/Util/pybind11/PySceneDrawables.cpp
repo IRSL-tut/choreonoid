@@ -2,6 +2,8 @@
 #include "../SceneDrawables.h"
 #include "../CloneMap.h"
 
+#include <pybind11/numpy.h> // for Image
+
 using namespace cnoid;
 namespace py = pybind11;
 
@@ -416,6 +418,76 @@ void exportPySceneDrawables(py::module& m)
         .def_property("textHeight", &SgText::textHeight, &SgText::setTextHeight)
         .def_property("color", &SgText::color, [](SgText &self, Vector3f &_in) { self.setColor(_in); })
         ;
+
+    py::class_<Image>(m, "Image", py::buffer_protocol())
+        .def(py::init<>(), "Default constructor.")
+        .def(py::init<const Image&>(), "Copy constructor.")
+        // Implementation of Buffer Protocol / This supports the way to direct conversion to a numpy array. Usage is `np.asarray(img)`
+        .def_buffer([](Image &img) -> py::buffer_info {
+            if (img.empty()) {
+                return py::buffer_info(nullptr, sizeof(unsigned char),
+                    py::format_descriptor<unsigned char>::format(),
+                    3, {0, 0, 0}, {0, 0, 0});
+            }
+            return py::buffer_info(
+                img.pixels(),                                  // pointer to the data
+                sizeof(unsigned char),                         // size of data
+                py::format_descriptor<unsigned char>::format(),// type of data
+                3,                                             // dimensions
+                { (size_t)img.height(), (size_t)img.width(), (size_t)img.numComponents() }, // shape of array
+                { sizeof(unsigned char) * img.width() * img.numComponents(), // stride
+                  sizeof(unsigned char) * img.numComponents(),
+                  sizeof(unsigned char) }
+            );
+        })
+        // properties
+        .def_property_readonly("width", &Image::width, "Width of the image in pixels.")
+        .def_property_readonly("height", &Image::height, "Height of the image in pixels.")
+        .def_property_readonly("num_components", &Image::numComponents,
+                               "Number of components per pixel (e.g., 3 for RGB).")
+        .def_property_readonly("has_alpha_component", &Image::hasAlphaComponent,
+                               "True if the image has an alpha component.")
+        // `pixels` property for handling the data as a numpy array
+        .def_property("pixels",
+            [](py::object obj) -> py::array {
+                Image &img = obj.cast<Image&>();
+                if (img.empty()) {
+                    return py::array_t<unsigned char>({0, 0, 0});
+                }
+                // As long as the Image (obj) exists, the data is valid
+                return py::array_t<unsigned char>(
+                    {(size_t)img.height(), (size_t)img.width(), (size_t)img.numComponents()},
+                    img.pixels(),
+                    obj); // passing parent object as `owner`
+            },
+            [](Image &img, py::array_t<unsigned char, py::array::c_style> arr) {
+                if (!arr.writeable()) { // checking can be written (at runtime)
+                    throw std::runtime_error("Input NumPy array must be writeable.");
+                }
+                py::buffer_info info = arr.request();
+                if (info.ndim != 3) {
+                    throw std::runtime_error("A 3-dimensional NumPy array is required.");
+                }
+                img.setSize(info.shape[1], info.shape[0], info.shape[2]);
+                std::memcpy(img.pixels(), info.ptr, info.size * info.itemsize);
+            }, "Access to the pixel data as a NumPy array (zero-copy view).")
+        // methods
+        .def("reset", &Image::reset, "Reset the image to its initial empty state.")
+        .def("empty", &Image::empty, "Check if the image is empty (has no pixels).")
+        .def("set_size", py::overload_cast<int, int, int>(&Image::setSize),
+             "Set the size and number of components of the image.",
+             py::arg("width"), py::arg("height"), py::arg("n_components"))
+        .def("set_size", py::overload_cast<int, int>(&Image::setSize),
+             "Set the size of the image, preserving the number of components.",
+             py::arg("width"), py::arg("height"))
+        .def("clear", &Image::clear, "Fill the entire image with zeros.")
+        .def("apply_vertical_flip", &Image::applyVerticalFlip, "Flip the image vertically.")
+        .def("load", [](Image &self, const std::string &filename) {
+                return self.load(filename);
+            }, "Load an image from a file.", py::arg("filename"))
+        .def("save", [](const Image &self, const std::string &filename) {
+                return self.save(filename);
+            }, "Save the image to a file.", py::arg("filename"));
 }
 
 }
