@@ -201,6 +201,20 @@ void exportPyDeviceTypes(py::module& m)
         .def(py::init<>())
         .def("points", static_cast<const cnoid::RangeCamera::PointData& (cnoid::RangeCamera::*)() const>(&cnoid::RangeCamera::points), py::return_value_policy::reference_internal)
         .def("newPoints", &cnoid::RangeCamera::newPoints, py::return_value_policy::reference_internal)
+        .def("depthImage", [](const RangeCamera &self) {
+            typedef std::vector<Vector3f> PointData;
+            const PointData &pts = self.constPoints();
+            py::array_t<float> ret;
+            ret.resize({(size_t)self.resolutionY(), (size_t)self.resolutionX()});
+            py::buffer_info b = ret.request();
+            float *ptr = static_cast<float *>(b.ptr);
+            size_t cntr = 0;
+            for(size_t y = 0; y < self.resolutionY(); y++) {
+                for(size_t x = 0; x < self.resolutionX(); x++) {
+                    *ptr++ = pts[cntr++].z();
+                }
+            }
+            return ret; })
         //.def("sharedPoints", &cnoid::RangeCamera::sharedPoints)
         //.def("setPoints", &cnoid::RangeCamera::setPoints)
         .def("clearPoints", &cnoid::RangeCamera::clearPoints)
