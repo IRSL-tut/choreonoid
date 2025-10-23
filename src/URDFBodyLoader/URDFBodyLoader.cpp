@@ -384,6 +384,9 @@ bool URDFBodyLoader::Impl::loadLink(LinkPtr link, const xml_node& linkNode)
     const xml_node& inertialNode = linkNode.child(INERTIAL);
     if (inertialNode.empty()) {
         os() << "Debug: link \"" << name << "\" has no inertial data." << endl;
+        // set fake inertia
+        link->setMass(1e-6);
+        link->setInertia(1e-12 * Matrix3::Identity());
     } else {
         if (!loadInertialTag(link, inertialNode)) {
             os() << "in link \"" << name << "\"." << endl;
@@ -486,8 +489,8 @@ bool URDFBodyLoader::Impl::loadInertialTag(LinkPtr& link,
     if (mass > 0.0) {
         link->setMass(mass);
     } else {
-        link->setMass(0.00001);
-        //os() << "Error: mass value is invalid";
+        link->setMass(1e-6);
+        os() << "Error: mass value is invalid / " << link->name();
         //return false;
     }
 
@@ -496,7 +499,9 @@ bool URDFBodyLoader::Impl::loadInertialTag(LinkPtr& link,
     const xml_node& inertiaNode = inertialNode.child(INERTIA);
     if (!inertiaNode.empty()) {
         if (!readInertiaTag(inertiaNode, inertiaMatrix)) {
-            return false;
+            os() << "Error: inertia value is invalid / " << link->name();
+            inertiaMatrix = 1e-12 * Matrix3::Identity();
+            //return false;
         }
     }
     link->setInertia(rotation * inertiaMatrix * rotation.transpose());
