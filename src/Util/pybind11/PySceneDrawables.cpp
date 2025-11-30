@@ -15,13 +15,16 @@ typedef Eigen::Ref<Eigen::Matrix<float, -1, -1, Eigen::RowMajor>> RefMatrixfRM;
 typedef Eigen::Matrix<double, 4, 4, Eigen::RowMajor> Matrix4RM;
 typedef Eigen::Matrix<double, 3, 3, Eigen::RowMajor> Matrix3RM;
 
-void setTextureImage(SgShape &shape, const std::string &name)
+void setTextureImage(SgShape &shape, const std::string &name, bool vflip)
 {
     SgTexture *tex = new SgTexture();
     SgImage *sgimg = tex->getOrCreateImage();
     sgimg->setUri(name, name);
     bool res = sgimg->image().load(name);
     if (res) {
+        if (vflip) {
+            sgimg->image().applyVerticalFlip();
+        }
         shape.setTexture(tex);
     } else {
         delete tex;
@@ -307,7 +310,8 @@ void exportPySceneDrawables(py::module& m)
         .def_property("material", (SgMaterial* (SgShape::*)()) &SgShape::material, &SgShape::setMaterial)
         .def("setMaterial", &SgShape::setMaterial)
         .def("getOrCreateMaterial", &SgShape::getOrCreateMaterial)
-        .def("setTextureImage", [](SgShape &self, const std::string &name) { setTextureImage(self, name); })
+        .def("setTextureImage", [](SgShape &self, const std::string &name, bool vflip) { setTextureImage(self, name, vflip); },
+             py::arg("name"), py::arg("vflip")=true)
         ;
 
     py::class_<SgPlot, SgPlotPtr, SgNode>(m, "SgPlot")
