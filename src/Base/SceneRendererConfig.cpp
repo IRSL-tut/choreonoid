@@ -80,6 +80,8 @@ public:
     CheckBox* shadowAntiAliasingCheck;
     PushButton* backgroundColorButton;
     PushButton* defaultColorButton;
+    PushButton* collisionHighlightColorButton;
+    PushButton* collisionLineColorButton;
     DoubleSpinBox* pointSizeSpin;
     DoubleSpinBox* lineWidthSpin;
     CheckBox* upsideDownCheck;
@@ -142,6 +144,8 @@ public:
     
     Vector3f backgroundColor;
     Vector3f defaultColor;
+    Vector3f collisionHighlightColor;
+    Vector3f collisionLineColor;
     double pointSize;
     double lineWidth;
     int msaaLevel;
@@ -227,6 +231,8 @@ SceneRendererConfig::Impl::Impl(SceneRendererConfig* self)
     
     backgroundColor << 0.1f, 0.1f, 0.3f; // Dark blue
     defaultColor << 1.0f, 1.0f, 1.0f; // White
+    collisionHighlightColor << 1.0f, 0.0f, 0.0f; // Red
+    collisionLineColor << 0.0f, 1.0f, 0.0f; // Green
     pointSize = 1.0;
     lineWidth = 1.0;
     msaaLevel = -1;  // System Default
@@ -270,6 +276,8 @@ SceneRendererConfig::Impl::Impl(const Impl& org, SceneRendererConfig* self)
     
     backgroundColor << org.backgroundColor;
     defaultColor << org.defaultColor;
+    collisionHighlightColor << org.collisionHighlightColor;
+    collisionLineColor << org.collisionLineColor;
     pointSize = org.pointSize;
     lineWidth = org.lineWidth;
     msaaLevel = org.msaaLevel;
@@ -383,6 +391,10 @@ void SceneRendererConfig::Impl::updateRenderer(GLSceneRenderer* renderer, unsign
         renderer->setDefaultLineWidth(lineWidth);
         int effectiveMsaaLevel = (msaaLevel < 0) ? SceneRendererConfig::getSystemDefaultMsaaLevel() : msaaLevel;
         renderer->setMsaaLevel(effectiveMsaaLevel);
+        static const SceneRenderer::PropertyKey collisionHighlightColorKey("CollisionHighlightColor", 3);
+        renderer->setProperty(collisionHighlightColorKey, collisionHighlightColor);
+        static const SceneRenderer::PropertyKey collisionLineColorKey("CollisionLineColor", 3);
+        renderer->setProperty(collisionLineColorKey, collisionLineColor);
     }
 
     if(categories & Effect){
@@ -465,6 +477,12 @@ bool SceneRendererConfig::Impl::store(Mapping* archive)
 
     if(!defaultColor.isApprox(Vector3f::Ones())){
         write(archive, "default_color", defaultColor);
+    }
+    if(!collisionHighlightColor.isApprox(Vector3f(1.0f, 0.0f, 0.0f))){
+        write(archive, "collision_highlight_color", collisionHighlightColor);
+    }
+    if(!collisionLineColor.isApprox(Vector3f(0.0f, 1.0f, 0.0f))){
+        write(archive, "collision_line_color", collisionLineColor);
     }
     archive->write("line_width", lineWidth);
     archive->write("point_size", pointSize);
@@ -586,7 +604,23 @@ bool SceneRendererConfig::Impl::restore(const Mapping* archive)
     if(widgetSet && defaultColor != defaultColor0){
         setColorButtonColor(widgetSet->defaultColorButton, defaultColor);
     }
-    
+
+    auto collisionHighlightColor0 = collisionHighlightColor;
+    if(!read(archive, "collision_highlight_color", collisionHighlightColor)){
+        collisionHighlightColor << 1.0f, 0.0f, 0.0f;
+    }
+    if(widgetSet && collisionHighlightColor != collisionHighlightColor0){
+        setColorButtonColor(widgetSet->collisionHighlightColorButton, collisionHighlightColor);
+    }
+
+    auto collisionLineColor0 = collisionLineColor;
+    if(!read(archive, "collision_line_color", collisionLineColor)){
+        collisionLineColor << 0.0f, 1.0f, 0.0f;
+    }
+    if(widgetSet && collisionLineColor != collisionLineColor0){
+        setColorButtonColor(widgetSet->collisionLineColorButton, collisionLineColor);
+    }
+
     archive->read({ "line_width", "lineWidth" }, lineWidth);
     archive->read({ "point_size", "pointSize" }, pointSize);
     isUpsideDownEnabled = archive->get({ "upside_down", "upsideDown" }, false);
@@ -645,6 +679,18 @@ PushButton* SceneRendererConfig::backgroundColorButton()
 PushButton* SceneRendererConfig::defaultColorButton()
 {
     return impl->widgetSet->defaultColorButton;
+}
+
+
+PushButton* SceneRendererConfig::collisionHighlightColorButton()
+{
+    return impl->widgetSet->collisionHighlightColorButton;
+}
+
+
+PushButton* SceneRendererConfig::collisionLineColorButton()
+{
+    return impl->widgetSet->collisionLineColorButton;
 }
 
 
@@ -976,6 +1022,28 @@ ConfigWidgetSet::ConfigWidgetSet(SceneRendererConfig::Impl* config_)
             }
         });
 
+    collisionHighlightColorButton = new PushButton(ownerWidget);
+    SceneRendererConfig::setColorButtonColor(collisionHighlightColorButton, config->collisionHighlightColor);
+    collisionHighlightColorButton->sigClicked().connect(
+        [this](){
+            if(SceneRendererConfig::inputColorWithColorDialog(
+                   _("Collision Highlight Color"), config->collisionHighlightColor,
+                   collisionHighlightColorButton)){
+                config->updateRenderers(Drawing, true);
+            }
+        });
+
+    collisionLineColorButton = new PushButton(ownerWidget);
+    SceneRendererConfig::setColorButtonColor(collisionLineColorButton, config->collisionLineColor);
+    collisionLineColorButton->sigClicked().connect(
+        [this](){
+            if(SceneRendererConfig::inputColorWithColorDialog(
+                   _("Collision Line Color"), config->collisionLineColor,
+                   collisionLineColorButton)){
+                config->updateRenderers(Drawing, true);
+            }
+        });
+
     lineWidthSpin = new DoubleSpinBox(ownerWidget);
     lineWidthSpin->setDecimals(1);
     lineWidthSpin->setRange(0.1, 10.0);
@@ -1141,7 +1209,9 @@ void ConfigWidgetSet::updateWidgets()
     shadowAntiAliasingCheck->setChecked(config->isShadowAntiAliasingEnabled);
 
     updateShadowWidgets();
-    
+
+    SceneRendererConfig::setColorButtonColor(collisionHighlightColorButton, config->collisionHighlightColor);
+    SceneRendererConfig::setColorButtonColor(collisionLineColorButton, config->collisionLineColor);
     lineWidthSpin->setValue(config->lineWidth);
     pointSizeSpin->setValue(config->pointSize);
     upsideDownCheck->setChecked(config->isUpsideDownEnabled);

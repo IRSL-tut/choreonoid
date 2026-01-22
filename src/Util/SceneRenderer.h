@@ -37,15 +37,15 @@ public:
     virtual void renderCustomTransform(SgTransform* transform, const std::function<void()>& traverseFunction) = 0;
     virtual void renderNode(SgNode* node) = 0;
 
-    void setTintColor(std::optional<Vector3f> color) {
-        tintColor_ = color;
-        onTintColorChanged();
+    void setHighlightColor(std::optional<Vector3f> color) {
+        highlightColor_ = color;
+        onHighlightColorChanged();
     }
-    void clearTintColor() {
-        tintColor_ = std::nullopt;
+    void clearHighlightColor() {
+        highlightColor_ = std::nullopt;
     }
-    std::optional<Vector3f> tintColor() const {
-        return tintColor_;
+    std::optional<Vector3f> highlightColor() const {
+        return highlightColor_;
     }
 
     typedef std::function<SgNode*(SgNode* targetNode)> NodeDecorationFunction;
@@ -128,14 +128,17 @@ public:
     
     class CNOID_EXPORT PropertyKey {
         int id;
+        int numElements;
     public:
-        PropertyKey(const std::string& key);
+        PropertyKey(const std::string& key, int numElements = 1);
         friend class SceneRenderer;
     };
 
     void setProperty(PropertyKey key, bool value);
     void setProperty(PropertyKey key, int value);
     void setProperty(PropertyKey key, double value);
+    void setProperty(PropertyKey key, const Vector3f& value);
+    void setProperty(PropertyKey key, const Vector3& value);
 
     template<typename T>
     inline T property(PropertyKey key, T defaultValue) const {
@@ -155,17 +158,42 @@ public:
         return static_cast<T>(val);
     }
 
+    inline Vector3f property(PropertyKey key, const Vector3f& defaultValue) const {
+        if(key.id + 2 >= static_cast<int>(properties_.size())){
+            return defaultValue;
+        }
+        double x = properties_[key.id];
+        if(std::isnan(x)){
+            return defaultValue;
+        }
+        return Vector3f(
+            static_cast<float>(x),
+            static_cast<float>(properties_[key.id + 1]),
+            static_cast<float>(properties_[key.id + 2]));
+    }
+
+    inline Vector3 property(PropertyKey key, const Vector3& defaultValue) const {
+        if(key.id + 2 >= static_cast<int>(properties_.size())){
+            return defaultValue;
+        }
+        double x = properties_[key.id];
+        if(std::isnan(x)){
+            return defaultValue;
+        }
+        return Vector3(x, properties_[key.id + 1], properties_[key.id + 2]);
+    }
+
 protected:
     virtual void doRender() = 0;
     virtual bool doPick(int x, int y);
-    virtual void onTintColorChanged();
+    virtual void onHighlightColorChanged();
 
 private:
     void setPropertyImpl(PropertyKey key, double value);
 
     Impl* impl;
     std::vector<double> properties_;
-    std::optional<Vector3f> tintColor_;
+    std::optional<Vector3f> highlightColor_;
 };
 
 }
