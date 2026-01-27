@@ -23,7 +23,7 @@ void exportPyMeshUtils(py::module& m);
 void exportPyGeometryTypes(py::module& m);
 void exportPyTaskTypes(py::module& m);
 void exportPySceneLoader(py::module& m);
-
+void exportPyZipUtils(py::module& m);
 }
 
 PYBIND11_MODULE(Util, m)
@@ -71,4 +71,6 @@ PYBIND11_MODULE(Util, m)
         ;
 
     py::class_<CloneMap> cloneMap(m, "CloneMap");
+
+    exportPyZipUtils(m);
 }

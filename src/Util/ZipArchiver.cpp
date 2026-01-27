@@ -19,13 +19,20 @@ public:
     std::string systemErrorMessage;
     std::string errorMessage;
     std::vector<std::string> extractedFiles;
-
+    std::string _topDir;
     Impl();
     bool createZipFile(const std::string& zipFilename, const std::string& directory);
     bool addDirectoryToZip(zip_t* zip, fs::path dirPath, const fs::path& srcTopDirPath, const fs::path& zipTopDirPath);
     bool extractZipFile(const std::string& zipFilename, const std::string& directory);
     bool extractFilesFromZipFile(
         zip_t* zip, const string& zipFilename, const fs::path&  zipFilePath, const fs::path& topDirPath);
+    //IRSL
+    bool extractSingleFileZip(zip_t *zip, const std::string& zipFilename, std::vector<unsigned char> &data);
+    bool extractSingleFile(const std::string& zipFilename, std::vector<unsigned char> &data);
+    bool extractSingleFile(const std::vector<unsigned char> &zip_data, std::vector<unsigned char> &data);
+    bool extractZipFilesZip(zip_t *zip, const std::string& zipFilename, ZipFileMap &zmap);
+    bool extractZipFiles(const std::string& zipFilename, ZipFileMap &zmap);
+    bool extractZipFiles(const std::vector<unsigned char> &zip_data, ZipFileMap &zmap);
 };
 
 }
@@ -66,6 +73,10 @@ const std::string& ZipArchiver::errorMessage() const
     return impl->errorMessage;
 }
 
+const std::string& ZipArchiver::topDir() const
+{
+    return impl->_topDir;
+}
 
 bool ZipArchiver::createZipFile(const std::string& zipFilename, const std::string& directory)
 {
@@ -192,6 +203,7 @@ bool ZipArchiver::extractZipFile(const std::string& zipFilename, const std::stri
 
 bool ZipArchiver::Impl::extractZipFile(const std::string& zipFilename, const std::string& directory)
 {
+    _topDir.clear();
     extractedFiles.clear();
 
     fs::path zipFilePath(fromUTF8(zipFilename));
@@ -228,9 +240,16 @@ bool ZipArchiver::Impl::extractFilesFromZipFile
 {
     vector<unsigned char> buf(1024 * 1024);
     stdx::error_code ec;
-    
     int numEntries = zip_get_num_entries(zip, 0);
-    
+    {// check top-dir
+        zip_stat_t stat;
+        if (zip_stat_index(zip, 0, 0, &stat) >= 0) {
+            string dname(stat.name);
+            if (dname[dname.size() - 1] == '/') {
+                _topDir = dname;
+            }
+        }
+    }
     for(int i = 0; i < numEntries; ++i){
         zip_stat_t stat;
         if(zip_stat_index(zip, i, 0, &stat) < 0){
@@ -312,4 +331,197 @@ bool ZipArchiver::Impl::extractFilesFromZipFile
 const std::vector<std::string>& ZipArchiver::extractedFiles() const
 {
     return impl->extractedFiles;
+}
+/// IRSL
+bool ZipArchiver::Impl::extractSingleFileZip(zip_t *zip, const std::string& zipFilename, std::vector<unsigned char> &data)
+{
+    int numEntries = zip_get_num_entries(zip, 0);
+    for(int i = 0; i < numEntries; ++i) {
+        zip_stat_t stat;
+        if (zip_stat_index(zip, i, 0, &stat) < 0) {
+            errorType = EntryExtractionError;
+            systemErrorMessage.clear();
+            errorMessage = formatR(_("Entry {0} in the zip file \"{1}\" cannot be extracted."), i, zipFilename);
+            break;
+        } else {
+            string name(stat.name);
+            if (name[name.size() - 1] == '/') {
+                // do nothing
+            } else {
+                bool failed = false;
+                zip_file_t* zf = zip_fopen_index(zip, i, 0);
+                if (!zf) {
+                    //
+                } else {
+                    data.resize(stat.size);
+                    int len = zip_fread(zf, data.data(), data.size());
+                    zip_fclose(zf);
+                    if (len >= 0 && len == stat.size) {
+                        return true;
+                    }
+                }
+                errorType = FileExtractionError;
+                systemErrorMessage.clear();
+                errorMessage =
+                formatR(_("File \"{0}\" in the zip file \"{1}\" cannot be extracted."),
+                        name, zipFilename);
+                break;
+            }
+        }
+    } // for
+    zip_close(zip);
+    return false;
+}
+bool ZipArchiver::Impl::extractSingleFile(const std::string& zipFilename, std::vector<unsigned char> &data)
+{
+    fs::path zipFilePath(fromUTF8(zipFilename));
+
+    int errorp;
+    zip_t* zip = zip_open(zipFilePath.make_preferred().string().c_str(), ZIP_RDONLY, &errorp);
+    if(!zip){
+        zip_error_t error;
+        zip_error_init_with_code(&error, errorp);
+        errorType = ZipFileOpenError;
+        systemErrorMessage = zip_error_strerror(&error);
+        errorMessage = 
+            formatR(_("Failed to open the zip file \"{0}\": {1}"),
+                    zipFilename, systemErrorMessage);;
+        return false;
+    }
+
+    return extractSingleFileZip(zip, zipFilename, data);
+}
+bool ZipArchiver::Impl::extractSingleFile(const std::vector<unsigned char> &zip_data, std::vector<unsigned char> &data)
+{
+    zip_error_t error;
+    std::string zipFilename("<data>");
+    //
+    zip_source_t *source = zip_source_buffer_create(zip_data.data(), zip_data.size(), 0, &error);
+    if (!source) {
+        errorType = ZipFileOpenError;
+        systemErrorMessage = zip_error_strerror(&error);
+        errorMessage = formatR(_("Failed to create source buffer : {0}"), systemErrorMessage);
+        return false;
+    }
+    //
+    zip_t* zip = zip_open_from_source(source, 0, &error);
+    if (!zip) {
+        zip_source_free(source);
+        errorType = ZipFileOpenError;
+        systemErrorMessage = zip_error_strerror(&error);
+        errorMessage = formatR(_("Failed to open from source : {0}"), systemErrorMessage);
+        return false;
+    }
+    return extractSingleFileZip(zip, zipFilename, data);
+}
+bool ZipArchiver::extractSingleFile(const std::string& zipFilename, std::vector<unsigned char> &data)
+{
+    return impl->extractSingleFile(zipFilename, data);
+}
+bool ZipArchiver::extractSingleFile(const std::vector<unsigned char> &zip_data, std::vector<unsigned char> &data)
+{
+    return impl->extractSingleFile(zip_data, data);
+}
+bool ZipArchiver::Impl::extractZipFilesZip(zip_t *zip, const std::string& zipFilename, ZipFileMap &zmap)
+{
+    int numEntries = zip_get_num_entries(zip, 0);
+    bool res = true;
+    {// check top-dir
+        zip_stat_t stat;
+        if (zip_stat_index(zip, 0, 0, &stat) >= 0) {
+            string dname(stat.name);
+            if (dname[dname.size() - 1] == '/') {
+                _topDir = dname;
+            }
+        }
+    }
+    for(int i = 0; i < numEntries; ++i) {
+        zip_stat_t stat;
+        if (zip_stat_index(zip, i, 0, &stat) < 0) {
+            errorType = EntryExtractionError;
+            systemErrorMessage.clear();
+            errorMessage = formatR(_("Entry {0} in the zip file \"{1}\" cannot be extracted."), i, zipFilename);
+            break;
+        } else {
+            string name(stat.name);
+            if (name[name.size() - 1] == '/') {
+                // do nothing
+            } else {
+                zip_file_t* zf = zip_fopen_index(zip, i, 0);
+                if (!zf) {
+                    res = false;
+                    break;
+                } else {
+                    std::vector<unsigned char> data;
+                    data.resize(stat.size);
+                    int len = zip_fread(zf, data.data(), data.size());
+                    zip_fclose(zf);
+                    if (len >= 0 && len == stat.size) {
+                        zmap.emplace(name, data);
+                    } else {
+                        errorType = FileExtractionError;
+                        systemErrorMessage.clear();
+                        errorMessage =
+                        formatR(_("File \"{0}\" in the zip file \"{1}\" cannot be extracted."),
+                                name, zipFilename);
+                        res = false;
+                        break;
+                    }
+                }
+            }
+        }
+    } // for
+    zip_close(zip);
+    return res;
+}
+bool ZipArchiver::Impl::extractZipFiles(const std::string& zipFilename, ZipFileMap &zmap)
+{
+    _topDir.clear();
+    fs::path zipFilePath(fromUTF8(zipFilename));
+    int errorp;
+    zip_t* zip = zip_open(zipFilePath.make_preferred().string().c_str(), ZIP_RDONLY, &errorp);
+    if(!zip){
+        zip_error_t error;
+        zip_error_init_with_code(&error, errorp);
+        errorType = ZipFileOpenError;
+        systemErrorMessage = zip_error_strerror(&error);
+        errorMessage = 
+            formatR(_("Failed to open the zip file \"{0}\": {1}"),
+                    zipFilename, systemErrorMessage);;
+        return false;
+    }
+
+    return extractZipFilesZip(zip, zipFilename, zmap);
+}
+bool ZipArchiver::Impl::extractZipFiles(const std::vector<unsigned char> &zip_data, ZipFileMap &zmap)
+{
+    _topDir.clear();
+    zip_error_t error;
+    std::string zipFilename("<data>");
+    //
+    zip_source_t *source = zip_source_buffer_create(zip_data.data(), zip_data.size(), 0, &error);
+    if (!source) {
+        errorType = ZipFileOpenError;
+        systemErrorMessage = zip_error_strerror(&error);
+        errorMessage = formatR(_("Failed to create source buffer : {0}"), systemErrorMessage);
+        return false;
+    }
+    //
+    zip_t* zip = zip_open_from_source(source, 0, &error);
+    if (!zip) {
+        zip_source_free(source);
+        errorType = ZipFileOpenError;
+        systemErrorMessage = zip_error_strerror(&error);
+        errorMessage = formatR(_("Failed to open from source : {0}"), systemErrorMessage);
+        return false;
+    }
+    return extractZipFilesZip(zip, zipFilename, zmap);
+}
+bool ZipArchiver::extractZipFiles(const std::string& zipFilename, ZipFileMap &zmap)
+{
+    return impl->extractZipFiles(zipFilename, zmap);
+}
+bool ZipArchiver::extractZipFiles(const std::vector<unsigned char> &zip_data, ZipFileMap &zmap)
+{
+    return impl->extractZipFiles(zip_data, zmap);
 }
