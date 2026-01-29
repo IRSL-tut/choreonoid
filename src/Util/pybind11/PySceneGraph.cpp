@@ -82,6 +82,8 @@ void exportPySceneGraph(py::module& m)
         .def("setUriFragment", &SgObject::setUriFragment)
         .def("setUriMetadata", &SgObject::setUriMetadata)
         .def("clearUri", &SgObject::clearUri)
+        .def("numChildObjects", &SgObject::numChildObjects)
+        .def("childObject", &SgObject::childObject)
         // deprecated
         .def("getName", &SgObject::name)
         ;
