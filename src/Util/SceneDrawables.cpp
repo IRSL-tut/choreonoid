@@ -141,9 +141,24 @@ unsigned char* SgImage::pixels()
 }
 
 
+float* SgImage::floatPixels()
+{
+    if(image_.use_count() > 1){
+        image_ = std::make_shared<Image>(*image_);
+    }
+    return image_->floatPixels();
+}
+
+
 void SgImage::setSize(int width, int height, int nComponents)
 {
     image().setSize(width, height, nComponents);
+}
+
+
+void SgImage::setSize(int width, int height, int nComponents, Image::PixelType pixelType)
+{
+    image().setSize(width, height, nComponents, pixelType);
 }
 
 

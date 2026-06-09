@@ -10,6 +10,7 @@ Image::Image()
     width_ = 0;
     height_ = 0;
     numComponents_ = 3;
+    pixelType_ = UInt8;
 }
 
 
@@ -19,6 +20,7 @@ Image::Image(const Image& org)
     width_ = org.width_;
     height_ = org.height_;
     numComponents_ = org.numComponents_;
+    pixelType_ = org.pixelType_;
 }
 
 
@@ -34,6 +36,7 @@ Image& Image::operator=(const Image& rhs)
     width_ = rhs.width_;
     height_ = rhs.height_;
     numComponents_ = rhs.numComponents_;
+    pixelType_ = rhs.pixelType_;
     return *this;
 }
 
@@ -55,11 +58,21 @@ void Image::setSize(int width, int height, int nComponents)
 }
 
 
+void Image::setSize(int width, int height, int nComponents, PixelType pixelType)
+{
+    pixelType_ = pixelType;
+    if(nComponents > 0 && nComponents <= 4){
+        numComponents_ = nComponents;
+    }
+    setSize(width, height);
+}
+
+
 void Image::setSize(int width, int height)
 {
     width_ = width;
     height_ = height;
-    pixels_.resize(numComponents_ * width_ * height_);
+    pixels_.resize(numComponents_ * width_ * height_ * bytesPerComponent());
 }
 
 
@@ -72,7 +85,7 @@ void Image::clear()
 void Image::applyVerticalFlip()
 {
     const int heightHalf = height_ / 2;
-    const int lineSize = width_ * numComponents_;
+    const int lineSize = width_ * numComponents_ * bytesPerComponent();
     unsigned char* upperLine = pixels();
     unsigned char* lowerLine = pixels() + lineSize * (height_ - 1);
     for(int y = 0; y < heightHalf; ++y){

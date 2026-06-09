@@ -76,11 +76,17 @@ public:
     const unsigned char* pixels() const { return image_->pixels(); }
     const unsigned char* constPixels() const { return image_->pixels(); }
 
+    float* floatPixels();
+    const float* floatPixels() const { return image_->floatPixels(); }
+    const float* constFloatPixels() const { return image_->floatPixels(); }
+
     int width() const { return image_->width(); }
     int height() const { return image_->height(); }
     int numComponents() const { return image_->numComponents(); }
-        
+    Image::PixelType pixelType() const { return image_->pixelType(); }
+
     void setSize(int width, int height, int nComponents);
+    void setSize(int width, int height, int nComponents, Image::PixelType pixelType);
     void setSize(int width, int height);
 
 protected:
