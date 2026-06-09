@@ -2,10 +2,59 @@
 #include <QImage>
 #include <QPaintEvent>
 #include <QPainter>
+#include <cmath>
+#include <algorithm>
 #include <math.h>
 
 using namespace std;
 using namespace cnoid;
+
+namespace {
+
+/**
+   Convert an HDR (Float32) image to an 8bit QImage for display.
+   The high dynamic range is compressed with Reinhard tone mapping followed by
+   gamma correction. The alpha component, if any, is copied without tone mapping.
+*/
+QImage toneMapToQImage(const Image& image)
+{
+    const int w = image.width();
+    const int h = image.height();
+    const int nc = image.numComponents();
+    const float* src = image.floatPixels();
+    if(!src){
+        return QImage();
+    }
+
+    const bool hasAlpha = image.hasAlphaComponent();
+    const QImage::Format format = hasAlpha ? QImage::Format_RGBA8888 : QImage::Format_RGB888;
+    const int outNc = hasAlpha ? 4 : 3;
+    QImage out(w, h, format);
+
+    const float exposure = 1.0f;
+    const float invGamma = 1.0f / 2.2f;
+
+    for(int y = 0; y < h; ++y){
+        uchar* dst = out.scanLine(y);
+        const float* srow = src + static_cast<size_t>(y) * w * nc;
+        for(int x = 0; x < w; ++x){
+            const float* sp = srow + x * nc;
+            for(int c = 0; c < outNc; ++c){
+                float v = (c < nc) ? sp[c] : 1.0f;
+                if(c < 3){
+                    v *= exposure;
+                    v = v / (v + 1.0f);            // Reinhard tone mapping
+                    v = std::pow(v, invGamma);     // gamma correction
+                }
+                dst[x * outNc + c] =
+                    static_cast<uchar>(std::clamp(v * 255.0f + 0.5f, 0.0f, 255.0f));
+            }
+        }
+    }
+    return out;
+}
+
+}
 
 
 ImageWidget::ImageWidget(QWidget* parent, Qt::WindowFlags f)
@@ -80,19 +129,27 @@ void ImageWidget::setImage(const Image& image, bool doRest)
     }
 
     std::lock_guard<std::mutex> lock(mtx);
-    static QImage::Format componentSizeToFormat[] = {
-        QImage::Format_Invalid,
-        QImage::Format_Invalid, //! \todo convert a gray scale image to RGB888
-        QImage::Format_Invalid,
-        QImage::Format_RGB888,
-        QImage::Format_RGBA8888
-    };
 
-    QImage::Format f = componentSizeToFormat[image.numComponents()];
+    if(image.pixelType() == Image::Float32){
+        QImage qimage = toneMapToQImage(image);
+        if(!qimage.isNull()){
+            pixmap_ = QPixmap::fromImage(qimage);
+        }
+    } else {
+        static QImage::Format componentSizeToFormat[] = {
+            QImage::Format_Invalid,
+            QImage::Format_Invalid, //! \todo convert a gray scale image to RGB888
+            QImage::Format_Invalid,
+            QImage::Format_RGB888,
+            QImage::Format_RGBA8888
+        };
 
-    if(f != QImage::Format_Invalid){
-        pixmap_ = QPixmap::fromImage(
-            QImage(image.pixels(), image.width(), image.height(), f));
+        QImage::Format f = componentSizeToFormat[image.numComponents()];
+
+        if(f != QImage::Format_Invalid){
+            pixmap_ = QPixmap::fromImage(
+                QImage(image.pixels(), image.width(), image.height(), f));
+        }
     }
 
     if(doRest){

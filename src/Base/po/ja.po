@@ -469,6 +469,12 @@ msgstr "グラフ位置 = ({0:.5f}, {1:.5f})"
 msgid "Image"
 msgstr "画像"
 
+msgid "Image File"
+msgstr "画像ファイル"
+
+msgid "ImageItem"
+msgstr "画像アイテム"
+
 msgid "ImageView"
 msgstr "画像ビュー"
 

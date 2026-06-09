@@ -130,6 +130,7 @@ set(sources
   SceneBar.cpp
   SceneItem.cpp
   SceneItemFileIO.cpp
+  ImageItem.cpp
   SceneGeometryMeasurementTracker.cpp
   GeneralSceneFileImporterBase.cpp
   GeneralSceneFileLoadDialog.cpp
@@ -293,6 +294,7 @@ set(headers
   SceneViewConfig.h
   SceneItem.h
   SceneItemFileIO.h
+  ImageItem.h
   GeneralSceneFileImporterBase.h
   GeneralSceneFileLoadDialog.h
   RawSceneItem.h

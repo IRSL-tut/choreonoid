@@ -21,6 +21,7 @@
 #include "SubProjectItem.h"
 #include "ExtCommandItem.h"
 #include "SceneItem.h"
+#include "ImageItem.h"
 #include "SceneGeometryMeasurementTracker.h"
 #include "RawSceneItem.h"
 #include "CameraItem.h"
@@ -527,6 +528,7 @@ void App::Impl::initialize()
     MultiVector3SeqItem::initializeClass(ext);
     ReferencedObjectSeqItem::initializeClass(ext);
     SceneItem::initializeClass(ext);
+    ImageItem::initializeClass(ext);
     SceneGeometryMeasurementTracker::initializeClass();
     RawSceneItem::initializeClass(ext);
     CameraItem::initializeClass(ext);
