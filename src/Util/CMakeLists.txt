@@ -64,6 +64,7 @@ set(sources
   PolygonMeshTriangulator.cpp
   Image.cpp
   ImageIO.cpp
+  stb_image_impl.cpp
   ImageConverter.cpp
   PointSetUtil.cpp
   CollisionDetector.cpp
@@ -223,6 +224,7 @@ else()
   include_directories(${include_dirs})
 endif()
 include_directories(BEFORE ${PROJECT_SOURCE_DIR}/thirdparty/fast_float-8.2.10/include)
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty)
 link_directories(${LIBYAML_LIBRARY_DIRS})
 
 

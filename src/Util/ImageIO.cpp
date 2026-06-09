@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <png.h>
 #include <algorithm>
+#include <cstring>
 
 extern "C" {
 #define XMD_H
@@ -13,6 +14,8 @@ extern "C" {
 #ifdef CNOID_USE_TIFF
 #include <tiffio.h>
 #endif
+
+#include <stb/stb_image.h>
 
 #include "gettext.h"
 
@@ -359,6 +362,25 @@ bool loadTIFF(Image& image, const std::string& filename, bool isUpsideDown, ostr
 
 #endif
 
+
+bool loadHDR(Image& image, const std::string& filename, bool isUpsideDown, ostream& os)
+{
+    int width, height, numComponents;
+    stbi_set_flip_vertically_on_load(isUpsideDown ? 1 : 0);
+    float* data = stbi_loadf(fromUTF8(filename).c_str(), &width, &height, &numComponents, 0);
+    if(!data){
+        os << formatR(_("Image file \"{0}\" cannot be loaded. {1}"),
+                      filename, stbi_failure_reason()) << endl;
+        return false;
+    }
+    image.setSize(width, height, numComponents, Image::Float32);
+    std::memcpy(
+        image.floatPixels(), data,
+        sizeof(float) * static_cast<size_t>(width) * height * numComponents);
+    stbi_image_free(data);
+    return true;
+}
+
 }
 
 
@@ -386,6 +408,8 @@ bool ImageIO::load(Image& image, const std::string& filename, std::ostream& os)
     } else if(ext == ".tif" || ext == ".tiff"){
         loaded = loadTIFF(image, filename, isUpsideDown_, os);
 #endif
+    } else if(ext == ".hdr"){
+        loaded = loadHDR(image, filename, isUpsideDown_, os);
     } else {
         os << formatR(_("The image file format of \"{0}\" is not supported."), fpath.string()) << endl;
     }
