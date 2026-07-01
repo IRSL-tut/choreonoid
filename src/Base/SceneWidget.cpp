@@ -645,6 +645,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
 
 SceneWidget::~SceneWidget()
 {
+    impl->setModeSyncEnabled(false);
     impl->sigAboutToBeDestroyed();
     delete impl;
 }
