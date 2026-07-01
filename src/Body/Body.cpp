@@ -594,9 +594,8 @@ bool Body::removeDevice(Device* device)
         if(dev == device){
             impl->removeDeviceFromDeviceNameMap(device);
             device->setLink(nullptr);
-            devices_.erase(it);
+            it = devices_.erase(it);
             removed = true;
-            break;
         } else {
             dev->setIndex(index++);
             ++it;
