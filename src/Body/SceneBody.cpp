@@ -97,6 +97,7 @@ public:
     std::vector<SceneBodyPtr> multiplexSceneBodies;
     std::list<SceneBodyPtr> multiplexSceneBodyCache;
     ScopedConnection existenceConnection;
+    bool isSceneDeviceUpdateConnectionEnabled;
 
     Impl(SceneBody* self);
     bool setBody(Body* body);
@@ -437,6 +438,7 @@ SceneBody::Impl::Impl(SceneBody* self)
     sceneLinkGroup = new SgGroup;
     lastEffectGroup = sceneLinkGroup;
     self->addChild(sceneLinkGroup);
+    isSceneDeviceUpdateConnectionEnabled = false;
 }
 
 
@@ -508,6 +510,11 @@ void SceneBody::updateSceneDeviceModels(bool doNotify)
         if(auto sceneDevice = SceneDevice::create(device)){
             sceneLinks_[device->link()->index()]->addSceneDevice(sceneDevice);
             impl->sceneDevices.push_back(sceneDevice);
+        }
+    }
+    if(impl->isSceneDeviceUpdateConnectionEnabled){
+        for(auto& sceneDevice : impl->sceneDevices){
+            sceneDevice->setSceneUpdateConnection(true);
         }
     }
     updateSceneDevices(0.0);
@@ -638,6 +645,7 @@ SceneDevice* SceneBody::getSceneDevice(Device* device)
 
 void SceneBody::setSceneDeviceUpdateConnection(bool on)
 {
+    impl->isSceneDeviceUpdateConnectionEnabled = on;
     auto& sceneDevices = impl->sceneDevices;
     for(size_t i=0; i < sceneDevices.size(); ++i){
         sceneDevices[i]->setSceneUpdateConnection(on);
