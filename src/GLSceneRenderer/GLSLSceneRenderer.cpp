@@ -650,6 +650,7 @@ public:
     void renderOverlayMain(SgOverlay* overlay, const Affine3& T, const SgNodePath& nodePath);
     void renderViewportOverlay(SgViewportOverlay* overlay);
     void renderViewportOverlayMain(SgViewportOverlay* overlay);
+    void renderOverlayPanel(SgOverlayPanel* panel);
     void renderBoundingBox(SgBoundingBox* bboxNode);
     void renderOutline(SgOutline* outline);
     void renderOutlineEdge(SgOutline* outline, const Affine3& T);
@@ -851,6 +852,8 @@ void GLSLSceneRenderer::Impl::initialize()
         [&](SgOverlay* node){ renderOverlay(node); });
     normalRenderingFunctions.setFunction<SgViewportOverlay>(
         [&](SgViewportOverlay* node){ renderViewportOverlay(node); });
+    normalRenderingFunctions.setFunction<SgOverlayPanel>(
+        [&](SgOverlayPanel* node){ renderOverlayPanel(node); });
     normalRenderingFunctions.setFunction<SgBoundingBox>(
         [&](SgBoundingBox* node){ renderBoundingBox(node); });
     normalRenderingFunctions.setFunction<SgOutline>(
@@ -4218,6 +4221,62 @@ void GLSLSceneRenderer::Impl::renderViewportOverlayMain(SgViewportOverlay* overl
     isRenderingViewportOverlay = wasRenderingViewportOverlay;
 
     PV = PV0;
+}
+
+
+void GLSLSceneRenderer::Impl::renderOverlayPanel(SgOverlayPanel* panel)
+{
+    if(isRenderingShadowMap || isRenderingPickingImage || panel->width() <= 0.0 || panel->height() <= 0.0){
+        return;
+    }
+
+    auto resource = getOrCreateGLResource<VertexResource>(panel);
+    if(!resource->isValid()){
+        if(!resource->vao){
+            glGenVertexArrays(1, &resource->vao);
+        }
+
+        const float w = static_cast<float>(panel->width());
+        const float h = static_cast<float>(panel->height());
+        const float y0 = 0.0f;
+        const float y1 = -h;
+
+        Vector3f vertices[6];
+        vertices[0] << 0.0f, y0, 0.0f;
+        vertices[1] << 0.0f, y1, 0.0f;
+        vertices[2] << w,    y0, 0.0f;
+        vertices[3] << w,    y0, 0.0f;
+        vertices[4] << 0.0f, y1, 0.0f;
+        vertices[5] << w,    y1, 0.0f;
+
+        LockVertexArrayAPI lock;
+        glBindVertexArray(resource->vao);
+        auto vbo = resource->newBuffer();
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        resource->numVertices = 6;
+    }
+
+    if(!stateFlag[CULL_FACE] || isCullFaceEnabled){
+        glDisable(GL_CULL_FACE);
+        isCullFaceEnabled = false;
+        stateFlag[CULL_FACE] = true;
+    }
+
+    SgMaterial material;
+    const Vector3f color =
+        panel->colorMode() == SgOverlayPanel::RendererBackgroundColor ?
+        self->backgroundColor() : panel->color();
+    material.setDiffuseColor(color);
+    material.setTransparency(panel->transparency());
+
+    pushProgram(solidColorExProgram);
+    solidColorExProgram->setMaterial(&material);
+    ScopedTransparentRendering transparentRendering(!isRenderingPickingImage && panel->transparency() > 0.0f);
+    drawVertexResource(resource, GL_TRIANGLES, modelMatrixStack.back());
+    popProgram();
 }
 
 

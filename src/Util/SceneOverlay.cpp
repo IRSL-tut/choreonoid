@@ -12,10 +12,13 @@ void cnoid::registerSceneOverlayNodeClasses()
 {
     static bool registered = false;
     if(!registered){
+        registerSceneGraphNodeClasses();
+
         SceneNodeClassRegistry::instance()
             .registerClass<SgOverlay, SgGroup>("SgOverlay")
             .registerClass<SgViewportOverlay, SgOverlay>("SgViewportOverlay")
-            .registerClass<HudOverlay, SgViewportOverlay>("HudOverlay");
+            .registerClass<HudOverlay, SgViewportOverlay>("HudOverlay")
+            .registerClass<SgOverlayPanel, SgSpatialNode>("SgOverlayPanel");
         registered = true;
     }
 }
@@ -106,6 +109,87 @@ void SgViewportOverlay::calcViewVolume(double /* viewportWidth */, double /* vie
     io_volume.top = 1.0;
     io_volume.zNear = 1.0;
     io_volume.zFar = -1.0;
+}
+
+
+SgOverlayPanel::SgOverlayPanel(int classId)
+    : SgSpatialNode(classId)
+{
+    width_ = 0.0;
+    height_ = 0.0;
+    colorMode_ = FixedColor;
+    color_ << 0.0f, 0.0f, 0.0f;
+    transparency_ = 0.0f;
+}
+
+
+SgOverlayPanel::SgOverlayPanel()
+    : SgOverlayPanel(findClassId<SgOverlayPanel>())
+{
+
+}
+
+
+SgOverlayPanel::SgOverlayPanel(double width, double height)
+    : SgOverlayPanel()
+{
+    setSize(width, height);
+}
+
+
+SgOverlayPanel::SgOverlayPanel(const SgOverlayPanel& org, CloneMap* /* cloneMap */)
+    : SgSpatialNode(org)
+{
+    width_ = org.width_;
+    height_ = org.height_;
+    colorMode_ = org.colorMode_;
+    color_ = org.color_;
+    transparency_ = org.transparency_;
+}
+
+
+SgOverlayPanel::~SgOverlayPanel()
+{
+
+}
+
+
+Referenced* SgOverlayPanel::doClone(CloneMap* cloneMap) const
+{
+    return new SgOverlayPanel(*this, cloneMap);
+}
+
+
+void SgOverlayPanel::setSize(double width, double height)
+{
+    width_ = width;
+    height_ = height;
+    invalidateBoundingBox();
+}
+
+
+const BoundingBox& SgOverlayPanel::untransformedBoundingBox() const
+{
+    if(!hasValidBoundingBoxCache()){
+        untransformedBboxCache.clear();
+        untransformedBboxCache.expandBy(Vector3(0.0, 0.0, 0.0));
+        untransformedBboxCache.expandBy(Vector3(width_, -height_, 0.0));
+    }
+    return untransformedBboxCache;
+}
+
+
+const BoundingBox& SgOverlayPanel::boundingBox() const
+{
+    if(hasValidBoundingBoxCache()){
+        return bboxCache_;
+    }
+    bboxCache_ = untransformedBoundingBox();
+    if(hasLocalPosition()){
+        bboxCache_.transform(position());
+    }
+    setBoundingBoxCacheReady();
+    return bboxCache_;
 }
 
 
@@ -241,6 +325,17 @@ bool HudOverlay::addItem(SgNode* node, Anchor anchor, int offsetX, int offsetY, 
         impl->layout(impl->lastWidth, impl->lastHeight);
     }
     return true;
+}
+
+
+SgOverlayPanel* HudOverlay::addPanel
+(double width, double height, Anchor anchor, int offsetX, int offsetY)
+{
+    SgOverlayPanelPtr panel = new SgOverlayPanel(width, height);
+    if(addItem(panel, anchor, offsetX, offsetY, static_cast<int>(width))){
+        return panel.retn();
+    }
+    return nullptr;
 }
 
 
