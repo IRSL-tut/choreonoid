@@ -1,0 +1,14 @@
+QuickHull implementation by Antti Kuukka
+Source: https://github.com/akuukka/quickhull
+
+This implementation is 100% Public Domain.
+
+The author's README states:
+
+    This implementation is 100% Public Domain.
+
+    Feel free to use.
+
+The QuickHull source files themselves also carry the notice
+"No copyrights. What follows is 100% Public Domain." in their header
+comments.
