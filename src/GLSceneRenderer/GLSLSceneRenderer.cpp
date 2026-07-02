@@ -708,6 +708,30 @@ private:
     bool isEnabled;
 };
 
+class ScopedDepthTestDisabler
+{
+public:
+    ScopedDepthTestDisabler(bool isEnabled)
+        : isEnabled(isEnabled)
+    {
+        if(isEnabled){
+            glDisable(GL_DEPTH_TEST);
+            glDepthMask(GL_FALSE);
+        }
+    }
+
+    ~ScopedDepthTestDisabler()
+    {
+        if(isEnabled){
+            glDepthMask(GL_TRUE);
+            glEnable(GL_DEPTH_TEST);
+        }
+    }
+
+private:
+    bool isEnabled;
+};
+
 }
 
 
@@ -4185,6 +4209,7 @@ void GLSLSceneRenderer::Impl::renderViewportOverlayMain(SgViewportOverlay* overl
 
     pickedNodePath.clear();
 
+    ScopedDepthTestDisabler depthTestDisabler(!isRenderingPickingImage);
     ScopedShaderProgramActivator programActivator(solidColorExProgram.get(), this);
     const bool wasRenderingViewportOverlay = isRenderingViewportOverlay;
     isRenderingViewportOverlay = true;
