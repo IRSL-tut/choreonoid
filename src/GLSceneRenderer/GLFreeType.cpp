@@ -144,12 +144,18 @@ bool GLFreeType::setText(const std::string& text, float textHeight)
     double y = 0.0;
     double sy = textHeight / resolution;
     double sx = sy;
+    double lineHeight = (face->size->metrics.height >> 6) * sy;
     bool isTextureActivated = false;
 
     for(size_t i=0; i < text.size(); ++i){
         CharaInfo* info = nullptr;
         // TODO: Get a unicode character
         int character = text[i];
+        if(character == '\n'){
+            x = 0.0;
+            y -= lineHeight;
+            continue;
+        }
         if(character < 128){
             info = asciiCharaInfos[character].get();
             if(!info && character >= 32){
@@ -205,6 +211,20 @@ GLFreeType::CharaInfo* GLFreeType::createCharacter(int character, bool& isTextur
 
     FT_GlyphSlot g = face->glyph;
     FT_Bitmap bitmap = g->bitmap;
+
+    // Wrap to the next row in the texture atlas when the current row does
+    // not have enough width for this glyph.
+    if(nextCharacterX + static_cast<GLuint>(bitmap.width) + 1 > textureWidth){
+        nextCharacterX = 0;
+        nextCharacterY += maxCharacterHeight + 1;
+        maxCharacterHeight = 0;
+    }
+    if(nextCharacterY + static_cast<GLuint>(bitmap.rows) > textureHeight){
+        // The atlas is exhausted; skip this glyph rather than corrupting
+        // the texture.
+        return info;
+    }
+
     glTexSubImage2D(
         GL_TEXTURE_2D, 0, nextCharacterX, nextCharacterY,
         bitmap.width, bitmap.rows, GL_RED, GL_UNSIGNED_BYTE, bitmap.buffer);
@@ -222,7 +242,7 @@ GLFreeType::CharaInfo* GLFreeType::createCharacter(int character, bool& isTextur
     // One pixel size must be added as a margin between characters to avoid
     // rendering noizy lines at character boundaries.
     nextCharacterX += g->bitmap.width + 1;
-    
+
     maxCharacterHeight = std::max(maxCharacterHeight, bitmap.rows);
 
     return info;

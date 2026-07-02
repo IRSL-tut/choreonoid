@@ -1227,6 +1227,7 @@ SgText::SgText(int classId)
     setAttribute(Composite | Geometry | Appearance);
     color_ << 1.0f, 1.0f, 1.0f;
     textHeight_ = 32.0f;
+    fontType_ = SansFont;
 }
 
 
@@ -1240,7 +1241,9 @@ SgText::SgText()
 SgText::SgText(const SgText& org, CloneMap* /* cloneMap */)
     : SgNode(org)
 {
+    text_ = org.text_;
     textHeight_ = org.textHeight_;
+    fontType_ = org.fontType_;
     color_ = org.color_;
 }
 

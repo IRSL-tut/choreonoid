@@ -745,6 +745,11 @@ private:
 class CNOID_EXPORT SgText : public SgNode
 {
 public:
+    enum FontType {
+        SansFont,
+        MonoFont
+    };
+
     SgText();
     SgText(const SgText& org, CloneMap* cloneMap);
     ~SgText();
@@ -758,11 +763,14 @@ public:
     float textHeight() const { return textHeight_; }
     void setTextHeight(double h) { textHeight_ = h; }
 
+    FontType fontType() const { return fontType_; }
+    void setFontType(FontType type) { fontType_ = type; }
+
     const Vector3f& color() const { return color_; }
     template<typename Derived> void setColor(const Eigen::MatrixBase<Derived>& c) {
         color_ = c.template cast<Vector3f::Scalar>();
     }
-    
+
 protected:
     SgText(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
@@ -770,6 +778,7 @@ protected:
 private:
     std::string text_;
     float textHeight_;
+    FontType fontType_;
     Vector3f color_;
 };
 

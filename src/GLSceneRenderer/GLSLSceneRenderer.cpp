@@ -499,7 +499,35 @@ public:
     SgMaterialPtr normalVisualizationMaterial;
 
 #ifdef CNOID_ENABLE_FREE_TYPE
-    GLFreeType freeType;
+    // Font files are opened lazily on the first SgText that requests each
+    // font type. Scenes that do not draw any text pay no font-loading cost.
+# ifdef _WIN32
+    static constexpr const char* SansFontPath = "C:\\Windows\\Fonts\\arial.ttf";
+    static constexpr const char* MonoFontPath = "C:\\Windows\\Fonts\\consola.ttf";
+# else
+    static constexpr const char* SansFontPath = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf";
+    static constexpr const char* MonoFontPath = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf";
+# endif
+
+    GLFreeType freeTypeSans;
+    GLFreeType freeTypeMono;
+    bool freeTypeSansInitialized = false;
+    bool freeTypeMonoInitialized = false;
+
+    GLFreeType& freeTypeForText(SgText* text){
+        if(text->fontType() == SgText::MonoFont){
+            if(!freeTypeMonoInitialized){
+                freeTypeMono.initializeGL(MonoFontPath, 100, ImageTextureUnit);
+                freeTypeMonoInitialized = true;
+            }
+            return freeTypeMono;
+        }
+        if(!freeTypeSansInitialized){
+            freeTypeSans.initializeGL(SansFontPath, 100, ImageTextureUnit);
+            freeTypeSansInitialized = true;
+        }
+        return freeTypeSans;
+    }
 #endif
 
     // OpenGL states
@@ -956,7 +984,11 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
 
 #ifdef CNOID_ENABLE_FREE_TYPE
         if(isCalledFromConstructor){
-            freeType.clearGL(isGLContextActive);
+            freeTypeSans.clearGL(isGLContextActive);
+            freeTypeMono.clearGL(isGLContextActive);
+            // The next SgText draw will re-open the font file on demand.
+            freeTypeSansInitialized = false;
+            freeTypeMonoInitialized = false;
         }
 #endif
     }
@@ -1194,13 +1226,8 @@ bool GLSLSceneRenderer::Impl::initializeGLForRendering()
         glEnable(GL_MULTISAMPLE);
     }
 
-#ifdef CNOID_ENABLE_FREE_TYPE
-# ifdef _WIN32
-    freeType.initializeGL("C:\\Windows\\Fonts\\arial.ttf", 100, ImageTextureUnit);
-# else
-    freeType.initializeGL("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 100, ImageTextureUnit);
-# endif
-#endif
+    // Fonts are opened lazily by freeTypeForText() on the first SgText that
+    // uses each font type, so no font-loading work happens here.
 
     isResourceClearRequested = true;
     isCurrentFogUpdated = false;
@@ -3955,6 +3982,7 @@ void GLSLSceneRenderer::Impl::renderText(SgText* text)
 {
 #ifdef CNOID_ENABLE_FREE_TYPE
 
+    GLFreeType& freeType = freeTypeForText(text);
     auto resource = getOrCreateGLResource<TextResource>(text);
 
     {
