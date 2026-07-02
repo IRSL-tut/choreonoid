@@ -21,9 +21,7 @@ void cnoid::registerSceneDrawableNodeClasses()
             .registerClass<SgPlot, SgNode>("SgPlot")
             .registerClass<SgPointSet, SgPlot>("SgPointSet")
             .registerClass<SgLineSet, SgPlot>("SgLineSet")
-            .registerClass<SgText, SgNode>("SgText")
-            .registerClass<SgOverlay, SgGroup>("SgOverlay")
-            .registerClass<SgViewportOverlay, SgOverlay>("SgViewportOverlay");
+            .registerClass<SgText, SgNode>("SgText");
         registered = true;
     }
 }
@@ -1268,81 +1266,4 @@ const BoundingBox& SgText::boundingBox() const
 const BoundingBox& SgText::untransformedBoundingBox() const
 {
     return SgText::boundingBox();
-}
-
-
-SgOverlay::SgOverlay(int classId)
-    : SgGroup(classId)
-{
-
-}
-
-
-SgOverlay::SgOverlay()
-    : SgGroup(findClassId<SgOverlay>())
-{
-
-}
-
-
-SgOverlay::SgOverlay(const SgOverlay& org, CloneMap* cloneMap)
-    : SgGroup(org, cloneMap)
-{
-
-}
-
-
-SgOverlay::~SgOverlay()
-{
-
-}
-
-
-Referenced* SgOverlay::doClone(CloneMap* cloneMap) const
-{
-    return new SgOverlay(*this, cloneMap);
-}
-
-
-SgViewportOverlay::SgViewportOverlay(int classId)
-    : SgOverlay(classId)
-{
-
-}
-
-
-SgViewportOverlay::SgViewportOverlay()
-    : SgOverlay(findClassId<SgViewportOverlay>())
-{
-
-}
-
-
-SgViewportOverlay::SgViewportOverlay(const SgViewportOverlay& org, CloneMap* cloneMap)
-    : SgOverlay(org, cloneMap)
-{
-
-}
-
-
-SgViewportOverlay::~SgViewportOverlay()
-{
-
-}
-
-
-Referenced* SgViewportOverlay::doClone(CloneMap* cloneMap) const
-{
-    return new SgViewportOverlay(*this, cloneMap);
-}
-
-
-void SgViewportOverlay::calcViewVolume(double /* viewportWidth */, double /* viewportHeight */, ViewVolume& io_volume)
-{
-    io_volume.left = -1.0;
-    io_volume.right = 1.0;
-    io_volume.bottom = -1.0;
-    io_volume.top = 1.0;
-    io_volume.zNear = 1.0;
-    io_volume.zFar = -1.0;
 }

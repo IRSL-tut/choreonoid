@@ -1,5 +1,4 @@
 #include "CoordinateAxesOverlay.h"
-#include "SceneDrawables.h"  // for registerSceneDrawableNodeClasses()
 #include "SceneNodeClassRegistry.h"
 #include "SceneRenderer.h"
 #include "MeshGenerator.h"
@@ -12,7 +11,7 @@ namespace {
 struct NodeClassRegistration {
     NodeClassRegistration() {
         // Ensure parent class SgViewportOverlay is registered first
-        registerSceneDrawableNodeClasses();
+        registerSceneOverlayNodeClasses();
         
         SceneNodeClassRegistry::instance().
             registerClass<CoordinateAxesOverlay, SgViewportOverlay>();

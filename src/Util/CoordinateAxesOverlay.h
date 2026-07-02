@@ -1,7 +1,7 @@
 #ifndef CNOID_BASE_COORDINATE_AXES_OVERLAY_H
 #define CNOID_BASE_COORDINATE_AXES_OVERLAY_H
 
-#include "SceneDrawables.h"
+#include "SceneOverlay.h"
 #include "exportdecl.h"
 
 namespace cnoid {

@@ -47,6 +47,7 @@ set(sources
   PolymorphicSceneNodeFunctionSet.cpp
   SceneGraph.cpp
   SceneDrawables.cpp
+  SceneOverlay.cpp
   SceneCameras.cpp
   SceneLights.cpp
   SceneEffects.cpp
@@ -163,6 +164,7 @@ set(headers
   SceneUpdate.h
   SceneGraph.h
   SceneDrawables.h
+  SceneOverlay.h
   SceneCameras.h
   SceneLights.h
   SceneEffects.h

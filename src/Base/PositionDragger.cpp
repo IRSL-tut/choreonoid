@@ -3,6 +3,7 @@
 #include "SceneWidget.h"
 #include <cnoid/DisplayValueFormat>
 #include <cnoid/SceneNodeClassRegistry>
+#include <cnoid/SceneOverlay>
 #include <cnoid/SceneRenderer>
 #include <cnoid/SceneUtil>
 #include <cnoid/MeshGenerator>

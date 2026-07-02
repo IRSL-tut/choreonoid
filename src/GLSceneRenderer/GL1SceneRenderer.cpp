@@ -1,5 +1,6 @@
 #include "GL1SceneRenderer.h"
 #include <cnoid/SceneDrawables>
+#include <cnoid/SceneOverlay>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
 #include <cnoid/SceneEffects>

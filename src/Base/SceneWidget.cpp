@@ -16,9 +16,11 @@
 #include <cnoid/DisplayValueFormat>
 #include <cnoid/Selection>
 #include <cnoid/EigenArchive>
+#include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
 #include <cnoid/SceneEffects>
+#include <cnoid/Image>
 #include <cnoid/CoordinateAxesOverlay>
 #include <cnoid/ConnectionSet>
 #include <cnoid/Format>

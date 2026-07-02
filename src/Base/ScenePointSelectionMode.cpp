@@ -2,6 +2,7 @@
 #include "SceneWidget.h"
 #include <cnoid/SceneRenderer>
 #include <cnoid/SceneDrawables>
+#include <cnoid/SceneOverlay>
 #include <cnoid/SceneEffects>
 #include <cnoid/SceneUtil>
 #include <cnoid/SceneNodeClassRegistry>

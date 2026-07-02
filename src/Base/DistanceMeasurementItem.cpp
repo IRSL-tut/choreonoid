@@ -9,6 +9,7 @@
 #include "LazyCaller.h"
 #include <cnoid/DisplayValueFormat>
 #include <cnoid/SceneDrawables>
+#include <cnoid/SceneOverlay>
 #include <cnoid/SceneNodeClassRegistry>
 #include <cnoid/SceneRenderer>
 #include <cnoid/CollisionDetector>

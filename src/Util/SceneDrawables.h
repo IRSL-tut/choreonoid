@@ -775,43 +775,6 @@ private:
 
 typedef ref_ptr<SgText> SgTextPtr;
 
-
-class CNOID_EXPORT SgOverlay : public SgGroup
-{
-public:
-    SgOverlay();
-    SgOverlay(const SgOverlay& org, CloneMap* cloneMap = nullptr);
-    ~SgOverlay();
-
-protected:
-    SgOverlay(int classId);
-    virtual Referenced* doClone(CloneMap* cloneMap) const override;
-};
-
-
-class CNOID_EXPORT SgViewportOverlay : public SgOverlay
-{
-public:
-    SgViewportOverlay();
-    SgViewportOverlay(const SgViewportOverlay& org, CloneMap* cloneMap = nullptr);
-    ~SgViewportOverlay();
-
-    struct ViewVolume {
-        double left;
-        double right;
-        double bottom;
-        double top;
-        double zNear;
-        double zFar;
-    };
-
-    virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume);
-
-protected:
-    SgViewportOverlay(int classId);
-    virtual Referenced* doClone(CloneMap* cloneMap) const override;
-};
-
 // Register scene drawable node classes to SceneNodeClassRegistry
 // Internal function to avoid static initialization order issues within Util module
 void registerSceneDrawableNodeClasses();

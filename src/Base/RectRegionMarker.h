@@ -2,7 +2,7 @@
 #define CNOID_BASE_RECT_REGION_MARKER_H
 
 #include "SceneWidgetEventHandler.h"
-#include <cnoid/SceneDrawables>
+#include <cnoid/SceneOverlay>
 #include <QCursor>
 #include "exportdecl.h"
 
