@@ -2502,6 +2502,15 @@ void GLSLSceneRenderer::Impl::dispatchRenderingFunction(SgNode* node)
             return;
         }
     }
+    if(node->hasAttribute(SgObject::SpatialNode)){
+        auto spatialNode = static_cast<SgSpatialNode*>(node);
+        if(spatialNode->hasLocalPosition()){
+            modelMatrixStack.push_back(modelMatrixStack.back() * spatialNode->position());
+            renderingFunctions->dispatch(node);
+            modelMatrixStack.pop_back();
+            return;
+        }
+    }
     renderingFunctions->dispatch(node);
 }
 

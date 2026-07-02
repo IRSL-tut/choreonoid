@@ -17,6 +17,8 @@ namespace cnoid {
 class CloneMap;
 class SgNode;
 typedef ref_ptr<SgNode> SgNodePtr;
+class SgSpatialNode;
+typedef ref_ptr<SgSpatialNode> SgSpatialNodePtr;
 class SgGroup;
 class SgTransform;
 class Mapping;
@@ -56,7 +58,8 @@ public:
         Marker = 1 << 7,
         Operable = 1 << 8,
         MetaScene = 1 << 9,
-        MaxAttributeBit = 10,
+        SpatialNode = 1 << 10,
+        MaxAttributeBit = 11,
 
         // deprecated
         GroupAttribute = GroupNode,
@@ -155,6 +158,8 @@ public:
 
     bool isNode() const { return hasAttribute(Node); }
     SgNode* toNode();
+    bool isSpatialNode() const { return hasAttribute(SpatialNode); }
+    SgSpatialNode* toSpatialNode();
     bool isGroupNode() const { return hasAttribute(GroupNode); }
     SgGroup* toGroupNode();
     bool isTransformNode() const { return hasAttribute(TransformNode); }
@@ -259,6 +264,116 @@ private:
 inline SgNode* SgObject::toNode()
 {
     return isNode() ? static_cast<SgNode*>(this) : nullptr;
+}
+
+
+/*
+  SgSpatialNode is intended for node types that can naturally have their own
+  local position in addition to path transforms such as SgPosTransform.
+  Candidate subclasses in the current scene graph include SgShape; SgPlot and
+  its concrete subclasses SgPointSet and SgLineSet; SgText; SgCamera and its
+  subclasses SgPerspectiveCamera and SgOrthographicCamera; SgLight and its
+  subclasses SgDirectionalLight, SgPointLight, and SgSpotLight; and overlay
+  drawable nodes such as SgOverlayPanel. Group, transform, style, effect, and
+  processor nodes should remain non-spatial unless they need an intrinsic local
+  position independent of their child or processing role.
+*/
+class CNOID_EXPORT SgSpatialNode : public SgNode
+{
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    ~SgSpatialNode();
+
+    bool hasLocalPosition() const { return hasLocalPosition_; }
+    void enableLocalPosition(bool on = true) {
+        hasLocalPosition_ = on;
+        invalidateBoundingBox();
+    }
+    void resetPosition();
+
+    Isometry3& T() {
+        hasLocalPosition_ = true;
+        invalidateBoundingBox();
+        return T_;
+    }
+    const Isometry3& T() const { return T_; }
+
+    Isometry3& position() {
+        hasLocalPosition_ = true;
+        invalidateBoundingBox();
+        return T_;
+    }
+    const Isometry3& position() const { return T_; }
+
+    Isometry3::TranslationPart translation() {
+        hasLocalPosition_ = true;
+        invalidateBoundingBox();
+        return T_.translation();
+    }
+    Isometry3::ConstTranslationPart translation() const { return T_.translation(); }
+
+    Isometry3::LinearPart rotation() {
+        hasLocalPosition_ = true;
+        invalidateBoundingBox();
+        return T_.linear();
+    }
+    Isometry3::ConstLinearPart rotation() const { return T_.linear(); }
+
+    template<class Scalar, int Mode, int Options>
+    void setPosition(const Eigen::Transform<Scalar, 3, Mode, Options>& T) {
+        T_ = T.template cast<Isometry3::Scalar>();
+        hasLocalPosition_ = true;
+        invalidateBoundingBox();
+    }
+    template<class Derived>
+    void setPosition(const Eigen::MatrixBase<Derived>& T){
+        T_ = T.template cast<Isometry3::Scalar>();
+        hasLocalPosition_ = true;
+        invalidateBoundingBox();
+    }
+    template<class Scalar, int Mode, int Options>
+    void setTransform(const Eigen::Transform<Scalar, 3, Mode, Options>& T) {
+        setPosition(T);
+    }
+    template<typename Derived>
+    void setRotation(const Eigen::MatrixBase<Derived>& R) {
+        T_.linear() = R.template cast<Isometry3::Scalar>();
+        hasLocalPosition_ = true;
+        invalidateBoundingBox();
+    }
+    template<typename T>
+    void setRotation(const Eigen::AngleAxis<T>& aa) {
+        T_.linear() = aa.template cast<Isometry3::Scalar>().toRotationMatrix();
+        hasLocalPosition_ = true;
+        invalidateBoundingBox();
+    }
+    template<typename T>
+    void setRotation(const Eigen::Quaternion<T>& q) {
+        T_.linear() = q.template cast<Isometry3::Scalar>().toRotationMatrix();
+        hasLocalPosition_ = true;
+        invalidateBoundingBox();
+    }
+    template<typename Derived>
+    void setTranslation(const Eigen::MatrixBase<Derived>& p) {
+        T_.translation() = p.template cast<Isometry3::Scalar>();
+        hasLocalPosition_ = true;
+        invalidateBoundingBox();
+    }
+
+protected:
+    SgSpatialNode(int classId);
+    SgSpatialNode(const SgSpatialNode& org);
+
+private:
+    Isometry3 T_;
+    bool hasLocalPosition_;
+};
+
+
+inline SgSpatialNode* SgObject::toSpatialNode()
+{
+    return isSpatialNode() ? static_cast<SgSpatialNode*>(this) : nullptr;
 }
 
 

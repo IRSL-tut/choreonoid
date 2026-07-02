@@ -402,6 +402,38 @@ const BoundingBox& SgNode::untransformedBoundingBox() const
 }
 
 
+SgSpatialNode::SgSpatialNode(int classId)
+    : SgNode(classId),
+      T_(Isometry3::Identity()),
+      hasLocalPosition_(false)
+{
+    setAttribute(SpatialNode);
+}
+
+
+SgSpatialNode::SgSpatialNode(const SgSpatialNode& org)
+    : SgNode(org),
+      T_(org.T_),
+      hasLocalPosition_(org.hasLocalPosition_)
+{
+
+}
+
+
+SgSpatialNode::~SgSpatialNode()
+{
+
+}
+
+
+void SgSpatialNode::resetPosition()
+{
+    T_.setIdentity();
+    hasLocalPosition_ = false;
+    invalidateBoundingBox();
+}
+
+
 /**
    \note The current implementation of this function does not seem to return the correct T value
 */
@@ -1266,7 +1298,8 @@ void cnoid::registerSceneGraphNodeClasses()
             .registerClass<SgSwitchableGroup, SgGroup>("SgSwitchableGroup")
             .registerClass<SgUnpickableGroup, SgGroup>("SgUnpickableGroup")
             .registerClass<SgPickableInvisibleGroup, SgGroup>("SgPickableInvisibleGroup")
-            .registerClass<SgPreprocessed, SgNode>("SgPreprocessed");
+            .registerClass<SgPreprocessed, SgNode>("SgPreprocessed")
+            .registerClass<SgSpatialNode, SgNode>("SgSpatialNode");
         registered = true;
     }
 }
