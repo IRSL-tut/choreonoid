@@ -83,6 +83,7 @@ set(sources
   BodyMotionUtil.cpp
   ControllerIO.cpp
   SimpleController.cpp
+  BodyBoundingBox.cpp
   CnoidBody.cpp # This file must be placed at the last position
   )
 
@@ -172,6 +173,7 @@ set(headers
   CollisionLinkPairList.h
   ControllerIO.h
   SimpleController.h
+  BodyBoundingBox.h
   exportdecl.h
   )
 
@@ -182,6 +184,7 @@ set(libraries PUBLIC CnoidUtil CnoidAISTCollisionDetector)
 if(UNIX)
   set(libraries ${libraries} PRIVATE dl)
 endif()
+set(libraries ${libraries} PRIVATE quickhull)
 target_link_libraries(${target} ${libraries})
 
 include(ChoreonoidBodyBuildFunctions.cmake)
