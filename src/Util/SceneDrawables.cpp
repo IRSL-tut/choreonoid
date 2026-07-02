@@ -21,7 +21,7 @@ void cnoid::registerSceneDrawableNodeClasses()
             .registerClass<SgPlot, SgNode>("SgPlot")
             .registerClass<SgPointSet, SgPlot>("SgPointSet")
             .registerClass<SgLineSet, SgPlot>("SgLineSet")
-            .registerClass<SgText, SgNode>("SgText");
+            .registerClass<SgText, SgSpatialNode>("SgText");
         registered = true;
     }
 }
@@ -1222,7 +1222,7 @@ void SgLineSet::putInformation(std::ostream& os)
 
 
 SgText::SgText(int classId)
-    : SgNode(classId)
+    : SgSpatialNode(classId)
 {
     setAttribute(Composite | Geometry | Appearance);
     color_ << 1.0f, 1.0f, 1.0f;
@@ -1239,7 +1239,7 @@ SgText::SgText()
 
 
 SgText::SgText(const SgText& org, CloneMap* /* cloneMap */)
-    : SgNode(org)
+    : SgSpatialNode(org)
 {
     text_ = org.text_;
     textHeight_ = org.textHeight_;

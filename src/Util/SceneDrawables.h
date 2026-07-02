@@ -742,7 +742,7 @@ private:
 };
 
 
-class CNOID_EXPORT SgText : public SgNode
+class CNOID_EXPORT SgText : public SgSpatialNode
 {
 public:
     enum FontType {

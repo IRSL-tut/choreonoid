@@ -105,6 +105,7 @@ public:
     void readNodeList(ValueNode* elements, SgGroup* group, bool isTopLevel);
     SgNode* readTransform(Mapping* info);
     SgNode* readTransformParameters(Mapping* info, SgNode* scene);
+    SgNode* readSpatialNodeTransformParameters(Mapping* info, SgSpatialNode* scene);
     SgNode* readShape(Mapping* info);
     SgMesh* readGeometry(Mapping* info, int meshOptions);
     void readDivisionNumbers(Mapping* info, SgMesh* mesh);
@@ -833,6 +834,34 @@ SgNode* StdSceneReader::Impl::readTransformParameters(Mapping* info, SgNode* sce
         }
         return group.retn();
     }
+    return scene;
+}
+
+
+SgNode* StdSceneReader::Impl::readSpatialNodeTransformParameters(Mapping* info, SgSpatialNode* scene)
+{
+    Matrix3 R;
+    bool isRotated = self->readRotation(info, R);
+    Vector3 v;
+    bool isTranslated = self->readTranslation(info, v);
+    if(isRotated || isTranslated){
+        Isometry3 T = Isometry3::Identity();
+        if(isRotated){
+            T.linear() = R;
+        }
+        if(isTranslated){
+            T.translation() = scaling * v;
+        }
+        scene->setPosition(T);
+    }
+
+    if(read(info, "scale", v)){
+        SgScaleTransformPtr scale = new SgScaleTransform;
+        scale->setScale(v);
+        scale->addChild(scene);
+        return scale.retn();
+    }
+
     return scene;
 }
 
@@ -1637,7 +1666,7 @@ SgNode* StdSceneReader::Impl::readText(Mapping* info)
         text->setColor(color);
     }
 
-    SgNode* scene = readTransformParameters(info, text);
+    SgNode* scene = readSpatialNodeTransformParameters(info, text);
     if(scene == text){
         return text.retn();
     }
