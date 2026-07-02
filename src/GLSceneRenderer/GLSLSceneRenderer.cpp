@@ -420,6 +420,7 @@ public:
     bool isShadowCastingAvailable;
     bool isWorldLightShadowEnabled;
     bool isRenderingShadowMap;
+    bool isRenderingViewportOverlay;
     bool isLightweightRenderingBeingProcessed;
     bool isLowMemoryConsumptionMode;
     bool isLowMemoryConsumptionRenderingBeingProcessed;
@@ -682,6 +683,31 @@ public:
     void setGlLineWidth(float width);
 };
 
+class ScopedTransparentRendering
+{
+public:
+    ScopedTransparentRendering(bool isEnabled)
+        : isEnabled(isEnabled)
+    {
+        if(isEnabled){
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glDepthMask(GL_FALSE);
+        }
+    }
+
+    ~ScopedTransparentRendering()
+    {
+        if(isEnabled){
+            glDisable(GL_BLEND);
+            glDepthMask(GL_TRUE);
+        }
+    }
+
+private:
+    bool isEnabled;
+};
+
 }
 
 
@@ -822,6 +848,7 @@ void GLSLSceneRenderer::Impl::initialize()
     isShadowCastingAvailable = true;
     isWorldLightShadowEnabled = false;
     isRenderingShadowMap = false;
+    isRenderingViewportOverlay = false;
     isLowMemoryConsumptionMode = false;
     isBoundingBoxRenderingMode = false;
     isBoundingBoxRenderingForLightweightRenderingGroupEnabled = false;
@@ -2235,6 +2262,9 @@ void GLSLSceneRenderer::dispatchToTransparentPhase
     if(!impl->isRenderingShadowMap){
         int matrixIndex = impl->modelMatrixBuffer.size();
         impl->modelMatrixBuffer.push_back(impl->modelMatrixStack.back());
+        // If this path is used from a ViewportOverlay, the queued draw will
+        // not preserve the overlay projection and child order. Such nodes need
+        // an immediate overlay path similar to transparent SgShape.
         impl->transparentRenderingQueue.emplace_back(
             [this, renderingFunction, object, matrixIndex, id](){
                 renderingFunction(object, impl->modelMatrixBuffer[matrixIndex], id); });
@@ -2244,21 +2274,12 @@ void GLSLSceneRenderer::dispatchToTransparentPhase
 
 void GLSLSceneRenderer::Impl::renderTransparentObjects()
 {
-    if(!isRenderingPickingImage){
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glDepthMask(GL_FALSE);
-    }
+    ScopedTransparentRendering transparentRendering(!isRenderingPickingImage);
 
     while(!transparentRenderingQueue.empty()){
         auto& func = transparentRenderingQueue.front();
         func();
         transparentRenderingQueue.pop_front();
-    }
-
-    if(!isRenderingPickingImage){
-        glDisable(GL_BLEND);
-        glDepthMask(GL_TRUE);
     }
 }
 
@@ -2707,6 +2728,13 @@ void GLSLSceneRenderer::Impl::renderShape(SgShape* shape)
         }
         if(!isTransparent){
             auto pickIndex = pushPickEndNode(shape);
+            renderShapeMain(shape, modelMatrixStack.back(), pickIndex);
+            popPickNode();
+        } else if(isRenderingViewportOverlay){
+            // Viewport overlays use a temporary projection while being traversed.
+            // Render transparent shapes here to preserve that projection and child order.
+            auto pickIndex = pushPickEndNode(shape);
+            ScopedTransparentRendering transparentRendering(!isRenderingPickingImage);
             renderShapeMain(shape, modelMatrixStack.back(), pickIndex);
             popPickNode();
         } else {
@@ -3788,6 +3816,8 @@ void GLSLSceneRenderer::Impl::renderPreparedPlot
         SgPlotPtr plotPtr = plot;
         int matrixIndex = modelMatrixBuffer.size();
         modelMatrixBuffer.push_back(modelMatrixStack.back());
+        // Transparent plots in a ViewportOverlay need an immediate overlay path
+        // similar to transparent SgShape to preserve the overlay projection and order.
         transparentRenderingQueue.emplace_back(
             [this, plotPtr, primitiveMode, resource, matrixIndex, pickIndex, setupShaderProgram, first, count](){
                 renderPlotMain(
@@ -4076,6 +4106,8 @@ void GLSLSceneRenderer::Impl::renderTransparentGroup(SgTransparentGroup* transpa
     float transparency = transparentGroup->transparency();
     if(transparency > minTransparency){
         minTransparency = transparency;
+        // In a ViewportOverlay, this queued state change does not by itself
+        // make the group render as intended; it needs an overlay-specific path.
         transparentRenderingQueue.emplace_back(
             [this, transparency](){
                 fullLightingProgram->setMinimumTransparency(transparency);
@@ -4145,8 +4177,11 @@ void GLSLSceneRenderer::Impl::renderViewportOverlayMain(SgViewportOverlay* overl
     pickedNodePath.clear();
 
     ScopedShaderProgramActivator programActivator(solidColorExProgram.get(), this);
+    const bool wasRenderingViewportOverlay = isRenderingViewportOverlay;
+    isRenderingViewportOverlay = true;
 
     renderOverlayMain(overlay, Affine3::Identity(), emptyNodePath);
+    isRenderingViewportOverlay = wasRenderingViewportOverlay;
 
     PV = PV0;
 }
