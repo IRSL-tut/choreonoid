@@ -101,13 +101,13 @@ private:
 
 
 /**
-   HudOverlay places child nodes at pixel-based offsets from one of the
+   SgHudOverlay places child nodes at pixel-based offsets from one of the
    anchor positions of the viewport (corners, edge centers, or the center).
    The viewport is mapped to an orthographic projection in pixel units so
    that text and other 2D elements appear as a head-up display fixed to
    the screen.
 */
-class CNOID_EXPORT HudOverlay : public SgViewportOverlay
+class CNOID_EXPORT SgHudOverlay : public SgViewportOverlay
 {
 public:
     enum Anchor {
@@ -122,9 +122,9 @@ public:
         Center
     };
 
-    HudOverlay();
-    HudOverlay(const HudOverlay& org, CloneMap* cloneMap = nullptr);
-    ~HudOverlay();
+    SgHudOverlay();
+    SgHudOverlay(const SgHudOverlay& org, CloneMap* cloneMap = nullptr);
+    ~SgHudOverlay();
 
     /**
        Add a node to be displayed at the given anchor position with
@@ -153,7 +153,7 @@ public:
     virtual void calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume) override;
 
 protected:
-    HudOverlay(int classId);
+    SgHudOverlay(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
 private:
@@ -164,7 +164,7 @@ private:
 typedef ref_ptr<SgOverlay> SgOverlayPtr;
 typedef ref_ptr<SgViewportOverlay> SgViewportOverlayPtr;
 typedef ref_ptr<SgOverlayPanel> SgOverlayPanelPtr;
-typedef ref_ptr<HudOverlay> HudOverlayPtr;
+typedef ref_ptr<SgHudOverlay> SgHudOverlayPtr;
 
 // Register overlay scene node classes to SceneNodeClassRegistry
 void registerSceneOverlayNodeClasses();

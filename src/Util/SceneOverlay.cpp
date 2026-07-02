@@ -17,7 +17,7 @@ void cnoid::registerSceneOverlayNodeClasses()
         SceneNodeClassRegistry::instance()
             .registerClass<SgOverlay, SgGroup>("SgOverlay")
             .registerClass<SgViewportOverlay, SgOverlay>("SgViewportOverlay")
-            .registerClass<HudOverlay, SgViewportOverlay>("HudOverlay")
+            .registerClass<SgHudOverlay, SgViewportOverlay>("SgHudOverlay")
             .registerClass<SgOverlayPanel, SgSpatialNode>("SgOverlayPanel");
         registered = true;
     }
@@ -195,7 +195,7 @@ const BoundingBox& SgOverlayPanel::boundingBox() const
 
 namespace cnoid {
 
-class HudOverlay::Impl
+class SgHudOverlay::Impl
 {
 public:
     struct Item {
@@ -207,19 +207,19 @@ public:
         int width;
     };
 
-    HudOverlay* self;
+    SgHudOverlay* self;
     vector<Item> items;
     double lastWidth;
     double lastHeight;
 
-    Impl(HudOverlay* self);
+    Impl(SgHudOverlay* self);
     void layout(double width, double height);
 };
 
 }
 
 
-HudOverlay::Impl::Impl(HudOverlay* self)
+SgHudOverlay::Impl::Impl(SgHudOverlay* self)
     : self(self),
       lastWidth(0.0),
       lastHeight(0.0)
@@ -228,7 +228,7 @@ HudOverlay::Impl::Impl(HudOverlay* self)
 }
 
 
-void HudOverlay::Impl::layout(double width, double height)
+void SgHudOverlay::Impl::layout(double width, double height)
 {
     for(auto& item : items){
         double x = 0.0;
@@ -252,21 +252,21 @@ void HudOverlay::Impl::layout(double width, double height)
 }
 
 
-HudOverlay::HudOverlay(int classId)
+SgHudOverlay::SgHudOverlay(int classId)
     : SgViewportOverlay(classId)
 {
     impl = new Impl(this);
 }
 
 
-HudOverlay::HudOverlay()
-    : SgViewportOverlay(findClassId<HudOverlay>())
+SgHudOverlay::SgHudOverlay()
+    : SgViewportOverlay(findClassId<SgHudOverlay>())
 {
     impl = new Impl(this);
 }
 
 
-HudOverlay::HudOverlay(const HudOverlay& org, CloneMap* cloneMap)
+SgHudOverlay::SgHudOverlay(const SgHudOverlay& org, CloneMap* cloneMap)
     : SgViewportOverlay(org, cloneMap)
 {
     impl = new Impl(this);
@@ -294,19 +294,19 @@ HudOverlay::HudOverlay(const HudOverlay& org, CloneMap* cloneMap)
 }
 
 
-HudOverlay::~HudOverlay()
+SgHudOverlay::~SgHudOverlay()
 {
     delete impl;
 }
 
 
-Referenced* HudOverlay::doClone(CloneMap* cloneMap) const
+Referenced* SgHudOverlay::doClone(CloneMap* cloneMap) const
 {
-    return new HudOverlay(*this, cloneMap);
+    return new SgHudOverlay(*this, cloneMap);
 }
 
 
-bool HudOverlay::addItem(SgNode* node, Anchor anchor, int offsetX, int offsetY, int width)
+bool SgHudOverlay::addItem(SgNode* node, Anchor anchor, int offsetX, int offsetY, int width)
 {
     if(!node){
         return false;
@@ -328,7 +328,7 @@ bool HudOverlay::addItem(SgNode* node, Anchor anchor, int offsetX, int offsetY, 
 }
 
 
-SgOverlayPanel* HudOverlay::addPanel
+SgOverlayPanel* SgHudOverlay::addPanel
 (double width, double height, Anchor anchor, int offsetX, int offsetY)
 {
     SgOverlayPanelPtr panel = new SgOverlayPanel(width, height);
@@ -339,7 +339,7 @@ SgOverlayPanel* HudOverlay::addPanel
 }
 
 
-bool HudOverlay::removeItem(SgNode* node)
+bool SgHudOverlay::removeItem(SgNode* node)
 {
     for(auto it = impl->items.begin(); it != impl->items.end(); ++it){
         if(it->node == node){
@@ -352,7 +352,7 @@ bool HudOverlay::removeItem(SgNode* node)
 }
 
 
-void HudOverlay::clearItems()
+void SgHudOverlay::clearItems()
 {
     for(auto& item : impl->items){
         removeChild(item.transform);
@@ -361,7 +361,7 @@ void HudOverlay::clearItems()
 }
 
 
-void HudOverlay::calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume)
+void SgHudOverlay::calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume)
 {
     io_volume.left = 0.0;
     io_volume.right = viewportWidth;
