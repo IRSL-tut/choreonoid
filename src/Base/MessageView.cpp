@@ -751,7 +751,7 @@ void MessageView::Impl::put
         } else if(type == Warning){
             prefix = _("Warning: ");
         }
-        put(formatC("\x1b[31m{0} {1}\x1b[0m", prefix, message), doLF, doNotify, doFlush, true);
+        put(formatC("\x1b[31m{0}{1}\x1b[0m", prefix, message), doLF, doNotify, doFlush, true);
     }
 }
 
