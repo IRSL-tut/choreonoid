@@ -113,3 +113,6 @@ msgstr "速度出力"
 
 msgid "Acceleration output"
 msgstr "加速度出力"
+
+msgid "Drive effort output"
+msgstr "駆動トルク／力出力"
