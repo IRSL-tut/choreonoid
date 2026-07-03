@@ -277,6 +277,7 @@ public:
 
     // TriangleMesh cooking preprocessing option
     bool isTriangleMeshPreprocessingEnabled;
+    bool isMeshCleaningEnabled;
 
     // SDF options (for dynamic objects when enabled)
     double sdfSpacing;

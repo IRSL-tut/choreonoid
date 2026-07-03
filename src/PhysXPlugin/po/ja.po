@@ -65,6 +65,9 @@ msgstr "動的オブジェクトに三角メッシュを使用"
 msgid "Triangle mesh preprocessing"
 msgstr "三角メッシュ前処理"
 
+msgid "Mesh cleaning"
+msgstr "メッシュクリーニング"
+
 msgid "SDF spacing"
 msgstr "SDF間隔"
 
@@ -119,6 +122,13 @@ msgstr "メッシュ \"{0}\""
 msgid "A mesh"
 msgstr "メッシュ"
 
+msgid ""
+"vertices: {0}, unique vertices: {1}, duplicate vertices: {2}, triangles: "
+"{3}, invalid triangles: {4}, degenerate triangles: {5}."
+msgstr ""
+"頂点数: {0}, ユニーク頂点数: {1}, 重複頂点数: {2}, 三角形数: {3}, "
+"不正な三角形数: {4}, 縮退三角形数: {5}."
+
 msgid "createScene failed!"
 msgstr "createSceneに失敗しました！"
 
@@ -139,8 +149,30 @@ msgstr ""
 "{0}は軸に沿わないスケーリングを持っており、PhysXプラグインではサポートされて"
 "いません。このメッシュはスキップされます。"
 
-msgid "{0} is not validated."
-msgstr "{0}は検証されませんでした。"
+msgid "{0} has mesh data problems for PhysX triangle mesh cooking. {1}"
+msgstr ""
+"{0}のメッシュデータに問題があります。PhysX三角メッシュ作成に使用できません。"
+"{1}"
+
+msgid ""
+"Mesh cleaning is disabled. The PhysX triangle mesh for {0} is not created."
+msgstr ""
+"メッシュクリーニングが無効です。{0}のPhysX三角メッシュは作成されません。"
+
+msgid ""
+"Mesh cleaning failed for {0}. The PhysX triangle mesh is not created. "
+"Cooking result: {1}."
+msgstr ""
+"メッシュクリーニングに失敗しました。{0}のPhysX三角メッシュは作成されません。"
+"cooking結果: {1}."
+
+msgid "Mesh cleaning modified {0}: vertices {1} -> {2}, triangles {3} -> {4}."
+msgstr ""
+"メッシュクリーニングにより{0}を修正しました: 頂点数 {1} -> {2}, 三角形数 "
+"{3} -> {4}."
+
+msgid "The PhysX triangle mesh for {0} is not created. Cooking result: {1}."
+msgstr "{0}のPhysX三角メッシュは作成されません。cooking結果: {1}."
 
 msgid "{0} has no valid vertices for creating a convex mesh."
 msgstr "{0}には凸メッシュを作成するための有効な頂点がありません。"

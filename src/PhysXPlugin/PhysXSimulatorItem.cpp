@@ -15,6 +15,7 @@
 #include <cnoid/Format>
 #include <cnoid/MessageOut>
 #include <cnoid/MessageView>
+#include <cnoid/MeshUtil>
 #include <geometry/PxConvexCoreGeometry.h>
 #include <extensions/PxDefaultSimulationFilterShader.h>
 #include <cmath>
@@ -52,21 +53,6 @@ PxMat33 getPxMat33(const Matrix3& M)
 PxVec3 getPxVec3(const Vector3& v)
 {
     return PxVec3(v.x(), v.y(), v.z());
-}
-
-string meshLabel(SgShape* shape)
-{
-    auto& name = shape->name();
-    if(!name.empty()){
-        return formatR(_("Mesh \"{0}\""), name);
-    }
-    if(auto mesh = shape->mesh()){
-        auto& meshName = mesh->name();
-        if(!meshName.empty()){
-            return formatR(_("Mesh \"{0}\""), meshName);
-        }
-    }
-    return _("A mesh");
 }
 
 }
@@ -237,6 +223,7 @@ PhysXSimulatorItem::Impl::Impl(PhysXSimulatorItem* self)
 
     isTriangleMeshEnabledForDynamicObjects = false;
     isTriangleMeshPreprocessingEnabled = true;
+    isMeshCleaningEnabled = true;
     sdfSpacing = 0.01;
     sdfSubgridSize = 6;
     sdfBitsPerSubgridPixel = 16;
@@ -285,6 +272,7 @@ PhysXSimulatorItem::Impl::Impl(PhysXSimulatorItem* self, const Impl& org)
 
     isTriangleMeshEnabledForDynamicObjects = org.isTriangleMeshEnabledForDynamicObjects;
     isTriangleMeshPreprocessingEnabled = org.isTriangleMeshPreprocessingEnabled;
+    isMeshCleaningEnabled = org.isMeshCleaningEnabled;
     sdfSpacing = org.sdfSpacing;
     sdfSubgridSize = org.sdfSubgridSize;
     sdfBitsPerSubgridPixel = org.sdfBitsPerSubgridPixel;
@@ -641,6 +629,8 @@ void PhysXSimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     // TriangleMesh preprocessing option
     putProperty(_("Triangle mesh preprocessing"), isTriangleMeshPreprocessingEnabled,
                 changeProperty(isTriangleMeshPreprocessingEnabled));
+    putProperty(_("Mesh cleaning"), isMeshCleaningEnabled,
+                changeProperty(isMeshCleaningEnabled));
 
     // SDF options (for dynamic objects)
     putProperty.decimals(4)(_("SDF spacing"), sdfSpacing, changeProperty(sdfSpacing));
@@ -702,6 +692,9 @@ void PhysXSimulatorItem::Impl::store(Archive& archive)
     if(!isTriangleMeshPreprocessingEnabled){
         archive.write("triangle_mesh_preprocessing", isTriangleMeshPreprocessingEnabled);
     }
+    if(!isMeshCleaningEnabled){
+        archive.write("mesh_cleaning", false);
+    }
     archive.write("sdf_spacing", sdfSpacing);
     archive.write("sdf_subgrid_size", sdfSubgridSize);
     archive.write("sdf_bits_per_pixel", sdfBitsPerSubgridPixel);
@@ -760,6 +753,7 @@ void PhysXSimulatorItem::Impl::restore(const Archive& archive)
     archive.read("skip_convex_mesh_cleanup", skipConvexMeshCleanup);
     archive.read("triangle_mesh_for_dynamic_objects", isTriangleMeshEnabledForDynamicObjects);
     archive.read("triangle_mesh_preprocessing", isTriangleMeshPreprocessingEnabled);
+    archive.read("mesh_cleaning", isMeshCleaningEnabled);
     archive.read("sdf_spacing", sdfSpacing);
     archive.read("sdf_subgrid_size", sdfSubgridSize);
     archive.read("sdf_bits_per_pixel", sdfBitsPerSubgridPixel);
@@ -1558,6 +1552,25 @@ void PhysxLink::createShape()
 }
 
 
+string meshLabel(SgShape* shape)
+{
+    if(!shape){
+        return _("A mesh");
+    }
+    auto& name = shape->name();
+    if(!name.empty()){
+        return formatR(_("Mesh \"{0}\""), name);
+    }
+    if(auto mesh = shape->mesh()){
+        auto& meshName = mesh->name();
+        if(!meshName.empty()){
+            return formatR(_("Mesh \"{0}\""), meshName);
+        }
+    }
+    return _("A mesh");
+}
+
+
 void PhysxLink::readMeshNode(MeshExtractor* meshExtractor, PxMaterial* material)
 {
     SgMesh* mesh = meshExtractor->currentMesh();
@@ -1708,6 +1721,53 @@ PxShape* PhysxLink::createPrimitiveShape(
 }
 
 
+string getMeshConsistencySummaryString(const MeshConsistencyInfo& info)
+{
+    return formatR(
+        _("vertices: {0}, unique vertices: {1}, duplicate vertices: {2}, "
+          "triangles: {3}, invalid triangles: {4}, degenerate triangles: {5}."),
+        info.numVertices,
+        info.numUniqueVertices,
+        info.numVertices - info.numUniqueVertices,
+        info.numTriangles,
+        info.numInvalidTriangles,
+        info.numDegenerateTriangles);
+}
+
+
+const char* triangleMeshCookingResultLabel(PxTriangleMeshCookingResult::Enum result)
+{
+    switch(result){
+    case PxTriangleMeshCookingResult::eSUCCESS:
+        return "success";
+    case PxTriangleMeshCookingResult::eLARGE_TRIANGLE:
+        return "large triangle";
+    case PxTriangleMeshCookingResult::eEMPTY_MESH:
+        return "empty mesh";
+    case PxTriangleMeshCookingResult::eFAILURE:
+        return "failure";
+    default:
+        return "unknown";
+    }
+}
+
+
+void notifyTriangleMeshCleaningChange
+(MessageOut* mout, const string& label, PxTriangleMesh* triMesh,
+ PxU32 numInputVertices, PxU32 numInputTriangles)
+{
+    PxU32 numCookedVertices = triMesh->getNbVertices();
+    PxU32 numCookedTriangles = triMesh->getNbTriangles();
+    if(numCookedVertices != numInputVertices || numCookedTriangles != numInputTriangles){
+        mout->putln(
+            formatR(_("Mesh cleaning modified {0}: vertices {1} -> {2}, triangles {3} -> {4}."),
+                    label,
+                    numInputVertices, numCookedVertices,
+                    numInputTriangles, numCookedTriangles));
+    }
+}
+
+
 PxShape* PhysxLink::createTriangleMeshShape(
     SgMesh* srcMesh, PxMaterial* material,
     const Vector3& scale, const std::optional<Vector3>& translation)
@@ -1731,9 +1791,10 @@ PxShape* PhysxLink::createTriangleMeshShape(
 
     PxCookingParams params(simImpl->tolerancesScale);
 
-    // When preprocessing is disabled, skip clean mesh and active edges precompute
-    if(!simImpl->isTriangleMeshPreprocessingEnabled){
+    if(!simImpl->isMeshCleaningEnabled){
         params.meshPreprocessParams |= PxMeshPreprocessingFlag::eDISABLE_CLEAN_MESH;
+    }
+    if(!simImpl->isTriangleMeshPreprocessingEnabled){
         params.meshPreprocessParams |= PxMeshPreprocessingFlag::eDISABLE_ACTIVE_EDGES_PRECOMPUTE;
     }
 
@@ -1746,22 +1807,47 @@ PxShape* PhysxLink::createTriangleMeshShape(
     meshDesc.triangles.stride = 3 * sizeof(PxU32);
     meshDesc.triangles.data = srcMesh->triangleVertices().data();
 
-    if(!PxValidateTriangleMesh(params, meshDesc)){
+    SgShape* currentShape = simImpl->meshExtractor.currentShape();
+    string label = meshLabel(currentShape);
+    if(!simImpl->isMeshCleaningEnabled && !PxValidateTriangleMesh(params, meshDesc)){
         simImpl->mout->putWarningln(
-            formatR(_("{0} is not validated."),
-                    meshLabel(simImpl->meshExtractor.currentShape())));
+            formatR(_("{0} has mesh data problems for PhysX triangle mesh cooking. {1}"),
+                    label, getMeshConsistencySummaryString(checkMeshConsistency(srcMesh))));
+        simImpl->mout->putWarningln(
+            formatR(_("Mesh cleaning is disabled. The PhysX triangle mesh for {0} is not created."),
+                    label));
+        return nullptr;
+    }
+
+    PxTriangleMeshCookingResult::Enum cookingResult = PxTriangleMeshCookingResult::eFAILURE;
+    PxTriangleMesh* triMesh = PxCreateTriangleMesh(
+        params, meshDesc, simImpl->physics->getPhysicsInsertionCallback(), &cookingResult);
+    if(triMesh){
+        simImpl->triangleMeshMap[srcMesh] = triMesh;
+        if(simImpl->isMeshCleaningEnabled){
+            notifyTriangleMeshCleaningChange(
+                simImpl->mout, label, triMesh, meshDesc.points.count, meshDesc.triangles.count);
+        }
+        PxMeshScale meshScale(PxVec3(scale.x(), scale.y(), scale.z()));
+        shape = simImpl->physics->createShape(
+            PxTriangleMeshGeometry(triMesh, meshScale), *material, true);
+        Isometry3 T = simImpl->meshExtractor.currentTransformWithoutScaling();
+        if(translation){
+            T *= Translation3(*translation);
+        }
+        shape->setLocalPose(getPxTransform(T));
     } else {
-        PxTriangleMesh* triMesh = PxCreateTriangleMesh(params, meshDesc, simImpl->physics->getPhysicsInsertionCallback());
-        if(triMesh){
-            simImpl->triangleMeshMap[srcMesh] = triMesh;
-            PxMeshScale meshScale(PxVec3(scale.x(), scale.y(), scale.z()));
-            shape = simImpl->physics->createShape(
-                PxTriangleMeshGeometry(triMesh, meshScale), *material, true);
-            Isometry3 T = simImpl->meshExtractor.currentTransformWithoutScaling();
-            if(translation){
-                T *= Translation3(*translation);
-            }
-            shape->setLocalPose(getPxTransform(T));
+        if(simImpl->isMeshCleaningEnabled){
+            simImpl->mout->putWarningln(
+                formatR(_("Mesh cleaning failed for {0}. The PhysX triangle mesh is not created. Cooking result: {1}."),
+                        label, triangleMeshCookingResultLabel(cookingResult)));
+            simImpl->mout->putWarningln(
+                formatR(_("{0} has mesh data problems for PhysX triangle mesh cooking. {1}"),
+                        label, getMeshConsistencySummaryString(checkMeshConsistency(srcMesh))));
+        } else {
+            simImpl->mout->putWarningln(
+                formatR(_("The PhysX triangle mesh for {0} is not created. Cooking result: {1}."),
+                        label, triangleMeshCookingResultLabel(cookingResult)));
         }
     }
 
@@ -1791,6 +1877,12 @@ PxShape* PhysxLink::createTriangleMeshShapeWithSDF(
     }
 
     PxCookingParams params(simImpl->tolerancesScale);
+    if(!simImpl->isMeshCleaningEnabled){
+        params.meshPreprocessParams |= PxMeshPreprocessingFlag::eDISABLE_CLEAN_MESH;
+    }
+    if(!simImpl->isTriangleMeshPreprocessingEnabled){
+        params.meshPreprocessParams |= PxMeshPreprocessingFlag::eDISABLE_ACTIVE_EDGES_PRECOMPUTE;
+    }
 
     PxSDFDesc sdfDesc;
     sdfDesc.spacing = static_cast<PxReal>(simImpl->sdfSpacing);
@@ -1809,23 +1901,47 @@ PxShape* PhysxLink::createTriangleMeshShapeWithSDF(
     meshDesc.triangles.data = srcMesh->triangleVertices().data();
     meshDesc.sdfDesc = &sdfDesc;
 
-    if(!PxValidateTriangleMesh(params, meshDesc)){
+    SgShape* currentShape = simImpl->meshExtractor.currentShape();
+    string label = meshLabel(currentShape);
+    if(!simImpl->isMeshCleaningEnabled && !PxValidateTriangleMesh(params, meshDesc)){
         simImpl->mout->putWarningln(
-            formatR(_("{0} is not validated."),
-                    meshLabel(simImpl->meshExtractor.currentShape())));
+            formatR(_("{0} has mesh data problems for PhysX triangle mesh cooking. {1}"),
+                    label, getMeshConsistencySummaryString(checkMeshConsistency(srcMesh))));
+        simImpl->mout->putWarningln(
+            formatR(_("Mesh cleaning is disabled. The PhysX triangle mesh for {0} is not created."),
+                    label));
+        return nullptr;
+    }
+
+    PxTriangleMeshCookingResult::Enum cookingResult = PxTriangleMeshCookingResult::eFAILURE;
+    PxTriangleMesh* triMesh = PxCreateTriangleMesh(
+        params, meshDesc, simImpl->physics->getPhysicsInsertionCallback(), &cookingResult);
+    if(triMesh){
+        simImpl->triangleMeshWithSdfMap[srcMesh] = triMesh;
+        if(simImpl->isMeshCleaningEnabled){
+            notifyTriangleMeshCleaningChange(
+                simImpl->mout, label, triMesh, meshDesc.points.count, meshDesc.triangles.count);
+        }
+        PxMeshScale meshScale(PxVec3(scale.x(), scale.y(), scale.z()));
+        shape = simImpl->physics->createShape(
+            PxTriangleMeshGeometry(triMesh, meshScale), *material, true);
+        Isometry3 T = simImpl->meshExtractor.currentTransformWithoutScaling();
+        if(translation){
+            T *= Translation3(*translation);
+        }
+        shape->setLocalPose(getPxTransform(T));
     } else {
-        PxTriangleMesh* triMesh = PxCreateTriangleMesh(
-            params, meshDesc, simImpl->physics->getPhysicsInsertionCallback());
-        if(triMesh){
-            simImpl->triangleMeshWithSdfMap[srcMesh] = triMesh;
-            PxMeshScale meshScale(PxVec3(scale.x(), scale.y(), scale.z()));
-            shape = simImpl->physics->createShape(
-                PxTriangleMeshGeometry(triMesh, meshScale), *material, true);
-            Isometry3 T = simImpl->meshExtractor.currentTransformWithoutScaling();
-            if(translation){
-                T *= Translation3(*translation);
-            }
-            shape->setLocalPose(getPxTransform(T));
+        if(simImpl->isMeshCleaningEnabled){
+            simImpl->mout->putWarningln(
+                formatR(_("Mesh cleaning failed for {0}. The PhysX triangle mesh is not created. Cooking result: {1}."),
+                        label, triangleMeshCookingResultLabel(cookingResult)));
+            simImpl->mout->putWarningln(
+                formatR(_("{0} has mesh data problems for PhysX triangle mesh cooking. {1}"),
+                        label, getMeshConsistencySummaryString(checkMeshConsistency(srcMesh))));
+        } else {
+            simImpl->mout->putWarningln(
+                formatR(_("The PhysX triangle mesh for {0} is not created. Cooking result: {1}."),
+                        label, triangleMeshCookingResultLabel(cookingResult)));
         }
     }
 
