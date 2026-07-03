@@ -58,6 +58,7 @@ set(sources
   SceneUtil.cpp
   MeshGenerator.cpp
   MeshFilter.cpp
+  MeshUtil.cpp
   MeshExtractor.cpp
   SceneNodeExtractor.cpp
   PolygonMeshTriangulator.cpp
@@ -175,6 +176,7 @@ set(headers
   SceneUtil.h
   MeshGenerator.h
   MeshFilter.h
+  MeshUtil.h
   MeshExtractor.h
   SceneNodeExtractor.h
   Triangulator.h
