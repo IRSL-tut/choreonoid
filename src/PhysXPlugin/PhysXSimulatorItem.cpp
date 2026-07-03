@@ -232,6 +232,7 @@ PhysXSimulatorItem::Impl::Impl(PhysXSimulatorItem* self)
 
     isVelocityOutputEnabled = false;
     isAccelerationOutputEnabled = false;
+    isDriveEffortOutputEnabled = false;
     isErrorOutputEnabled = true;
 
     isTriangleMeshEnabledForDynamicObjects = false;
@@ -279,6 +280,7 @@ PhysXSimulatorItem::Impl::Impl(PhysXSimulatorItem* self, const Impl& org)
 
     isVelocityOutputEnabled = org.isVelocityOutputEnabled;
     isAccelerationOutputEnabled = org.isAccelerationOutputEnabled;
+    isDriveEffortOutputEnabled = org.isDriveEffortOutputEnabled;
     isErrorOutputEnabled = org.isErrorOutputEnabled;
 
     isTriangleMeshEnabledForDynamicObjects = org.isTriangleMeshEnabledForDynamicObjects;
@@ -660,8 +662,9 @@ void PhysXSimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Drive damping"), driveDamping,
                 [&](const string& v){ return driveDamping.setNonNegativeValue(v); });
 
-    putProperty(_("Enable velocity output"), isVelocityOutputEnabled, changeProperty(isVelocityOutputEnabled));
-    putProperty(_("Enable acceleration output"), isAccelerationOutputEnabled, changeProperty(isAccelerationOutputEnabled));
+    putProperty(_("Velocity output"), isVelocityOutputEnabled, changeProperty(isVelocityOutputEnabled));
+    putProperty(_("Acceleration output"), isAccelerationOutputEnabled, changeProperty(isAccelerationOutputEnabled));
+    putProperty(_("Drive effort output"), isDriveEffortOutputEnabled, changeProperty(isDriveEffortOutputEnabled));
     putProperty(_("Error output"), isErrorOutputEnabled, changeProperty(isErrorOutputEnabled));
 }
 
@@ -724,10 +727,13 @@ void PhysXSimulatorItem::Impl::store(Archive& archive)
         archive.write("drive_damping", driveDamping);
     }
     if(isVelocityOutputEnabled){
-        archive.write("enable_velocity_output", isVelocityOutputEnabled);
+        archive.write("velocity_output", isVelocityOutputEnabled);
     }
     if(isAccelerationOutputEnabled){
-        archive.write("enable_acceleration_output", isAccelerationOutputEnabled);
+        archive.write("acceleration_output", isAccelerationOutputEnabled);
+    }
+    if(isDriveEffortOutputEnabled){
+        archive.write("drive_effort_output", isDriveEffortOutputEnabled);
     }
     if(!isErrorOutputEnabled){
         archive.write("error_output", false);
@@ -769,8 +775,9 @@ void PhysXSimulatorItem::Impl::restore(const Archive& archive)
     archive.read("angular_damping", angularDamping);
     driveStiffness = archive.get("drive_stiffness", driveStiffness.string());
     driveDamping = archive.get("drive_damping", driveDamping.string());
-    archive.read("enable_velocity_output", isVelocityOutputEnabled);
-    archive.read("enable_acceleration_output", isAccelerationOutputEnabled);
+    archive.read("velocity_output", isVelocityOutputEnabled);
+    archive.read("acceleration_output", isAccelerationOutputEnabled);
+    archive.read("drive_effort_output", isDriveEffortOutputEnabled);
     archive.read("error_output", isErrorOutputEnabled);
 }
 
@@ -897,9 +904,18 @@ void PhysxBody::createPhysxObjects()
     }
 
     for(auto& bodyArticulation : bodyArticulations){
+        bodyArticulation->hasTorqueControlLinks = false;
+        bodyArticulation->needsVelocityForDriveEffortOutput = false;
         for(auto physxLink : bodyArticulation->physxLinks){
             if(physxLink->useDirectTorqueControl){
                 bodyArticulation->hasTorqueControlLinks = true;
+            } else if(simImpl->isDriveEffortOutputEnabled &&
+                      physxLink->link->hasActualJoint() &&
+                      physxLink->drive.driveType == PxArticulationDriveType::eFORCE){
+                bodyArticulation->needsVelocityForDriveEffortOutput = true;
+            }
+            if(bodyArticulation->hasTorqueControlLinks &&
+               bodyArticulation->needsVelocityForDriveEffortOutput){
                 break;
             }
         }
@@ -1110,7 +1126,8 @@ void PhysxBody::getKinematicStateFromPhysx()
         }
         isSleeping_ = false;
         PxArticulationCacheFlags cacheFlags = PxArticulationCacheFlag::ePOSITION;
-        if(simImpl->isVelocityOutputEnabled){
+        if(simImpl->isVelocityOutputEnabled ||
+           bodyArticulation->needsVelocityForDriveEffortOutput){
             cacheFlags |= PxArticulationCacheFlag::eVELOCITY;
         }
         bodyArticulation->articulation->copyInternalStateToCache(
@@ -1314,6 +1331,7 @@ PhysxArticulationLink::PhysxArticulationLink(
     articulationDofIndex = -1;
     articulationLinkIndex = -1;
     useDirectTorqueControl = false;
+    lastJointEffort = 0.0;
 
     auto& simImpl = physxBody->simImpl;
     auto& physics = simImpl->physics;
@@ -1470,6 +1488,7 @@ void PhysxArticulationLink::initializeArticulationJoint()
                         if(u < link->u_lower()) u = link->u_lower();
                         if(u > link->u_upper()) u = link->u_upper();
                     }
+                    lastJointEffort = u;
                     bodyArticulation->articulationCache->jointForce[articulationDofIndex] = static_cast<PxReal>(u);
                 };
 
@@ -1984,11 +2003,50 @@ void PhysxArticulationLink::getArticulationKinematicStateFromPhysx()
 
     if(articulationDofIndex >= 0){
         auto articulationCache = bodyArticulation->articulationCache;
-        link->q() = articulationCache->jointPosition[articulationDofIndex];
+        double q = articulationCache->jointPosition[articulationDofIndex];
+        link->q() = q;
         if(physxBody->simImpl->isVelocityOutputEnabled){
             link->dq() = articulationCache->jointVelocity[articulationDofIndex];
         }
+        if(physxBody->simImpl->isDriveEffortOutputEnabled && link->hasActualJoint()){
+            // Write back the drive effort generated by the actuator or drive
+            // model. This is not the net joint effort including gravity,
+            // contacts, or external forces.
+            if(useDirectTorqueControl){
+                link->u() = lastJointEffort;
+            } else if(drive.driveType == PxArticulationDriveType::eFORCE){
+                double dq = articulationCache->jointVelocity[articulationDofIndex];
+                link->u() = getDriveJointEffort(q, dq);
+            } else {
+                link->u() = 0.0;
+            }
+        }
     }
+}
+
+
+double PhysxArticulationLink::getDriveJointEffort(double q, double dq) const
+{
+    /*
+      PhysX does not provide a public API to read the actual effort generated
+      by an articulation drive. The drive is solved internally as an implicit
+      spring-damper constraint, so the final solver impulse can depend on the
+      time step, articulation response, solver type and iterations, limits, and
+      other constraints. The value computed here is therefore an approximation
+      based on the configured force-drive PD model, not a guaranteed match with
+      the internal solver effort.
+    */
+    double u = drive.stiffness * (joint->getDriveTarget(articulationAxis) - q) +
+        drive.damping * (joint->getDriveVelocity(articulationAxis) - dq);
+    double limit = drive.maxForce;
+    if(limit >= 0.0){
+        if(u > limit){
+            u = limit;
+        } else if(u < -limit){
+            u = -limit;
+        }
+    }
+    return u;
 }
 
 

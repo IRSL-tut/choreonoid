@@ -93,6 +93,8 @@ public:
     std::vector<ref_ptr<ForceSensorInfo>> forceSensorInfos;
     bool hasDummyRoot;
     bool hasTorqueControlLinks;
+    // True when this articulation needs joint velocities to output drive effort.
+    bool needsVelocityForDriveEffortOutput;
     bool isSleeping_;
 
     PhysxBodyArticulation()
@@ -100,6 +102,7 @@ public:
           articulationCache(nullptr),
           hasDummyRoot(false),
           hasTorqueControlLinks(false),
+          needsVelocityForDriveEffortOutput(false),
           isSleeping_(false)
     { }
 
@@ -204,6 +207,7 @@ public:
     int articulationDofIndex;
     int articulationLinkIndex;
     bool useDirectTorqueControl;
+    double lastJointEffort;
 
     PhysxArticulationLink(
         Link* link, PhysxBody* physxBody, PhysxLink* parent,
@@ -213,6 +217,7 @@ public:
 
     virtual void setKinematicStateToPhysx() override;
     void getArticulationKinematicStateFromPhysx();
+    double getDriveJointEffort(double q, double dq) const;
 
     void initializeArticulationJoint();
     void initArticulationIndices(const std::vector<int>& linkIndexToDofIndexMap);
@@ -281,6 +286,7 @@ public:
 
     bool isVelocityOutputEnabled;
     bool isAccelerationOutputEnabled;
+    bool isDriveEffortOutputEnabled;
     bool isErrorOutputEnabled;
 
     // Solver options

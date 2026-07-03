@@ -101,11 +101,14 @@ msgstr "駆動剛性"
 msgid "Drive damping"
 msgstr "駆動ダンピング"
 
-msgid "Enable velocity output"
-msgstr "速度出力を有効化"
+msgid "Velocity output"
+msgstr "速度出力"
 
-msgid "Enable acceleration output"
-msgstr "加速度出力を有効化"
+msgid "Acceleration output"
+msgstr "加速度出力"
+
+msgid "Drive effort output"
+msgstr "駆動トルク／力出力"
 
 msgid "Error output"
 msgstr "エラー出力"
