@@ -93,6 +93,7 @@ public:
     bool is2Dmode;
     bool isKinematicWalkingEnabled;
     bool isOldAccelSensorMode;
+    bool isDriveEffortOutputEnabled;
     bool hasNonRootFreeJoints;
 
     std::optional<int> forcedBodyPositionFunctionId;
@@ -167,6 +168,7 @@ AISTSimulatorItem::Impl::Impl(AISTSimulatorItem* self)
     isKinematicWalkingEnabled = false;
     is2Dmode = false;
     isOldAccelSensorMode = false;
+    isDriveEffortOutputEnabled = false;
     hasNonRootFreeJoints = false;
 
     mv = MessageView::instance();
@@ -201,6 +203,7 @@ AISTSimulatorItem::Impl::Impl(AISTSimulatorItem* self, const Impl& org)
     isKinematicWalkingEnabled = org.isKinematicWalkingEnabled;
     is2Dmode = org.is2Dmode;
     isOldAccelSensorMode = org.isOldAccelSensorMode;
+    isDriveEffortOutputEnabled = org.isDriveEffortOutputEnabled;
 
     mv = MessageView::instance();
 }
@@ -433,6 +436,7 @@ bool AISTSimulatorItem::Impl::initializeSimulation(const std::vector<SimulationB
     world.setGravityAcceleration(gravity);
     world.enableSensors(true);
     world.setOldAccelSensorCalcMode(isOldAccelSensorMode);
+    world.setDriveEffortOutputEnabled(isDriveEffortOutputEnabled);
     world.setTimeStep(self->worldTimeStep());
     world.setCurrentTime(0.0);
 
@@ -743,6 +747,7 @@ void AISTSimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
                 [&](const string& v){ return contactCorrectionDepth.setNonNegativeValue(v); });
     putProperty(_("CC v-ratio"), contactCorrectionVelocityRatio,
                 [&](const string& v){ return contactCorrectionVelocityRatio.setNonNegativeValue(v); });
+    putProperty(_("Drive effort output"), isDriveEffortOutputEnabled, changeProperty(isDriveEffortOutputEnabled));
     putProperty(_("Kinematic walking"), isKinematicWalkingEnabled,
                 changeProperty(isKinematicWalkingEnabled));
     putProperty(_("2D mode"), is2Dmode, changeProperty(is2Dmode));
@@ -772,6 +777,9 @@ bool AISTSimulatorItem::Impl::store(Archive& archive)
     archive.write("max_num_contact_points", maxNumContactPoints);
     archive.write("contact_correction_depth", contactCorrectionDepth);
     archive.write("contact_correction_velocity_ratio", contactCorrectionVelocityRatio);
+    if(isDriveEffortOutputEnabled){
+        archive.write("drive_effort_output", true);
+    }
     if(isKinematicWalkingEnabled){
         archive.write("enable_kinematic_walking", true);
     }
@@ -816,6 +824,7 @@ bool AISTSimulatorItem::Impl::restore(const Archive& archive)
     archive.read("max_num_contact_points", maxNumContactPoints);
     contactCorrectionDepth = archive.get({ "contact_correction_depth", "contactCorrectionDepth" }, contactCorrectionDepth.string());
     contactCorrectionVelocityRatio = archive.get({ "contact_correction_velocity_ratio", "contactCorrectionVelocityRatio" }, contactCorrectionVelocityRatio.string());
+    archive.read("drive_effort_output", isDriveEffortOutputEnabled);
     archive.read({ "enable_kinematic_walking", "kinematicWalking" }, isKinematicWalkingEnabled);
     archive.read({ "use_2d_mode", "2Dmode" }, is2Dmode);
     archive.read({ "use_old_accel_sensor_mode", "oldAccelSensorMode" }, isOldAccelSensorMode);

@@ -121,6 +121,7 @@ private:
     void calcPositionAndVelocityFK();
     void calcMassMatrix();
     void setColumnOfMassMatrix(MatrixXd& M, int column);
+    double calcTorqueModeJointDriveEffort(const DyLink* link) const;
     void calcInverseDynamics(DyLink* link, Vector3& out_f, Vector3& out_tau, bool isSubBodyRoot);
     void calcd1(DyLink* link, Vector3& out_f, Vector3& out_tau, bool isSubBodyRoot);
     inline void calcAccelFKandForceSensorValues();

@@ -59,6 +59,8 @@ public:
     void enableSensors(bool on);
 
     void setOldAccelSensorCalcMode(bool on);
+    void setDriveEffortOutputEnabled(bool on);
+    bool isDriveEffortOutputEnabled() const { return isDriveEffortOutputEnabled_; }
 
     /**
        \brief Use the euler method for integration
@@ -108,6 +110,7 @@ private:
     Vector3 g;
     bool sensorsAreEnabled;
     bool isOldAccelSensorCalcMode;
+    bool isDriveEffortOutputEnabled_;
     bool isEulerMethod; // Euler or Runge Kutta ?
     bool hasHighGainDynamics_;
 

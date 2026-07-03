@@ -372,11 +372,15 @@ void ForwardDynamicsABM::calcABMPhase2()
                 link->hhw().noalias() = link->Iwv() * link->sv() + link->Iww() * link->sw();
                 // dd = Ia * s * s^T
                 link->dd() = link->sv().dot(link->hhv()) + link->sw().dot(link->hhw()) + link->Jm2();
+                const double u = std::clamp(link->u(), link->u_lower(), link->u_upper());
                 // uu = u - hh^T*c + s^T*pp
                 link->uu() =
-                    std::clamp(link->u(), link->u_lower(), link->u_upper()) -
+                    u -
                     (link->hhv().dot(link->cv()) + link->hhw().dot(link->cw()) +
                      link->sv().dot(link->pf()) + link->sw().dot(link->ptau()));
+                if(isDriveEffortOutputEnabled_ && link->hasActualJoint()){
+                    link->u() = u;
+                }
             }
         }
     }
@@ -446,9 +450,13 @@ void ForwardDynamicsABM::calcABMPhase2Part2()
 
         if(i > 0){
             if(!link->isFixedJoint()){
+                const double u = std::clamp(link->u(), link->u_lower(), link->u_upper());
                 link->uu() +=
-                    std::clamp(link->u(), link->u_lower(), link->u_upper())
+                    u
                     - (link->sv().dot(link->pf()) + link->sw().dot(link->ptau()));
+                if(isDriveEffortOutputEnabled_ && link->hasActualJoint()){
+                    link->u() = u;
+                }
             }
         }
     }

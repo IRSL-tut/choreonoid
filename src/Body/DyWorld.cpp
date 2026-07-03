@@ -17,6 +17,7 @@ DyWorldBase::DyWorldBase()
     hasHighGainDynamics_ = false;
     sensorsAreEnabled = false;
     isOldAccelSensorCalcMode = false;
+    isDriveEffortOutputEnabled_ = false;
     numRegisteredLinkPairs = 0;
 }
 
@@ -77,6 +78,12 @@ void DyWorldBase::setOldAccelSensorCalcMode(bool on)
 }
 
 
+void DyWorldBase::setDriveEffortOutputEnabled(bool on)
+{
+    isDriveEffortOutputEnabled_ = on;
+}
+
+
 void DyWorldBase::initialize()
 {
     for(auto& subBody : subBodies_){
@@ -90,6 +97,7 @@ void DyWorldBase::initialize()
         forwardDynamics->setTimeStep(timeStep_);
         forwardDynamics->enableSensors(sensorsAreEnabled);
         forwardDynamics->setOldAccelSensorCalcMode(isOldAccelSensorCalcMode);
+        forwardDynamics->setDriveEffortOutputEnabled(isDriveEffortOutputEnabled_);
         forwardDynamics->initialize();
     }
 }

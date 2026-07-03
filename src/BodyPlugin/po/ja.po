@@ -112,6 +112,9 @@ msgstr "2Dモード"
 msgid "Old accel sensor mode"
 msgstr "旧加速センサモード"
 
+msgid "Drive effort output"
+msgstr "駆動トルク／力出力"
+
 msgid "BodyBar"
 msgstr "ボディバー"
 

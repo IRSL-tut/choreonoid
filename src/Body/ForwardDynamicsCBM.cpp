@@ -2,12 +2,12 @@
 #include "DyBody.h"
 #include <cnoid/EigenUtil>
 #include <cnoid/Format>
+#include <algorithm>
 #include <iostream>
 
 using namespace std;
 using namespace cnoid;
 
-static const bool CALC_ALL_JOINT_TORQUES = false;
 static const bool ROOT_ATT_NORMALIZATION_ENABLED = false;
 
 static const bool debugMode = false;
@@ -159,6 +159,10 @@ void ForwardDynamicsCBM::calcNextState()
     if(isNoUnknownAccelMode && !sensorHelper.isActive()){
 
         calcPositionAndVelocityFK();
+        if(isDriveEffortOutputEnabled_ && !highGainModeJoints.empty()){
+            calcAccelFKandForceSensorValues();
+        }
+        preserveHighGainModeJointState();
 
     } else {
 
@@ -552,6 +556,12 @@ void ForwardDynamicsCBM::setColumnOfMassMatrix(MatrixXd& M, int column)
 }
 
 
+double ForwardDynamicsCBM::calcTorqueModeJointDriveEffort(const DyLink* link) const
+{
+    return std::clamp(link->u(), link->u_lower(), link->u_upper());
+}
+
+
 void ForwardDynamicsCBM::calcInverseDynamics(DyLink* link, Vector3& out_f, Vector3& out_tau, bool isSubBodyRoot)
 {
     if(!isSubBodyRoot){
@@ -717,7 +727,12 @@ void ForwardDynamicsCBM::solveUnknownAccels(const Vector3& fext, const Vector3& 
     }
 
     for(size_t i=0; i < torqueModeJoints.size(); ++i){
-        c1(i + unknown_rootDof) = torqueModeJoints[i]->u();
+        DyLink* link = torqueModeJoints[i];
+        const double u = calcTorqueModeJointDriveEffort(link);
+        c1(i + unknown_rootDof) = u;
+        if(isDriveEffortOutputEnabled_ && link->hasActualJoint()){
+            link->u() = u;
+        }
     }
 
     c1 -= d1;
@@ -760,7 +775,7 @@ void ForwardDynamicsCBM::calcAccelFKandForceSensorValues(DyLink* link, Vector3& 
 
     auto& cbm = link->cbm;
 
-    if(CALC_ALL_JOINT_TORQUES || cbm->hasForceSensorsAbove){
+    if((isDriveEffortOutputEnabled_ && !highGainModeJoints.empty()) || cbm->hasForceSensorsAbove){
 
         Vector3 fg(link->m() * g);
         Vector3 tg(link->wc().cross(fg));
@@ -774,8 +789,12 @@ void ForwardDynamicsCBM::calcAccelFKandForceSensorValues(DyLink* link, Vector3& 
         out_f  .noalias() += link->m()   * link->dvo() + link->Iwv().transpose() * link->dw();
         out_tau.noalias() += link->Iwv() * link->dvo() + link->Iww()             * link->dw();
 
-        if(CALC_ALL_JOINT_TORQUES && link->actuationMode() == Link::JointDisplacement){
-            link->u() = link->sv().dot(out_f) + link->sw().dot(out_tau);
+        if(isDriveEffortOutputEnabled_ &&
+           (link->actuationMode() == Link::JointDisplacement ||
+            link->actuationMode() == Link::JointVelocity) &&
+           link->hasActualJoint()){
+            link->u() =
+                link->sv().dot(out_f) + link->sw().dot(out_tau) + link->ddq() * link->Jm2();
         }
 
         if(cbm->hasForceSensor){

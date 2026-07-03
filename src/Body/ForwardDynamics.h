@@ -28,6 +28,8 @@ public:
     void setTimeStep(double timeStep);
     void enableSensors(bool on);
     void setOldAccelSensorCalcMode(bool on);
+    void setDriveEffortOutputEnabled(bool on);
+    bool isDriveEffortOutputEnabled() const;
 
     virtual void initialize() = 0;
     virtual void calcNextState() = 0;
@@ -51,6 +53,7 @@ protected:
     Vector3 g;
     double timeStep;
     bool sensorsEnabled;
+    bool isDriveEffortOutputEnabled_;
     BasicSensorSimulationHelper sensorHelper;
 
     enum { SemiImplicitEuler, RungeKutta } integrationMode;

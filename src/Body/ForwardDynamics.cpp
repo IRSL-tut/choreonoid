@@ -12,6 +12,7 @@ ForwardDynamics::ForwardDynamics(DySubBody* subBody)
 
     integrationMode = SemiImplicitEuler;
     sensorsEnabled = false;
+    isDriveEffortOutputEnabled_ = false;
 }
 
 
@@ -54,6 +55,18 @@ void ForwardDynamics::enableSensors(bool on)
 void ForwardDynamics::setOldAccelSensorCalcMode(bool on)
 {
     sensorHelper.setOldAccelSensorCalcMode(on);
+}
+
+
+void ForwardDynamics::setDriveEffortOutputEnabled(bool on)
+{
+    isDriveEffortOutputEnabled_ = on;
+}
+
+
+bool ForwardDynamics::isDriveEffortOutputEnabled() const
+{
+    return isDriveEffortOutputEnabled_;
 }
 
 
