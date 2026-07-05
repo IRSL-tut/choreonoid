@@ -246,6 +246,14 @@ public:
     float transparency() const;
     void setTransparency(float t);
 
+    /**
+       When this is enabled, the bounding box of the body is always displayed in the scene view
+       regardless of the scene view mode and the highlighting mode. The bounding box is an
+       axis-aligned box in the root link's local coordinate frame.
+    */
+    bool isBoundingBoxVisible() const;
+    void setBoundingBoxVisible(bool on);
+
     bool isVisibleLinkSelectionMode() const { return isVisibleLinkSelectionMode_; }
     void setVisibleLinkSelectionMode(bool on) { isVisibleLinkSelectionMode_ = on; }
 

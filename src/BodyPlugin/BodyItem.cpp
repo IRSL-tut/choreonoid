@@ -174,6 +174,7 @@ public:
             
     OperableSceneBodyPtr sceneBody;
     float transparency;
+    bool isBoundingBoxVisible;
     Signal<void(int flags)> sigModelUpdated;
 
     LeggedBodyHelperPtr legged;
@@ -207,6 +208,7 @@ public:
     void setLocationLocked(bool on, bool updateInitialPositionWhenLocked, bool doNotiyUpdate);
     void createSceneBody();
     void setTransparency(float t);
+    void setBoundingBoxVisible(bool on);
     bool isLinkableToParentBody() const;
     void setParentLink(const std::string& name);
     bool updateParentBodyLinkage(bool doUpdatePreferred, bool doNotifyUpdate);
@@ -335,6 +337,7 @@ BodyItem::Impl::Impl(BodyItem* self, const Impl& org, CloneMap* cloneMap)
 
     initialState = org.initialState;
     transparency = org.transparency;
+    isBoundingBoxVisible = org.isBoundingBoxVisible;
 
     extraBodyHandlerNames = org.extraBodyHandlerNames;
 }
@@ -355,6 +358,7 @@ BodyItem::Impl::~Impl()
 void BodyItem::Impl::init(bool calledFromCopyConstructor)
 {
     transparency = 0.0f;
+    isBoundingBoxVisible = false;
     isFkRequested = isVelFkRequested = isAccFkRequested = false;
 
     initBody(calledFromCopyConstructor);
@@ -420,7 +424,8 @@ bool BodyItem::Impl::doAssign(const Item* srcItem)
     isDeviceStateStoringEnabled = srcImpl->isDeviceStateStoringEnabled;
     parentLinkName = srcImpl->parentLinkName;
     transparency = srcImpl->transparency;
-    
+    setBoundingBoxVisible(srcImpl->isBoundingBoxVisible);
+
     // copy the base link property
     Link* baseLink = nullptr;
     Link* srcBaseLink = srcBodyItem->currentBaseLink();
@@ -1533,6 +1538,29 @@ void BodyItem::Impl::setTransparency(float t)
 }
 
 
+bool BodyItem::isBoundingBoxVisible() const
+{
+    return impl->isBoundingBoxVisible;
+}
+
+
+void BodyItem::setBoundingBoxVisible(bool on)
+{
+    impl->setBoundingBoxVisible(on);
+}
+
+
+void BodyItem::Impl::setBoundingBoxVisible(bool on)
+{
+    if(on != isBoundingBoxVisible){
+        isBoundingBoxVisible = on;
+        if(sceneBody){
+            sceneBody->updateBoundingBoxVisualization();
+        }
+    }
+}
+
+
 bool BodyItem::isLinkableToParentBody() const
 {
     return findOwnerItem<BodyItem>() != nullptr;
@@ -1961,6 +1989,8 @@ void BodyItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
                 [this](float value){ setTransparency(value); return true; });
     putProperty(_("Visible link selection"), self->isVisibleLinkSelectionMode_,
                 changeProperty(self->isVisibleLinkSelectionMode_));
+    putProperty(_("Show bounding box"), isBoundingBoxVisible,
+                [this](bool on){ setBoundingBoxVisible(on); return true; });
 
     putProperty(_("Multiplexing number"), body->numMultiplexBodies());
     putProperty(_("Existence"), body->existence(),
@@ -2073,6 +2103,10 @@ bool BodyItem::Impl::store(Archive& archive)
 
     if(transparency > 0.0f){
         archive.write("transparency", transparency);
+    }
+
+    if(isBoundingBoxVisible){
+        archive.write("show_bounding_box", true);
     }
 
     if(!extraBodyHandlerNames.empty()){
@@ -2236,6 +2270,10 @@ bool BodyItem::Impl::restore(const Archive& archive)
     double t;
     if(archive.read("transparency", t)){
         setTransparency(t);
+    }
+
+    if(archive.read("show_bounding_box", on)){
+        setBoundingBoxVisible(on);
     }
 
     auto handlersNode = archive.find("extra_body_handlers");

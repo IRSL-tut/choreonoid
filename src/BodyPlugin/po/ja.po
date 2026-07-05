@@ -257,6 +257,9 @@ msgstr "透明度"
 msgid "Visible link selection"
 msgstr "表示リンクの選択"
 
+msgid "Show bounding box"
+msgstr "バウンディングボックスの表示"
+
 msgid "Multiplexing number"
 msgstr "多重化数"
 

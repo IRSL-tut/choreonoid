@@ -17,6 +17,7 @@
 #include <cnoid/LinkPath>
 #include <cnoid/LinkedJointHandler>
 #include <cnoid/LeggedBodyHelper>
+#include <cnoid/BodyBoundingBox>
 #include <cnoid/PinDragIK>
 #include <cnoid/PenetrationBlocker>
 #include <cnoid/SceneDevice>
@@ -145,7 +146,10 @@ public:
 
     PositionDraggerPtr linkOriginMarker;
     vector<bool> linkOriginMarkerVisibilities;
-    SgHighlightPtr highlight;
+    SgPosTransformPtr boundingBoxMarker;
+    SgLineSetPtr boundingBoxLineSet;
+    SgMaterialPtr boundingBoxMaterial;
+    std::unique_ptr<BodyBoundingBox> boundingBox;
     SgGroupPtr markerGroup;
     CrossMarkerPtr cmMarker;
     CrossMarkerPtr cmProjectionMarker;
@@ -177,7 +181,9 @@ public:
     void updateVisibleLinkSelectionMode(bool isActive);
     void onLinkOriginsCheckToggled(bool on);
     void onLinkCmsCheckToggled(bool on);
-    void enableHighlight(bool on);
+    void createBoundingBoxMarker();
+    void updateBoundingBoxMarker();
+    void updateBoundingBoxMarkerGeometry();
     void calcBodyMarkerRadius();
     double calcLinkMarkerRadius(SceneLink* sceneLink) const;
     void ensureCmMarker();
@@ -622,6 +628,12 @@ void OperableSceneBody::Impl::updateSceneModel()
 
     self->SceneBody::updateSceneModel();
 
+    // The vertex cache of the bounding box must be rebuilt for the updated model
+    boundingBox.reset();
+    if(boundingBoxMarker && boundingBoxMarker->hasParents()){
+        updateBoundingBoxMarkerGeometry();
+    }
+
     // Restore the visibilities of link origin markers
     int n = std::min(self->numSceneLinks(), (int)linkOriginMarkerVisibilities.size());
     for(int i=0; i < n; ++i){
@@ -642,7 +654,7 @@ OperableSceneLink* OperableSceneBody::operableSceneLink(int index)
 void OperableSceneBody::Impl::onSelectionChanged(bool on)
 {
     isSelected = on;
-    enableHighlight(isHighlightingEnabled && isEditMode && isSelected);
+    updateBoundingBoxMarker();
 }
 
 
@@ -664,6 +676,10 @@ void OperableSceneBody::Impl::onKinematicStateChanged()
                     = (targetLink->T() * pointedLinkLocalPoint).cast<Vector3f::Scalar>();
             }
         }
+    }
+
+    if(boundingBoxMarker && boundingBoxMarker->hasParents()){
+        updateBoundingBoxMarkerGeometry();
     }
 
     self->updateLinkPositions(update.withAction(SgUpdate::Modified));
@@ -750,45 +766,90 @@ void OperableSceneBody::Impl::onLinkCmsCheckToggled(bool on)
 }
 
 
-void OperableSceneBody::Impl::enableHighlight(bool on)
+void OperableSceneBody::updateBoundingBoxVisualization()
 {
+    impl->updateBoundingBoxMarker();
+}
+
+
+void OperableSceneBody::Impl::createBoundingBoxMarker()
+{
+    boundingBoxLineSet = new SgLineSet;
+    boundingBoxLineSet->getOrCreateVertices()->resize(8);
+
+    // 12 edges of the box
+    static const int edges[12][2] = {
+        {0,1},{2,3},{4,5},{6,7},   // X edges
+        {0,2},{1,3},{4,6},{5,7},   // Y edges
+        {0,4},{1,5},{2,6},{3,7}    // Z edges
+    };
+    for(auto& e : edges){
+        boundingBoxLineSet->addLine(e[0], e[1]);
+    }
+    boundingBoxLineSet->setLineWidth(2.0f);
+
+    boundingBoxMaterial = new SgMaterial;
+    boundingBoxLineSet->setMaterial(boundingBoxMaterial);
+
+    boundingBoxMarker = new SgPosTransform;
+    boundingBoxMarker->setName("BodyBoundingBoxMarker");
+    boundingBoxMarker->addChild(boundingBoxLineSet);
+}
+
+
+void OperableSceneBody::Impl::updateBoundingBoxMarker()
+{
+    bool on = bodyItem->isBoundingBoxVisible() ||
+              (isHighlightingEnabled && isEditMode && isSelected);
+
     if(on){
-        bool doUpdate = false;
-        if(!highlight){
-            highlight = new SgBoundingBox;
-            highlight->setColor(Vector3f(1.0f, 1.0f, 0.0f));
-            highlight->setLineWidth(2.0f);
-            doUpdate = true;
-        } else {
-            doUpdate = !highlight->hasParents();
+        if(!boundingBoxMarker){
+            createBoundingBoxMarker();
         }
-        if(doUpdate){
-            self->insertEffectGroup(highlight, update.withAction(SgUpdate::GeometryModified));
+        static const Vector3f selectedColor(1.0f, 1.0f, 0.0f);
+        static const Vector3f normalColor(0.2f, 1.0f, 0.2f);
+        const Vector3f& color = isSelected ? selectedColor : normalColor;
+        boundingBoxMaterial->setDiffuseColor(color);
+        boundingBoxMaterial->setEmissiveColor(color);
+        boundingBoxMaterial->notifyUpdate(update.withAction(SgUpdate::Modified));
+        updateBoundingBoxMarkerGeometry();
 
-            // The following code cannot support the case where
-            // the number of links is changed by model update.
-            /*
-            if(self->numSceneLinks() == 1){
-                self->sceneLink(0)->insertEffectGroup(highlight, update);
-            } else{
-                self->insertEffectGroup(highlight, update);
-            }
-            */
+    } else if(boundingBoxMarker){
+        markerGroup->removeChild(boundingBoxMarker, update.withAction(SgUpdate::Removed));
+    }
+}
+
+
+void OperableSceneBody::Impl::updateBoundingBoxMarkerGeometry()
+{
+    auto body = self->body();
+    if(!boundingBox){
+        boundingBox = std::make_unique<BodyBoundingBox>(body);
+    }
+
+    auto bb = boundingBox->compute(BodyBoundingBox::RootLocalAABB);
+    if(bb.empty()){
+        if(boundingBoxMarker->hasParents()){
+            markerGroup->removeChild(boundingBoxMarker, update.withAction(SgUpdate::Removed));
         }
+        return;
+    }
+
+    const Vector3& bmin = bb.min();
+    const Vector3& bmax = bb.max();
+    auto& vertices = *boundingBoxLineSet->vertices();
+    for(int i=0; i < 8; ++i){
+        vertices[i] <<
+            static_cast<float>((i & 1) ? bmax.x() : bmin.x()),
+            static_cast<float>((i & 2) ? bmax.y() : bmin.y()),
+            static_cast<float>((i & 4) ? bmax.z() : bmin.z());
+    }
+    boundingBoxMarker->setPosition(body->rootLink()->position());
+
+    if(boundingBoxMarker->hasParents()){
+        boundingBoxLineSet->vertices()->notifyUpdate(update.withAction(SgUpdate::Modified));
     } else {
-        if(highlight && highlight->hasParents()){
-            self->removeEffectGroup(highlight, update.withAction(SgUpdate::GeometryModified));
-
-            // The following code cannot support the case where
-            // the number of links is changed by model update.
-            /*
-            if(self->numSceneLinks() == 1){
-                self->sceneLink(0)->removeEffectGroup(highlight, update);
-            } else {
-                self->removeEffectGroup(highlight, update);
-            }
-            */
-        }
+        markerGroup->addChild(boundingBoxMarker, update.withAction(SgUpdate::Added));
     }
 }
 
@@ -1318,7 +1379,7 @@ void OperableSceneBody::Impl::onSceneModeChanged(SceneWidgetEvent* event)
     }
 
     isHighlightingEnabled = event->sceneWidget()->isHighlightingEnabled();
-    enableHighlight(isHighlightingEnabled && isEditMode && isSelected);
+    updateBoundingBoxMarker();
 }
 
 

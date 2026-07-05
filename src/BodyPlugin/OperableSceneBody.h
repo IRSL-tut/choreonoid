@@ -56,6 +56,9 @@ public:
     OperableSceneLink* operableSceneLink(int index);
     void setLinkVisibilities(const std::vector<bool>& visibilities);
 
+    //! Update the visibility and geometry of the bounding box visualization
+    void updateBoundingBoxVisualization();
+
     virtual void updateSceneModel() override;
 
     virtual void onSceneModeChanged(SceneWidgetEvent* event) override;
