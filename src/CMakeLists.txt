@@ -46,6 +46,7 @@ if(ENABLE_GUI)
 
   add_subdirectory(PhysXPlugin)
   add_subdirectory(MuJoCoPlugin)
+  add_subdirectory(BulletPlugin)
   add_subdirectory(ODEPlugin)
   add_subdirectory(AGXDynamicsPlugin)
   add_subdirectory(MulticopterPlugin)

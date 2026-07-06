@@ -26,6 +26,7 @@ python3-numpy \
 python3-yaml \
 libassimp-dev \
 libode-dev \
+libbullet-dev \
 libfcl-dev \
 libpulse-dev \
 libsndfile1-dev \

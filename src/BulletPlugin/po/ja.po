@@ -1,0 +1,179 @@
+# Japanese translations for Choreonoid package.
+# Copyright (C) 2026 THE Choreonoid'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the Choreonoid package.
+# nakaoka <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Choreonoid\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-10 21:46+0900\n"
+"PO-Revision-Date: 2026-07-06 00:00+0900\n"
+"Last-Translator: nakaoka <EMAIL@ADDRESS>\n"
+"Language-Team: Japanese <translation-team-ja@lists.sourceforge.net>\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid ""
+"BtContinuousTrack \"{0}\" (link \"{1}\"): Adjusted num_shoes from {2} to {3} for phase alignment "
+"between wheels and linear segments.{4}"
+msgstr ""
+"BtContinuousTrack \"{0}\" (リンク\"{1}\"): ホイールと直動セグメントの位相を合わせるため、"
+"num_shoesを{2}から{3}に調整しました。{4}"
+
+msgid ""
+"BtContinuousTrack \"{0}\" (link \"{1}\"): num_shoes={2} is not phase-aligned with wheel distance "
+"{3:.4f}. Suggested wheel distance: {4}.{5}"
+msgstr ""
+"BtContinuousTrack \"{0}\" (リンク\"{1}\"): num_shoes={2}はホイール間距離{3:.4f}と位相が合って"
+"いません。推奨されるホイール間距離: {4}。{5}"
+
+msgid ""
+"BtContinuousTrack \"{0}\" of {1} is ignored because its links are invalid or not simulated as a "
+"single multibody."
+msgstr ""
+"{1}のBtContinuousTrack \"{0}\"は、リンクが不正であるか、単一のマルチボディとしてシミュレートされ"
+"ていないため無視されます。"
+
+msgid "Bullet Physics {0}.{1} is available.\n"
+msgstr "Bullet Physics {0}.{1} が利用可能です。\n"
+
+msgid "Mesh \"{0}\""
+msgstr "メッシュ \"{0}\""
+
+msgid "A mesh"
+msgstr "メッシュ"
+
+msgid "BulletSimulatorItem"
+msgstr "Bulletシミュレータアイテム"
+
+msgid "Sequential impulse"
+msgstr "逐次インパルス"
+
+msgid "MLCP (Dantzig)"
+msgstr "MLCP (Dantzig)"
+
+msgid "Confirmation of all link position recording mode"
+msgstr "全リンク位置記録モードの確認"
+
+msgid ""
+"{0}: There is a model that has free-type joints other than the root link and all the link "
+"positions should be recorded in this case. Do you enable the mode to do it?"
+msgstr ""
+"{0}: ルートリンク以外にフリータイプの関節を持つモデルが存在し、この場合は全てのリンク位置を記録す"
+"る必要があります。そのためのモードを有効化しますか?"
+
+msgid ""
+"{0}: The equivalent rotor inertia is ignored. Set the rotor inertia property of {1} to true to "
+"simulate it using virtual geared rotor links."
+msgstr ""
+"{0}: 等価ロータ慣性は無視されます。{1}のロータ慣性プロパティをtrueに設定すると、仮想のギア付き"
+"ロータリンクによってこれをシミュレートできます。"
+
+msgid ""
+"{0}: The equivalent rotor inertia of the following links is ignored because the links are not "
+"simulated as revolute or prismatic joints of a multibody: {1}"
+msgstr ""
+"{0}: 以下のリンクの等価ロータ慣性は、リンクがマルチボディの回転関節または直動関節としてシミュ"
+"レートされていないため無視されます: {1}"
+
+msgid ""
+"{0}: The following joints do not have the gear_ratio information and the default gear ratio {1} "
+"is used for their rotor models: {2}"
+msgstr ""
+"{0}: 以下の関節はgear_ratioの情報を持たないため、それらのロータモデルにはデフォルトギア比{1}が使"
+"用されます: {2}"
+
+msgid "The continuous track \"{0}\" could not be set up."
+msgstr "連続履帯\"{0}\"をセットアップできませんでした。"
+
+msgid ""
+"The force sensor \"{0}\" is ignored because its link is not simulated as a movable joint of a "
+"multibody."
+msgstr ""
+"力センサ\"{0}\"はそのリンクがマルチボディの可動関節としてシミュレートされていないため無視されま"
+"す。"
+
+msgid ""
+"{0} has a non-axis-aligned scaling which is not supported in the Bullet plugin. The mesh is "
+"skipped."
+msgstr ""
+"{0} には軸に沿っていないスケーリングが指定されており、Bulletプラグインではサポートされていません。"
+"このメッシュはスキップされます。"
+
+msgid "{0} has no vertices for creating a convex hull."
+msgstr "{0} には凸包を作成するための頂点がありません。"
+
+msgid "{0} has no valid vertices for creating a convex hull."
+msgstr "{0} には凸包を作成するための有効な頂点がありません。"
+
+msgid "{0} does not have valid triangle mesh data."
+msgstr "{0} は有効な三角形メッシュデータを持っていません。"
+
+msgid ""
+"The extra joint between {0} and {1} is ignored because one of the links is not included in the "
+"simulation."
+msgstr ""
+"{0} と {1} の間のエクストラジョイントは、リンクがシミュレーションに含まれていないため無視されま"
+"す。"
+
+msgid ""
+"The extra joint between {0} and {1} is ignored because the static link has no body in the "
+"simulation."
+msgstr ""
+"{0} と {1} の間のエクストラジョイントは、静的リンクがシミュレーション中にボディを持たないため無視"
+"されます。"
+
+msgid "Gravity"
+msgstr "重力"
+
+msgid "Solver"
+msgstr "ソルバ"
+
+msgid "Solver iterations"
+msgstr "ソルバ反復回数"
+
+msgid "Contact ERP"
+msgstr "接触ERP"
+
+msgid "Position gain"
+msgstr "位置ゲイン"
+
+msgid "Velocity gain"
+msgstr "速度ゲイン"
+
+msgid "Linear damping"
+msgstr "並進ダンピング"
+
+msgid "Angular damping"
+msgstr "回転ダンピング"
+
+msgid "Collision margin"
+msgstr "衝突マージン"
+
+msgid "GImpact meshes for dynamic objects"
+msgstr "動的オブジェクトへのGImpactメッシュ適用"
+
+msgid "Internal edge smoothing"
+msgstr "内部エッジの平滑化"
+
+msgid "Self collision"
+msgstr "自己干渉"
+
+msgid "Rotor inertia"
+msgstr "ロータ慣性"
+
+msgid "Default rotor gear ratio"
+msgstr "デフォルトロータギア比"
+
+msgid "Velocity output"
+msgstr "速度出力"
+
+msgid "Acceleration output"
+msgstr "加速度出力"
+
+msgid "Drive effort output"
+msgstr "駆動エフォート出力"
