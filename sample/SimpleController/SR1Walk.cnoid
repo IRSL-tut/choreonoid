@@ -1,4 +1,4 @@
-optional_plugins: [ PhysX, MuJoCo, ODE, AGXDynamics ]
+optional_plugins: [ PhysX, MuJoCo, Bullet, ODE, AGXDynamics ]
 
 items:
   id: 0
@@ -129,6 +129,25 @@ items:
               name: "MuJoCoSimulator-Position"
               plugin: MuJoCo
               class: MuJoCoSimulatorItem
+              data:
+                time_step: 0.002
+                time_length: 60
+                is_active_control_time_range_mode: true
+                controller_options: "position"
+            -
+              id: 14
+              name: "BulletSimulator"
+              plugin: Bullet
+              class: BulletSimulatorItem
+              data:
+                time_step: 0.002
+                time_length: 60
+                is_active_control_time_range_mode: true
+            -
+              id: 15
+              name: "BulletSimulator-Position"
+              plugin: Bullet
+              class: BulletSimulatorItem
               data:
                 time_step: 0.002
                 time_length: 60

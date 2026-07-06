@@ -1,4 +1,4 @@
-optional_plugins: [ PhysX, MuJoCo, ODE, AGXDynamics ]
+optional_plugins: [ PhysX, MuJoCo, Bullet, ODE, AGXDynamics ]
 
 items:
   id: 0
@@ -136,6 +136,18 @@ items:
               name: "MuJoCoSimulator-Position"
               plugin: MuJoCo
               class: MuJoCoSimulatorItem
+              data:
+                controller_options: "position"
+            -
+              id: 16
+              name: "BulletSimulator"
+              plugin: Bullet
+              class: BulletSimulatorItem
+            -
+              id: 17
+              name: "BulletSimulator-Position"
+              plugin: Bullet
+              class: BulletSimulatorItem
               data:
                 controller_options: "position"
             -

@@ -1,5 +1,5 @@
 required_plugins: [ SubmersibleSample ]
-optional_plugins: [ PhysX, MuJoCo, ODE, AGXDynamics ]
+optional_plugins: [ PhysX, MuJoCo, Bullet, ODE, AGXDynamics ]
 
 items:
   id: 0
@@ -120,6 +120,21 @@ items:
               children:
                 -
                   id: 12
+                  name: "SubmersibleSimulator"
+                  plugin: SubmersibleSample
+                  class: SubmersibleSimulatorItem
+            -
+              id: 17
+              name: "BulletSimulator"
+              plugin: Bullet
+              class: BulletSimulatorItem
+              data:
+                time_step: 0.005
+                recording: tail
+                is_active_control_time_range_mode: true
+              children:
+                -
+                  id: 18
                   name: "SubmersibleSimulator"
                   plugin: SubmersibleSample
                   class: SubmersibleSimulatorItem
