@@ -446,7 +446,26 @@ public:
     vector<DispatchedNodeInfo> pureWireframeRenderingNodes;
     vector<DispatchedNodeInfo> vertexRenderingNodes;
         
-    deque<function<void()>> transparentRenderingQueue;
+    struct TransparentRenderingEntry
+    {
+        function<void()> renderingFunction;
+
+        // Signed distance from the viewpoint along the view direction.
+        // Used as the key for the back-to-front sorting.
+        float depth;
+
+        // The minimum transparency specified by the SgTransparentGroup nodes
+        // enclosing the object of this entry
+        float minTransparency;
+
+        TransparentRenderingEntry(function<void()> renderingFunction, float depth, float minTransparency)
+            : renderingFunction(std::move(renderingFunction)),
+              depth(depth),
+              minTransparency(minTransparency)
+        { }
+    };
+    vector<TransparentRenderingEntry> transparentRenderingQueue;
+
     deque<function<void()>> overlayRenderingQueue;
     
     GLuint defaultFBO;
@@ -596,8 +615,10 @@ public:
     void renderFog(LightingProgram* program);
     void doPureWireframeRendering();
     void doVertexRendering();
+    void addTransparentRenderingEntry(
+        const Affine3& modelTransform, const BoundingBox& bbox, function<void()> renderingFunction);
     void renderTransparentObjects();
-    void renderOverlayObjects();    
+    void renderOverlayObjects();
     void pushProgram(ShaderProgram* program);
     template<class ShaderProgramType>
     void pushProgram(unique_ptr<ShaderProgramType>& program);
@@ -2292,10 +2313,23 @@ void GLSLSceneRenderer::dispatchToTransparentPhase
         // If this path is used from a ViewportOverlay, the queued draw will
         // not preserve the overlay projection and child order. Such nodes need
         // an immediate overlay path similar to transparent SgShape.
-        impl->transparentRenderingQueue.emplace_back(
+        impl->addTransparentRenderingEntry(
+            impl->modelMatrixStack.back(), BoundingBox(),
             [this, renderingFunction, object, matrixIndex, id](){
                 renderingFunction(object, impl->modelMatrixBuffer[matrixIndex], id); });
     }
+}
+
+
+void GLSLSceneRenderer::Impl::addTransparentRenderingEntry
+(const Affine3& modelTransform, const BoundingBox& bbox, function<void()> renderingFunction)
+{
+    Vector3 p = modelTransform.translation();
+    if(!bbox.empty()){
+        p = modelTransform * bbox.center();
+    }
+    float depth = static_cast<float>(-(viewTransform * p).z());
+    transparentRenderingQueue.emplace_back(std::move(renderingFunction), depth, minTransparency);
 }
 
 
@@ -2303,11 +2337,36 @@ void GLSLSceneRenderer::Impl::renderTransparentObjects()
 {
     ScopedTransparentRendering transparentRendering(!isRenderingPickingImage);
 
-    while(!transparentRenderingQueue.empty()){
-        auto& func = transparentRenderingQueue.front();
-        func();
-        transparentRenderingQueue.pop_front();
+    // Sort the entries in back-to-front order to blend overlapping transparent
+    // objects correctly. The sorting must be stable to keep the scene graph
+    // traversal order for the entries with the same depth.
+    std::stable_sort(
+        transparentRenderingQueue.begin(), transparentRenderingQueue.end(),
+        [](const TransparentRenderingEntry& e1, const TransparentRenderingEntry& e2){
+            return e1.depth > e2.depth;
+        });
+
+    float orgMinTransparency = minTransparency;
+    float currentMinTransparency = orgMinTransparency;
+
+    // The index-based iteration is used because an entry may add new entries
+    // to the queue while it is executed. Each entry is moved to a local variable
+    // before the execution so that the reallocation of the queue buffer does not
+    // invalidate the entry being executed.
+    for(size_t i=0; i < transparentRenderingQueue.size(); ++i){
+        auto entry = std::move(transparentRenderingQueue[i]);
+        if(entry.minTransparency != currentMinTransparency){
+            fullLightingProgram->setMinimumTransparency(entry.minTransparency);
+            currentMinTransparency = entry.minTransparency;
+        }
+        entry.renderingFunction();
     }
+
+    if(currentMinTransparency != orgMinTransparency){
+        fullLightingProgram->setMinimumTransparency(orgMinTransparency);
+    }
+
+    transparentRenderingQueue.clear();
 }
 
 
@@ -2779,7 +2838,8 @@ void GLSLSceneRenderer::Impl::renderShape(SgShape* shape)
                 int matrixIndex = modelMatrixBuffer.size();
                 modelMatrixBuffer.push_back(modelMatrixStack.back());
                 auto pickIndex = pushPickEndNode(shape);
-                transparentRenderingQueue.emplace_back(
+                addTransparentRenderingEntry(
+                    modelMatrixStack.back(), mesh->boundingBox(),
                     [this, shapePtr, matrixIndex, pickIndex](){
                         renderShapeMain(shapePtr, modelMatrixBuffer[matrixIndex], pickIndex); });
                 popPickNode();
@@ -3854,7 +3914,8 @@ void GLSLSceneRenderer::Impl::renderPreparedPlot
         modelMatrixBuffer.push_back(modelMatrixStack.back());
         // Transparent plots in a ViewportOverlay need an immediate overlay path
         // similar to transparent SgShape to preserve the overlay projection and order.
-        transparentRenderingQueue.emplace_back(
+        addTransparentRenderingEntry(
+            modelMatrixStack.back(), plot->boundingBox(),
             [this, plotPtr, primitiveMode, resource, matrixIndex, pickIndex, setupShaderProgram, first, count](){
                 renderPlotMain(
                     plotPtr, primitiveMode, resource, modelMatrixBuffer[matrixIndex],
@@ -4137,28 +4198,20 @@ void GLSLSceneRenderer::Impl::renderPolygonDrawStyle(SgPolygonDrawStyle* style)
 
 void GLSLSceneRenderer::Impl::renderTransparentGroup(SgTransparentGroup* transparentGroup)
 {
+    // The minimum transparency value is stored in each element of the transparent
+    // rendering queue and is applied to the shader program when the queue is rendered.
+    // Note that a transparent shape in a ViewportOverlay is rendered immediately
+    // without using the queue and the transparency of this group is not applied to it.
     float prevMinTransparency = minTransparency;
 
     float transparency = transparentGroup->transparency();
     if(transparency > minTransparency){
         minTransparency = transparency;
-        // In a ViewportOverlay, this queued state change does not by itself
-        // make the group render as intended; it needs an overlay-specific path.
-        transparentRenderingQueue.emplace_back(
-            [this, transparency](){
-                fullLightingProgram->setMinimumTransparency(transparency);
-            });
     }
 
     renderGroup(transparentGroup);
 
-    if(prevMinTransparency != minTransparency){
-        minTransparency = prevMinTransparency;
-        transparentRenderingQueue.emplace_back(
-            [this, prevMinTransparency](){
-                fullLightingProgram->setMinimumTransparency(prevMinTransparency);
-            });
-    }
+    minTransparency = prevMinTransparency;
 }
 
 
