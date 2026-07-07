@@ -20,5 +20,8 @@
     <file>shader/FullLighting.vert</file>
     <file>shader/FullLighting.geom</file>
     <file>shader/FullLighting.frag</file>
+    <file>shader/DepthPeeling.vert</file>
+    <file>shader/DepthPeelingInit.frag</file>
+    <file>shader/DepthPeelingComposite.frag</file>
   </qresource>
 </RCC>

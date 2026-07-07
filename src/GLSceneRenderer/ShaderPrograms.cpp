@@ -304,6 +304,12 @@ public:
     bool useReversedDepth;
     bool useReversedDepthInitialized;
 
+    // For the depth peeling of the transparent object rendering
+    int depthPeelingTextureUnit;
+    GLint isDepthPeelingEnabledLocation;
+    GLint isDepthPeelingReversedDepthLocation;
+    GLint peeledDepthTextureLocation;
+
     Impl(FullLightingProgram* self);
     void initialize(GLSLProgram& glsl);
     void initializeShadowInfo(GLSLProgram& glsl, int index);
@@ -1412,7 +1418,9 @@ FullLightingProgram::Impl::Impl(FullLightingProgram* self)
 
     useReversedDepth = false;
     useReversedDepthInitialized = false;
-}    
+
+    depthPeelingTextureUnit = 4;
+}
     
 
 FullLightingProgram::~FullLightingProgram()
@@ -1483,6 +1491,10 @@ void FullLightingProgram::Impl::initialize(GLSLProgram& glsl)
 
     isShadowAntiAliasingEnabledLocation = glsl.getUniformLocation("isShadowAntiAliasingEnabled");
 
+    isDepthPeelingEnabledLocation = glsl.getUniformLocation("isDepthPeelingEnabled");
+    isDepthPeelingReversedDepthLocation = glsl.getUniformLocation("isDepthPeelingReversedDepth");
+    peeledDepthTextureLocation = glsl.getUniformLocation("peeledDepthTexture");
+
     shadowMapProgram.initialize();
 
     /**
@@ -1494,6 +1506,7 @@ void FullLightingProgram::Impl::initialize(GLSLProgram& glsl)
         auto& shadow = shadowInfos[i];
         glUniform1i(shadow.shadowMapLocation, shadowMapTextureTopIndex + i);
     }
+    glUniform1i(peeledDepthTextureLocation, depthPeelingTextureUnit);
 
     // Reset reversed depth state to ensure proper initialization on first render
     useReversedDepthInitialized = false;
@@ -1785,6 +1798,22 @@ void FullLightingProgram::setShadowAntiAliasingEnabled(bool on)
 bool FullLightingProgram::isShadowAntiAliasingEnabled() const
 {
     return impl->isShadowAntiAliasingEnabled;
+}
+
+
+void FullLightingProgram::setDepthPeelingTextureUnit(int textureUnit)
+{
+    impl->depthPeelingTextureUnit = textureUnit;
+}
+
+
+//! The program must be in use when this function is called
+void FullLightingProgram::setDepthPeelingEnabled(bool on)
+{
+    glUniform1i(impl->isDepthPeelingEnabledLocation, on);
+    if(on){
+        glUniform1i(impl->isDepthPeelingReversedDepthLocation, impl->useReversedDepth);
+    }
 }
 
 

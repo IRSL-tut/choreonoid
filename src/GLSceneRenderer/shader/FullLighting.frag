@@ -105,6 +105,16 @@ uniform ShadowInfo shadows[MAX_NUM_SHADOWS];
 
 uniform bool isShadowAntiAliasingEnabled;
 
+/*
+  Uniform variables for the depth peeling of the transparent object rendering.
+  In each peeling pass, the fragments at or in front of the depth peeled in
+  the previous passes are discarded so that only the nearest remaining layer
+  is rendered.
+*/
+uniform bool isDepthPeelingEnabled = false;
+uniform bool isDepthPeelingReversedDepth = false;
+uniform sampler2D peeledDepthTexture;
+
 layout(location = 0) out vec4 color4;
 
 vec3 calcDiffuseAndSpecularElements(LightInfo light, vec3 diffuseColor);
@@ -112,6 +122,13 @@ float calcEdgeDistance();
 
 void main()
 {
+    if(isDepthPeelingEnabled){
+        float peeledDepth = texelFetch(peeledDepthTexture, ivec2(gl_FragCoord.xy), 0).r;
+        if(isDepthPeelingReversedDepth ? (gl_FragCoord.z >= peeledDepth) : (gl_FragCoord.z <= peeledDepth)){
+            discard;
+        }
+    }
+
     float edgeDistance;
     if(isWireframeEnabled){
         edgeDistance = calcEdgeDistance();

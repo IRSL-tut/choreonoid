@@ -375,6 +375,8 @@ public:
     bool isShadowAntiAliasingEnabled() const;
     void setUseReversedDepth(bool on);
     void resetReversedDepthState();
+    void setDepthPeelingTextureUnit(int textureUnit);
+    void setDepthPeelingEnabled(bool on);
 
 private:
     class Impl;

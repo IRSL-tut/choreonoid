@@ -42,6 +42,7 @@ int cnoidLoadGL(GLADloadfunc load)
     glad_glBindSampler = (PFNGLBINDSAMPLERPROC)load("glBindSampler");
     glad_glBindTexture = (PFNGLBINDTEXTUREPROC)load("glBindTexture");
     glad_glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)load("glBindVertexArray");
+    glad_glBeginQuery = (PFNGLBEGINQUERYPROC)load("glBeginQuery");
     glad_glBlendFunc = (PFNGLBLENDFUNCPROC)load("glBlendFunc");
     glad_glBlitFramebuffer = (PFNGLBLITFRAMEBUFFERPROC)load("glBlitFramebuffer");
     glad_glBufferData = (PFNGLBUFFERDATAPROC)load("glBufferData");
@@ -62,6 +63,7 @@ int cnoidLoadGL(GLADloadfunc load)
     glad_glDeleteBuffers = (PFNGLDELETEBUFFERSPROC)load("glDeleteBuffers");
     glad_glDeleteFramebuffers = (PFNGLDELETEFRAMEBUFFERSPROC)load("glDeleteFramebuffers");
     glad_glDeleteProgram = (PFNGLDELETEPROGRAMPROC)load("glDeleteProgram");
+    glad_glDeleteQueries = (PFNGLDELETEQUERIESPROC)load("glDeleteQueries");
     glad_glDeleteRenderbuffers = (PFNGLDELETERENDERBUFFERSPROC)load("glDeleteRenderbuffers");
     glad_glDeleteSamplers = (PFNGLDELETESAMPLERSPROC)load("glDeleteSamplers");
     glad_glDeleteShader = (PFNGLDELETESHADERPROC)load("glDeleteShader");
@@ -76,6 +78,7 @@ int cnoidLoadGL(GLADloadfunc load)
     glad_glEnable = (PFNGLENABLEPROC)load("glEnable");
     glad_glEnableClientState = (PFNGLENABLECLIENTSTATEPROC)load("glEnableClientState");
     glad_glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)load("glEnableVertexAttribArray");
+    glad_glEndQuery = (PFNGLENDQUERYPROC)load("glEndQuery");
     glad_glFlush = (PFNGLFLUSHPROC)load("glFlush");
     glad_glFogf = (PFNGLFOGFPROC)load("glFogf");
     glad_glFogfv = (PFNGLFOGFVPROC)load("glFogfv");
@@ -85,6 +88,7 @@ int cnoidLoadGL(GLADloadfunc load)
     glad_glFrontFace = (PFNGLFRONTFACEPROC)load("glFrontFace");
     glad_glGenBuffers = (PFNGLGENBUFFERSPROC)load("glGenBuffers");
     glad_glGenFramebuffers = (PFNGLGENFRAMEBUFFERSPROC)load("glGenFramebuffers");
+    glad_glGenQueries = (PFNGLGENQUERIESPROC)load("glGenQueries");
     glad_glGenRenderbuffers = (PFNGLGENRENDERBUFFERSPROC)load("glGenRenderbuffers");
     glad_glGenSamplers = (PFNGLGENSAMPLERSPROC)load("glGenSamplers");
     glad_glGenTextures = (PFNGLGENTEXTURESPROC)load("glGenTextures");
@@ -95,6 +99,7 @@ int cnoidLoadGL(GLADloadfunc load)
     glad_glGetAttachedShaders = (PFNGLGETATTACHEDSHADERSPROC)load("glGetAttachedShaders");
     glad_glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC)load("glGetProgramInfoLog");
     glad_glGetProgramiv = (PFNGLGETPROGRAMIVPROC)load("glGetProgramiv");
+    glad_glGetQueryObjectuiv = (PFNGLGETQUERYOBJECTUIVPROC)load("glGetQueryObjectuiv");
     glad_glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)load("glGetShaderInfoLog");
     glad_glGetShaderiv = (PFNGLGETSHADERIVPROC)load("glGetShaderiv");
     glad_glGetSubroutineIndex = (PFNGLGETSUBROUTINEINDEXPROC)load("glGetSubroutineIndex");

@@ -103,6 +103,18 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     void setLowMemoryConsumptionMode(bool on);
 
+    /**
+       Depth peeling gives the correct rendering result of overlapping transparent
+       objects even if the objects intersect one another. It is enabled by default.
+       When it is disabled or not available, the transparent objects are rendered
+       by the alpha blending in back-to-front sorted order, which is an
+       approximation that cannot correctly handle intersecting objects.
+    */
+    void setDepthPeelingEnabled(bool on);
+    bool isDepthPeelingEnabled() const;
+    void setMaxNumDepthPeelingLayers(int n);
+    int maxNumDepthPeelingLayers() const;
+
     virtual void setPickingImageOutputEnabled(bool on) override;
     virtual bool getPickingImage(Image& out_image) override;
 

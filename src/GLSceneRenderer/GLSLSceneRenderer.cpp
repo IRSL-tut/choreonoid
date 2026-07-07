@@ -1,6 +1,7 @@
 #include <cnoid/Config>
 #include "GLSLSceneRenderer.h"
 #include "ShaderPrograms.h"
+#include "GLSLProgram.h"
 
 #ifdef CNOID_ENABLE_FREE_TYPE
 #include "GLFreeType.h"
@@ -38,6 +39,12 @@ constexpr bool USE_GL_FLUSH_FUNCTION_IN_SHADOW_MAP_RENDERING = false;
 constexpr int DepthTextureUnit = 0;
 constexpr int ImageTextureUnit = 1;
 constexpr int ShadowMapTextureUnit = 2;
+
+// Texture units used in the depth peeling of the transparent object rendering.
+// Units 2 and 3 are used by the shadow maps (ShadowMapTextureUnit + shadow index).
+constexpr int PeeledDepthTextureUnit = 4;
+constexpr int DepthPeelingWorkTextureUnit = 5;
+constexpr int DepthPeelingWorkTextureUnitMS = 6;
 
 int glVersion = 0;
 
@@ -458,10 +465,16 @@ public:
         // enclosing the object of this entry
         float minTransparency;
 
-        TransparentRenderingEntry(function<void()> renderingFunction, float depth, float minTransparency)
+        // True if the entry is rendered by the full lighting program, which
+        // supports the fragment rejection required by the depth peeling
+        bool isDepthPeelable;
+
+        TransparentRenderingEntry(
+            function<void()> renderingFunction, float depth, float minTransparency, bool isDepthPeelable)
             : renderingFunction(std::move(renderingFunction)),
               depth(depth),
-              minTransparency(minTransparency)
+              minTransparency(minTransparency),
+              isDepthPeelable(isDepthPeelable)
         { }
     };
     vector<TransparentRenderingEntry> transparentRenderingQueue;
@@ -484,6 +497,22 @@ public:
     bool isInfiniteFarOverrideEnabled;
     int pickingImageWidth;
     int pickingImageHeight;
+
+    // Resources for the depth peeling of the transparent object rendering
+    bool isDepthPeelingEnabled;
+    bool isDepthPeelingAvailable; // Set to false when the resource initialization fails
+    int maxNumDepthPeelingLayers;
+    GLuint depthPeelingFBO;
+    GLuint peeledDepthTextures[2]; // Ping-pong depth textures for the peeling passes
+    vector<GLuint> depthPeelingLayerTextures;
+    int depthPeelingBufferWidth;
+    int depthPeelingBufferHeight;
+    GLuint depthPeelingQuery; // Occlusion query for detecting empty layers
+    GLuint depthPeelingVAO;   // Empty VAO for the full-screen passes
+    GLSLProgram depthPeelingInitProgram;
+    GLSLProgram depthPeelingCompositeProgram;
+    GLint depthPeelingInitUseMsaaLocation;
+    bool areDepthPeelingProgramsInitialized;
 
     LightingMode lightingMode;
     SgMaterialPtr defaultMaterial;
@@ -616,8 +645,14 @@ public:
     void doPureWireframeRendering();
     void doVertexRendering();
     void addTransparentRenderingEntry(
-        const Affine3& modelTransform, const BoundingBox& bbox, function<void()> renderingFunction);
-    void renderTransparentObjects();
+        const Affine3& modelTransform, const BoundingBox& bbox, bool isDepthPeelable,
+        function<void()> renderingFunction);
+    void renderTransparentObjects(bool isDepthPeelingAllowed);
+    void renderBlendedTransparentEntries(bool skipDepthPeelableEntries);
+    bool initializeDepthPeelingResources();
+    void releaseDepthPeelingResources(bool isGLContextActive);
+    void renderTransparentObjectsWithDepthPeeling();
+    void renderDepthPeelableEntries();
     void renderOverlayObjects();
     void pushProgram(ShaderProgram* program);
     template<class ShaderProgramType>
@@ -911,6 +946,9 @@ void GLSLSceneRenderer::Impl::initialize()
     isReversedDepthBufferActive = false;
     isInfiniteFarOverrideEnabled = true;
 
+    isDepthPeelingEnabled = true;
+    maxNumDepthPeelingLayers = 4;
+
     lightingMode = NormalLighting;
     
     doUnusedResourceCheck = true;
@@ -1106,6 +1144,8 @@ void GLSLSceneRenderer::Impl::clearGL(bool isGLContextActive, bool isCalledFromC
         }
     }
 
+    releaseDepthPeelingResources(isGLContextActive && !isCalledFromConstructor);
+
     if(!isCalledFromDestructor){
         currentProgram = nullptr;
         currentSolidColorProgram = nullptr;
@@ -1266,6 +1306,7 @@ bool GLSLSceneRenderer::Impl::initializeGLForRendering()
         minimumLightingProgram->initialize();
         fullLightingProgram->setColorTextureUnit(ImageTextureUnit);
         fullLightingProgram->setShadowMapTextureTopIndex(ShadowMapTextureUnit);
+        fullLightingProgram->setDepthPeelingTextureUnit(PeeledDepthTextureUnit);
         fullLightingProgram->initialize();
     }
     catch(std::runtime_error& error){
@@ -1708,7 +1749,7 @@ void GLSLSceneRenderer::Impl::doRender()
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         if(!transparentRenderingQueue.empty()){
-            renderTransparentObjects();
+            renderTransparentObjects(true);
         }
         if(!overlayRenderingQueue.empty()){
             renderOverlayObjects();
@@ -1867,7 +1908,7 @@ bool GLSLSceneRenderer::Impl::doPick(int x, int y)
         renderChildNodes(self->sceneRoot());
 
         if(!transparentRenderingQueue.empty()){
-            renderTransparentObjects();
+            renderTransparentObjects(false);
         }
         if(!overlayRenderingQueue.empty()){
             renderOverlayObjects();
@@ -2314,7 +2355,7 @@ void GLSLSceneRenderer::dispatchToTransparentPhase
         // not preserve the overlay projection and child order. Such nodes need
         // an immediate overlay path similar to transparent SgShape.
         impl->addTransparentRenderingEntry(
-            impl->modelMatrixStack.back(), BoundingBox(),
+            impl->modelMatrixStack.back(), BoundingBox(), false,
             [this, renderingFunction, object, matrixIndex, id](){
                 renderingFunction(object, impl->modelMatrixBuffer[matrixIndex], id); });
     }
@@ -2322,21 +2363,19 @@ void GLSLSceneRenderer::dispatchToTransparentPhase
 
 
 void GLSLSceneRenderer::Impl::addTransparentRenderingEntry
-(const Affine3& modelTransform, const BoundingBox& bbox, function<void()> renderingFunction)
+(const Affine3& modelTransform, const BoundingBox& bbox, bool isDepthPeelable, function<void()> renderingFunction)
 {
     Vector3 p = modelTransform.translation();
     if(!bbox.empty()){
         p = modelTransform * bbox.center();
     }
     float depth = static_cast<float>(-(viewTransform * p).z());
-    transparentRenderingQueue.emplace_back(std::move(renderingFunction), depth, minTransparency);
+    transparentRenderingQueue.emplace_back(std::move(renderingFunction), depth, minTransparency, isDepthPeelable);
 }
 
 
-void GLSLSceneRenderer::Impl::renderTransparentObjects()
+void GLSLSceneRenderer::Impl::renderTransparentObjects(bool isDepthPeelingAllowed)
 {
-    ScopedTransparentRendering transparentRendering(!isRenderingPickingImage);
-
     // Sort the entries in back-to-front order to blend overlapping transparent
     // objects correctly. The sorting must be stable to keep the scene graph
     // traversal order for the entries with the same depth.
@@ -2346,6 +2385,46 @@ void GLSLSceneRenderer::Impl::renderTransparentObjects()
             return e1.depth > e2.depth;
         });
 
+    bool hasDepthPeelableEntries = false;
+    bool hasNonPeelableEntries = false;
+    for(auto& entry : transparentRenderingQueue){
+        if(entry.isDepthPeelable){
+            hasDepthPeelableEntries = true;
+        } else {
+            hasNonPeelableEntries = true;
+        }
+    }
+
+    /*
+      The depth peeling gives the exactly correct result of the transparent object
+      rendering even if the transparent objects intersect one another. It requires
+      the fragment rejection implemented in the full lighting program, so it is only
+      applied when the entries are rendered by that program. The remaining entries
+      are rendered by the back-to-front sorted alpha blending, which is also used
+      as the fallback when the depth peeling is not available.
+    */
+    bool depthPeelingDone = false;
+    if(isDepthPeelingAllowed && hasDepthPeelableEntries &&
+       isDepthPeelingEnabled && !isRenderingPickingImage &&
+       currentProgram == fullLightingProgram.get()){
+        if(initializeDepthPeelingResources()){
+            renderTransparentObjectsWithDepthPeeling();
+            depthPeelingDone = true;
+        }
+    }
+
+    if(!depthPeelingDone || hasNonPeelableEntries){
+        renderBlendedTransparentEntries(depthPeelingDone);
+    }
+
+    transparentRenderingQueue.clear();
+}
+
+
+void GLSLSceneRenderer::Impl::renderBlendedTransparentEntries(bool skipDepthPeelableEntries)
+{
+    ScopedTransparentRendering transparentRendering(!isRenderingPickingImage);
+
     float orgMinTransparency = minTransparency;
     float currentMinTransparency = orgMinTransparency;
 
@@ -2354,6 +2433,9 @@ void GLSLSceneRenderer::Impl::renderTransparentObjects()
     // before the execution so that the reallocation of the queue buffer does not
     // invalidate the entry being executed.
     for(size_t i=0; i < transparentRenderingQueue.size(); ++i){
+        if(skipDepthPeelableEntries && transparentRenderingQueue[i].isDepthPeelable){
+            continue;
+        }
         auto entry = std::move(transparentRenderingQueue[i]);
         if(entry.minTransparency != currentMinTransparency){
             fullLightingProgram->setMinimumTransparency(entry.minTransparency);
@@ -2365,8 +2447,321 @@ void GLSLSceneRenderer::Impl::renderTransparentObjects()
     if(currentMinTransparency != orgMinTransparency){
         fullLightingProgram->setMinimumTransparency(orgMinTransparency);
     }
+}
 
-    transparentRenderingQueue.clear();
+
+bool GLSLSceneRenderer::Impl::initializeDepthPeelingResources()
+{
+    if(!isDepthPeelingAvailable){
+        return false;
+    }
+    auto& vp = self->viewport();
+    if(vp.w <= 0 || vp.h <= 0){
+        return false;
+    }
+    bool sizeChanged = (vp.w != depthPeelingBufferWidth || vp.h != depthPeelingBufferHeight);
+    int numLayers = std::max(1, maxNumDepthPeelingLayers);
+    bool numLayersChanged = (static_cast<size_t>(numLayers) != depthPeelingLayerTextures.size());
+    if(!sizeChanged && !numLayersChanged && depthPeelingFBO){
+        return true;
+    }
+
+    try {
+        if(!areDepthPeelingProgramsInitialized){
+            depthPeelingInitProgram.loadShader(
+                ":/GLSceneRenderer/shader/DepthPeeling.vert", GL_VERTEX_SHADER);
+            depthPeelingInitProgram.loadShader(
+                ":/GLSceneRenderer/shader/DepthPeelingInit.frag", GL_FRAGMENT_SHADER);
+            depthPeelingInitProgram.link();
+            depthPeelingInitProgram.use();
+            glUniform1i(
+                depthPeelingInitProgram.getUniformLocation("depthTexture2D"), DepthPeelingWorkTextureUnit);
+            glUniform1i(
+                depthPeelingInitProgram.getUniformLocation("depthTextureMS"), DepthPeelingWorkTextureUnitMS);
+            depthPeelingInitUseMsaaLocation = depthPeelingInitProgram.getUniformLocation("useMsaa");
+
+            depthPeelingCompositeProgram.loadShader(
+                ":/GLSceneRenderer/shader/DepthPeeling.vert", GL_VERTEX_SHADER);
+            depthPeelingCompositeProgram.loadShader(
+                ":/GLSceneRenderer/shader/DepthPeelingComposite.frag", GL_FRAGMENT_SHADER);
+            depthPeelingCompositeProgram.link();
+            depthPeelingCompositeProgram.use();
+            glUniform1i(
+                depthPeelingCompositeProgram.getUniformLocation("layerTexture"), DepthPeelingWorkTextureUnit);
+
+            glUseProgram(0);
+            areDepthPeelingProgramsInitialized = true;
+        }
+    }
+    catch(std::runtime_error& error){
+        os() << formatR(_("Depth peeling is disabled because its shader program cannot be initialized: {0}"),
+                        error.what()) << endl;
+        isDepthPeelingAvailable = false;
+        return false;
+    }
+
+    if(!depthPeelingVAO){
+        glGenVertexArrays(1, &depthPeelingVAO);
+    }
+    if(!depthPeelingQuery){
+        glGenQueries(1, &depthPeelingQuery);
+    }
+    if(!depthPeelingFBO){
+        glGenFramebuffers(1, &depthPeelingFBO);
+    }
+
+    /*
+      GL_DEPTH_COMPONENT32F is used for the peeling depth textures so that the
+      depth values written in a peeling pass exactly match the gl_FragCoord.z
+      values compared in the next pass. A lower precision format may break the
+      exact match and prevent the peeling from advancing to the next layer.
+    */
+    if(!peeledDepthTextures[0]){
+        glGenTextures(2, peeledDepthTextures);
+    }
+    for(int i=0; i < 2; ++i){
+        glActiveTexture(GL_TEXTURE0 + PeeledDepthTextureUnit);
+        glBindTexture(GL_TEXTURE_2D, peeledDepthTextures[i]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, vp.w, vp.h, 0,
+                     GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+    }
+
+    if(numLayersChanged && !depthPeelingLayerTextures.empty()){
+        glDeleteTextures(depthPeelingLayerTextures.size(), depthPeelingLayerTextures.data());
+        depthPeelingLayerTextures.clear();
+    }
+    if(depthPeelingLayerTextures.empty()){
+        depthPeelingLayerTextures.resize(numLayers, 0);
+        glGenTextures(numLayers, depthPeelingLayerTextures.data());
+    }
+    for(auto& texture : depthPeelingLayerTextures){
+        glActiveTexture(GL_TEXTURE0 + DepthPeelingWorkTextureUnit);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, vp.w, vp.h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    }
+    glActiveTexture(GL_TEXTURE0);
+
+    GLint prevFBO;
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthPeelingFBO);
+    glFramebufferTexture2D(
+        GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, peeledDepthTextures[0], 0);
+    glFramebufferTexture2D(
+        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, depthPeelingLayerTextures[0], 0);
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    glBindFramebuffer(GL_FRAMEBUFFER, prevFBO);
+
+    if(status != GL_FRAMEBUFFER_COMPLETE){
+        os() << _("Depth peeling is disabled because its framebuffer is not complete.") << endl;
+        releaseDepthPeelingResources(true);
+        isDepthPeelingAvailable = false;
+        return false;
+    }
+
+    depthPeelingBufferWidth = vp.w;
+    depthPeelingBufferHeight = vp.h;
+
+    return true;
+}
+
+
+void GLSLSceneRenderer::Impl::releaseDepthPeelingResources(bool isGLContextActive)
+{
+    if(isGLContextActive){
+        if(depthPeelingFBO){
+            glDeleteFramebuffers(1, &depthPeelingFBO);
+        }
+        if(peeledDepthTextures[0]){
+            glDeleteTextures(2, peeledDepthTextures);
+        }
+        if(!depthPeelingLayerTextures.empty()){
+            glDeleteTextures(depthPeelingLayerTextures.size(), depthPeelingLayerTextures.data());
+        }
+        if(depthPeelingQuery){
+            glDeleteQueries(1, &depthPeelingQuery);
+        }
+        if(depthPeelingVAO){
+            glDeleteVertexArrays(1, &depthPeelingVAO);
+        }
+        if(areDepthPeelingProgramsInitialized){
+            depthPeelingInitProgram.release();
+            depthPeelingCompositeProgram.release();
+        }
+    }
+    depthPeelingFBO = 0;
+    peeledDepthTextures[0] = 0;
+    peeledDepthTextures[1] = 0;
+    depthPeelingLayerTextures.clear();
+    depthPeelingBufferWidth = 0;
+    depthPeelingBufferHeight = 0;
+    depthPeelingQuery = 0;
+    depthPeelingVAO = 0;
+    areDepthPeelingProgramsInitialized = false;
+
+    // Allow the initialization to be retried with a new GL context
+    isDepthPeelingAvailable = true;
+}
+
+
+void GLSLSceneRenderer::Impl::renderTransparentObjectsWithDepthPeeling()
+{
+    /*
+      Depth peeling renders the transparent objects in multiple passes. The i-th
+      pass extracts the i-th nearest layer of the transparent fragments into a
+      layer texture by discarding the fragments at or in front of the depth
+      peeled in the previous pass. The extracted layers are finally composited
+      over the scene in back-to-front order with the standard alpha blending.
+    */
+    GLint prevFBO;
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevFBO);
+    GLint prevViewport[4];
+    glGetIntegerv(GL_VIEWPORT, prevViewport);
+
+    const int w = depthPeelingBufferWidth;
+    const int h = depthPeelingBufferHeight;
+    const GLenum depthFunc = isReversedDepthBufferActive ? GL_GEQUAL : GL_LEQUAL;
+    const double defaultClearDepth = isReversedDepthBufferActive ? 0.0 : 1.0;
+
+    // The depth value that means "no fragment has been peeled yet".
+    // It makes the first pass keep all the fragments.
+    const double noPeeledDepth = isReversedDepthBufferActive ? 1.0 : 0.0;
+
+    glBindFramebuffer(GL_FRAMEBUFFER, depthPeelingFBO);
+    glViewport(0, 0, w, h);
+
+    // Initialize the "previously peeled depth" texture for the first pass
+    glFramebufferTexture2D(
+        GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, peeledDepthTextures[1], 0);
+    glClearDepth(noPeeledDepth);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glClearDepth(defaultClearDepth);
+
+    const int maxNumLayers = static_cast<int>(depthPeelingLayerTextures.size());
+    int numLayers = 0;
+
+    for(int i=0; i < maxNumLayers; ++i){
+
+        int writeIndex = i % 2;
+        int prevIndex = 1 - writeIndex;
+
+        glFramebufferTexture2D(
+            GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, peeledDepthTextures[writeIndex], 0);
+        glFramebufferTexture2D(
+            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, depthPeelingLayerTextures[i], 0);
+
+        // The alpha channel must be written into the layer texture although
+        // the alpha writing is disabled in the main framebuffer rendering
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        /*
+          Copy the depth values of the opaque scene into the peeling depth buffer
+          by the full-screen pass so that the ordinary depth test hides the
+          transparent fragments behind the opaque objects. This also works as the
+          clearing of the depth buffer because the pass covers all the pixels.
+        */
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        glDepthFunc(GL_ALWAYS);
+        depthPeelingInitProgram.use();
+        bool useMsaa = (msaaSamples > 1);
+        glUniform1i(depthPeelingInitUseMsaaLocation, useMsaa);
+        if(useMsaa){
+            glActiveTexture(GL_TEXTURE0 + DepthPeelingWorkTextureUnitMS);
+            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, depthTexture);
+        } else {
+            glActiveTexture(GL_TEXTURE0 + DepthPeelingWorkTextureUnit);
+            glBindTexture(GL_TEXTURE_2D, depthTexture);
+        }
+        glBindVertexArray(depthPeelingVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glDepthFunc(depthFunc);
+
+        // The depth peeled in the previous pass is given to the fragment rejection
+        glActiveTexture(GL_TEXTURE0 + PeeledDepthTextureUnit);
+        glBindTexture(GL_TEXTURE_2D, peeledDepthTextures[prevIndex]);
+        glActiveTexture(GL_TEXTURE0);
+
+        fullLightingProgram->glslProgram().use();
+        if(i == 0){
+            fullLightingProgram->setDepthPeelingEnabled(true);
+        }
+
+        glBeginQuery(GL_ANY_SAMPLES_PASSED, depthPeelingQuery);
+        renderDepthPeelableEntries();
+        glEndQuery(GL_ANY_SAMPLES_PASSED);
+
+        GLuint anySamplesPassed = 0;
+        glGetQueryObjectuiv(depthPeelingQuery, GL_QUERY_RESULT, &anySamplesPassed);
+        if(!anySamplesPassed){
+            break; // The layer is empty and the peeling is finished
+        }
+        numLayers = i + 1;
+    }
+
+    fullLightingProgram->setDepthPeelingEnabled(false);
+
+    // Composite the extracted layers over the scene in back-to-front order
+    glBindFramebuffer(GL_FRAMEBUFFER, prevFBO);
+    glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+
+    if(numLayers > 0){
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        depthPeelingCompositeProgram.use();
+        glBindVertexArray(depthPeelingVAO);
+        glActiveTexture(GL_TEXTURE0 + DepthPeelingWorkTextureUnit);
+        for(int i = numLayers - 1; i >= 0; --i){
+            glBindTexture(GL_TEXTURE_2D, depthPeelingLayerTextures[i]);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+        }
+        glActiveTexture(GL_TEXTURE0);
+
+        glDisable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
+    }
+
+    fullLightingProgram->glslProgram().use();
+}
+
+
+void GLSLSceneRenderer::Impl::renderDepthPeelableEntries()
+{
+    float orgMinTransparency = minTransparency;
+    float currentMinTransparency = orgMinTransparency;
+
+    /*
+      Unlike renderBlendedTransparentEntries, the entries are referenced in place
+      without moving them out because the same entries are executed once per
+      peeling pass. The shape rendering functions never modify the queue, so the
+      iteration is safe.
+    */
+    for(auto& entry : transparentRenderingQueue){
+        if(!entry.isDepthPeelable){
+            continue;
+        }
+        if(entry.minTransparency != currentMinTransparency){
+            fullLightingProgram->setMinimumTransparency(entry.minTransparency);
+            currentMinTransparency = entry.minTransparency;
+        }
+        entry.renderingFunction();
+    }
+
+    if(currentMinTransparency != orgMinTransparency){
+        fullLightingProgram->setMinimumTransparency(orgMinTransparency);
+    }
 }
 
 
@@ -2433,7 +2828,9 @@ void GLSLSceneRenderer::Impl::renderOverlayObjects()
     }
 
     if(!transparentRenderingQueue.empty()){
-        renderTransparentObjects();
+        // Depth peeling is not used here because the overlay rendering has its own
+        // depth buffer and projection that the peeling passes do not support
+        renderTransparentObjects(false);
     }
 
     if(isRenderingPickingImage){
@@ -2839,7 +3236,7 @@ void GLSLSceneRenderer::Impl::renderShape(SgShape* shape)
                 modelMatrixBuffer.push_back(modelMatrixStack.back());
                 auto pickIndex = pushPickEndNode(shape);
                 addTransparentRenderingEntry(
-                    modelMatrixStack.back(), mesh->boundingBox(),
+                    modelMatrixStack.back(), mesh->boundingBox(), true,
                     [this, shapePtr, matrixIndex, pickIndex](){
                         renderShapeMain(shapePtr, modelMatrixBuffer[matrixIndex], pickIndex); });
                 popPickNode();
@@ -3915,7 +4312,7 @@ void GLSLSceneRenderer::Impl::renderPreparedPlot
         // Transparent plots in a ViewportOverlay need an immediate overlay path
         // similar to transparent SgShape to preserve the overlay projection and order.
         addTransparentRenderingEntry(
-            modelMatrixStack.back(), plot->boundingBox(),
+            modelMatrixStack.back(), plot->boundingBox(), false,
             [this, plotPtr, primitiveMode, resource, matrixIndex, pickIndex, setupShaderProgram, first, count](){
                 renderPlotMain(
                     plotPtr, primitiveMode, resource, modelMatrixBuffer[matrixIndex],
@@ -4771,4 +5168,28 @@ void GLSLSceneRenderer::setLowMemoryConsumptionMode(bool on)
         impl->isLowMemoryConsumptionMode = on;
         requestToClearResources();
     }
+}
+
+
+void GLSLSceneRenderer::setDepthPeelingEnabled(bool on)
+{
+    impl->isDepthPeelingEnabled = on;
+}
+
+
+bool GLSLSceneRenderer::isDepthPeelingEnabled() const
+{
+    return impl->isDepthPeelingEnabled;
+}
+
+
+void GLSLSceneRenderer::setMaxNumDepthPeelingLayers(int n)
+{
+    impl->maxNumDepthPeelingLayers = std::max(1, n);
+}
+
+
+int GLSLSceneRenderer::maxNumDepthPeelingLayers() const
+{
+    return impl->maxNumDepthPeelingLayers;
 }
