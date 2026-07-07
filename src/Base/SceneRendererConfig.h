@@ -40,6 +40,7 @@ public:
     static void setSystemDefaultMsaaLevel(int level);
     static SignalProxy<void()> sigSystemDefaultMsaaLevelChanged();
     static void setMenuAsOpenGLMsaaLevelMenu(Menu* menu);
+    static void setMenuAsOpenGLTransparentRenderingModeMenu(Menu* menu);
 
     static bool inputColorWithColorDialog(const std::string& title, Vector3f& io_color, QPushButton* button);
     static void setColorButtonColor(QPushButton* button, const Vector3f& color);

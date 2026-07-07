@@ -1089,6 +1089,18 @@ msgstr "GPUメモリ消費低減モード"
 msgid "MSAA Level (System Default)"
 msgstr "MSAAレベル（システム設定）"
 
+msgid "Transparent Rendering"
+msgstr "半透明描画"
+
+msgid "Per-Object Sorting"
+msgstr "オブジェクト単位のソート"
+
+msgid "Per-Pixel Compositing"
+msgstr "ピクセル単位の重ね合わせ"
+
+msgid "Per-Pixel Compositing (Anti-Aliased)"
+msgstr "ピクセル単位の重ね合わせ（アンチエイリアス付き）"
+
 msgid "Help"
 msgstr "ヘルプ"
 

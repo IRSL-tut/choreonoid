@@ -37,6 +37,30 @@ const MsaaLevelInfo msaaLevels[] = {
 };
 constexpr int numMsaaLevels = sizeof(msaaLevels) / sizeof(MsaaLevelInfo);
 
+struct TransparentRenderingModeInfo { const char* label; int mode; const char* symbol; };
+const TransparentRenderingModeInfo transparentRenderingModes[] = {
+    { N_("Per-Object Sorting"), GLSceneRenderer::SortedTransparentRendering, "object_sorting" },
+    { N_("Per-Pixel Compositing"), GLSceneRenderer::DepthPeelingTransparentRendering, "depth_peeling" },
+    { N_("Per-Pixel Compositing (Anti-Aliased)"),
+      GLSceneRenderer::SupersampledDepthPeelingTransparentRendering, "supersampled_depth_peeling" }
+};
+
+void loadSystemTransparentRenderingMode()
+{
+    static bool initialized = false;
+    if(!initialized){
+        auto glConfig = AppConfig::archive()->openMapping("OpenGL");
+        string symbol = glConfig->get("transparent_rendering_mode", "depth_peeling");
+        for(auto& info : transparentRenderingModes){
+            if(symbol == info.symbol){
+                GLSceneRenderer::setTransparentRenderingMode(info.mode);
+                break;
+            }
+        }
+        initialized = true;
+    }
+}
+
 enum ConfigCategory
 {
     Lighting = 1 << 1,
@@ -150,6 +174,8 @@ public:
     double lineWidth;
     int msaaLevel;
 
+    ScopedConnection transparentRenderingModeConnection;
+
     ConfigWidgetSet* widgetSet;
     ConfigDialog* dialog;
     
@@ -196,6 +222,13 @@ void SceneRendererConfig::Impl::doCommonInitialization()
             updateRenderers(Drawing, true);
         }
     });
+
+    // The transparent rendering mode is a system-wide setting directly referred
+    // to by the renderers, so only the re-rendering is requested here.
+    loadSystemTransparentRenderingMode();
+    transparentRenderingModeConnection =
+        GLSceneRenderer::sigTransparentRenderingModeChanged().connect(
+            [this](){ self->onRendererConfigUpdated(true); });
 }
 
 
@@ -805,6 +838,35 @@ void SceneRendererConfig::setMenuAsOpenGLMsaaLevelMenu(Menu* menu)
         int currentLevel = getSystemDefaultMsaaLevel();
         for(auto action : actionGroup->actions()){
             action->setChecked(action->data().toInt() == currentLevel);
+        }
+    });
+}
+
+
+void SceneRendererConfig::setMenuAsOpenGLTransparentRenderingModeMenu(Menu* menu)
+{
+    loadSystemTransparentRenderingMode();
+
+    auto actionGroup = new QActionGroup(menu);
+    actionGroup->setExclusive(true);
+
+    for(auto& info : transparentRenderingModes){
+        auto action = menu->addAction(_(info.label));
+        action->setCheckable(true);
+        action->setData(info.mode);
+        actionGroup->addAction(action);
+
+        QObject::connect(action, &QAction::triggered, [info](){
+            GLSceneRenderer::setTransparentRenderingMode(info.mode);
+            auto glConfig = AppConfig::archive()->openMapping("OpenGL");
+            glConfig->write("transparent_rendering_mode", info.symbol);
+        });
+    }
+
+    QObject::connect(menu, &QMenu::aboutToShow, [actionGroup](){
+        int currentMode = GLSceneRenderer::transparentRenderingMode();
+        for(auto action : actionGroup->actions()){
+            action->setChecked(action->data().toInt() == currentMode);
         }
     });
 }
