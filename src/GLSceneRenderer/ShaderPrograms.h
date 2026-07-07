@@ -369,6 +369,9 @@ public:
     void setNumShadows(int n);
     ShadowMapProgram* shadowMapProgram();
     void getShadowMapSize(int& width, int& height) const;
+    void setShadowMapSize(int width, int height);
+    // This must be called with the GL context active to apply a pending size change
+    void updateShadowMapSize();
     SgCamera* getShadowMapCamera(SgLight* light, Isometry3& io_T);
     void setShadowMapViewProjection(const Matrix4& PV);
     void setShadowAntiAliasingEnabled(bool on);

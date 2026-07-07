@@ -274,6 +274,10 @@ public:
     int numShadows;
     int shadowMapWidth;
     int shadowMapHeight;
+    int allocatedShadowMapWidth;
+    int allocatedShadowMapHeight;
+    int maxShadowMapSize;
+    bool needToResizeShadowMaps;
     SgPerspectiveCameraPtr persShadowCamera;  
     SgOrthographicCameraPtr orthoShadowCamera;
     ShadowMapProgram shadowMapProgram;
@@ -313,6 +317,8 @@ public:
     Impl(FullLightingProgram* self);
     void initialize(GLSLProgram& glsl);
     void initializeShadowInfo(GLSLProgram& glsl, int index);
+    void clampShadowMapSizeToHardwareLimit();
+    void allocateShadowMapTextures();
     void activate(GLSLProgram& glsl);
     void updateShaderWireframeState();
 };
@@ -1411,6 +1417,10 @@ FullLightingProgram::Impl::Impl(FullLightingProgram* self)
     numShadows = 0;
     shadowMapWidth = 2048;
     shadowMapHeight = 2048;
+    allocatedShadowMapWidth = 0;
+    allocatedShadowMapHeight = 0;
+    maxShadowMapSize = 0;
+    needToResizeShadowMaps = false;
     persShadowCamera = new SgPerspectiveCamera;
     orthoShadowCamera = new SgOrthographicCamera;
     orthoShadowCamera->setHeight(15.0);
@@ -1478,10 +1488,13 @@ void FullLightingProgram::Impl::initialize(GLSLProgram& glsl)
     wireframeWidthLocation = glsl.getUniformLocation("wireframeWidth");
 
     numShadowsLocation = glsl.getUniformLocation("numShadows");
+    clampShadowMapSizeToHardwareLimit();
     shadowInfos.resize(maxNumShadows);
     for(int i=0; i < maxNumShadows; ++i){
         initializeShadowInfo(glsl, i);
     }
+    allocatedShadowMapWidth = shadowMapWidth;
+    allocatedShadowMapHeight = shadowMapHeight;
     // This is necessary to make all the shadow maps work correctly.
     // Does QOpenGLWidget do some operation on the current active texture unit
     // just after finishing the initializeGL function?
@@ -1755,6 +1768,82 @@ void FullLightingProgram::getShadowMapSize(int& width, int& height) const
 {
     width = impl->shadowMapWidth;
     height = impl->shadowMapHeight;
+}
+
+
+void FullLightingProgram::setShadowMapSize(int width, int height)
+{
+    if(width > 0 && height > 0 &&
+       (width != impl->shadowMapWidth || height != impl->shadowMapHeight)){
+        impl->shadowMapWidth = width;
+        impl->shadowMapHeight = height;
+        // If the shadow map textures have already been created, they are resized
+        // later when the GL context is active. Otherwise the new size is simply
+        // used when the textures are created.
+        impl->needToResizeShadowMaps = !impl->shadowInfos.empty();
+    }
+}
+
+
+void FullLightingProgram::updateShadowMapSize()
+{
+    if(!impl->needToResizeShadowMaps){
+        return;
+    }
+    impl->needToResizeShadowMaps = false;
+
+    impl->clampShadowMapSizeToHardwareLimit();
+    if(impl->shadowMapWidth == impl->allocatedShadowMapWidth &&
+       impl->shadowMapHeight == impl->allocatedShadowMapHeight){
+        return;
+    }
+
+    while(glGetError() != GL_NO_ERROR); // Clear the stale error flags
+
+    impl->allocateShadowMapTextures();
+
+    if(glGetError() != GL_NO_ERROR){
+        // The allocation failed probably due to a GPU memory shortage.
+        // Restore the previously allocated shadow map size.
+        impl->shadowMapWidth = impl->allocatedShadowMapWidth;
+        impl->shadowMapHeight = impl->allocatedShadowMapHeight;
+        impl->allocateShadowMapTextures();
+    } else {
+        impl->allocatedShadowMapWidth = impl->shadowMapWidth;
+        impl->allocatedShadowMapHeight = impl->shadowMapHeight;
+    }
+}
+
+
+void FullLightingProgram::Impl::clampShadowMapSizeToHardwareLimit()
+{
+    if(maxShadowMapSize == 0){
+        glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxShadowMapSize);
+        if(maxShadowMapSize <= 0){
+            maxShadowMapSize = 2048; // Conservative fallback
+        }
+    }
+    if(shadowMapWidth > maxShadowMapSize){
+        shadowMapWidth = maxShadowMapSize;
+    }
+    if(shadowMapHeight > maxShadowMapSize){
+        shadowMapHeight = maxShadowMapSize;
+    }
+}
+
+
+void FullLightingProgram::Impl::allocateShadowMapTextures()
+{
+    const int n = shadowInfos.size();
+    for(int i=0; i < n; ++i){
+        glActiveTexture(GL_TEXTURE0 + shadowMapTextureTopIndex + i);
+        glBindTexture(GL_TEXTURE_2D, shadowInfos[i].depthTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, shadowMapWidth, shadowMapHeight,
+                     0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    }
+    if(n > 0){
+        glActiveTexture(GL_TEXTURE0);
+    }
 }
 
 

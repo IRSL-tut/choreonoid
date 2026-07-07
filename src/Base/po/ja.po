@@ -1985,6 +1985,16 @@ msgstr "影の要因となる光源の番号"
 msgid "Anti-aliasing of shadows"
 msgstr "影のアンチエイリアシング"
 
+msgid "Shadow map size"
+msgstr "シャドウマップサイズ"
+
+msgid ""
+"Resolution of the shadow map texture. Note that large sizes consume a large "
+"amount of GPU memory and the size may be limited by the GPU."
+msgstr ""
+"シャドウマップテクスチャの解像度です。大きなサイズはGPUメモリを大量に消費し、"
+"GPUによってはサイズが制限されることがあります。"
+
 msgid "Texture"
 msgstr "テクスチャ"
 

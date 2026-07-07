@@ -1861,6 +1861,8 @@ void GLSLSceneRenderer::Impl::setupFullLightingRendering()
             shadowCasterBBoxAccumulator.clear();
         }
 
+        program->updateShadowMapSize();
+
         int w, h;
         program->getShadowMapSize(w, h);
         auto vp0 = self->viewport(); // preserve the original viewport size
@@ -5374,6 +5376,12 @@ void GLSLSceneRenderer::clearAdditionalLightShadows()
 void GLSLSceneRenderer::setShadowAntiAliasingEnabled(bool on)
 {
     impl->fullLightingProgram->setShadowAntiAliasingEnabled(on);
+}
+
+
+void GLSLSceneRenderer::setShadowMapSize(int width, int height)
+{
+    impl->fullLightingProgram->setShadowMapSize(width, height);
 }
 
 

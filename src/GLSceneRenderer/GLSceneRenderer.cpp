@@ -230,6 +230,12 @@ void GLSceneRenderer::setShadowAntiAliasingEnabled(bool /* on */)
 }
 
 
+void GLSceneRenderer::setShadowMapSize(int /* width */, int /* height */)
+{
+
+}
+
+
 void GLSceneRenderer::setUpsideDown(bool /* on */)
 {
 

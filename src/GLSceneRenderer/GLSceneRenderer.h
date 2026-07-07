@@ -125,7 +125,8 @@ public:
     virtual void setAdditionalLightShadowEnabled(int index, bool on = true);
     virtual void clearAdditionalLightShadows();
     virtual void setShadowAntiAliasingEnabled(bool on);
-    
+    virtual void setShadowMapSize(int width, int height);
+
     virtual void setDefaultSmoothShading(bool on) = 0;
     virtual SgMaterial* defaultMaterial() = 0;
     virtual void enableTexture(bool on) = 0;

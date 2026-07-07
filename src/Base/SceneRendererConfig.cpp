@@ -26,6 +26,8 @@ using namespace cnoid;
 namespace {
 
 constexpr int MaxNumShadows = 2;
+constexpr int DefaultShadowMapSize = 2048;
+constexpr int ShadowMapSizeChoices[] = { 1024, 2048, 4096, 8192, 16384, 32768 };
 
 int systemDefaultMsaaLevel = 4;
 bool isSystemDefaultMsaaLevelInitialized = false;
@@ -102,6 +104,7 @@ public:
     };
     ShadowWidgetSet shadowWidgetSets[MaxNumShadows];
     CheckBox* shadowAntiAliasingCheck;
+    ComboBox* shadowMapSizeCombo;
     PushButton* backgroundColorButton;
     PushButton* defaultColorButton;
     PushButton* collisionHighlightColorButton;
@@ -165,6 +168,7 @@ public:
         bool isEnabled;
     };
     ShadowInfo shadowInfos[MaxNumShadows];
+    int shadowMapSize;
     
     Vector3f backgroundColor;
     Vector3f defaultColor;
@@ -261,7 +265,8 @@ SceneRendererConfig::Impl::Impl(SceneRendererConfig* self)
         shadowInfos[i].lightIndex = i;
         shadowInfos[i].isEnabled = false;
     }
-    
+    shadowMapSize = DefaultShadowMapSize;
+
     backgroundColor << 0.1f, 0.1f, 0.3f; // Dark blue
     defaultColor << 1.0f, 1.0f, 1.0f; // White
     collisionHighlightColor << 1.0f, 0.0f, 0.0f; // Red
@@ -306,7 +311,8 @@ SceneRendererConfig::Impl::Impl(const Impl& org, SceneRendererConfig* self)
     for(int i=0; i < MaxNumShadows; ++i){
         shadowInfos[i] = org.shadowInfos[i];
     }
-    
+    shadowMapSize = org.shadowMapSize;
+
     backgroundColor << org.backgroundColor;
     defaultColor << org.defaultColor;
     collisionHighlightColor << org.collisionHighlightColor;
@@ -414,6 +420,7 @@ void SceneRendererConfig::Impl::updateRenderer(GLSceneRenderer* renderer, unsign
             }
         }
         renderer->setShadowAntiAliasingEnabled(isShadowAntiAliasingEnabled);
+        renderer->setShadowMapSize(shadowMapSize, shadowMapSize);
     }
 
     if(categories & Drawing){
@@ -499,6 +506,9 @@ bool SceneRendererConfig::Impl::store(Mapping* archive)
 
     if(!isShadowAntiAliasingEnabled){
         archive->write("shadow_antialiasing", false);
+    }
+    if(shadowMapSize != DefaultShadowMapSize){
+        archive->write("shadow_map_size", shadowMapSize);
     }
     if(!isTextureEnabled){
         archive->write("texture", false);
@@ -621,6 +631,7 @@ bool SceneRendererConfig::Impl::restore(const Mapping* archive)
         archive->read("world_light_shadow", isWorldLightShadowEnabled);
     }
     isShadowAntiAliasingEnabled = archive->get("shadow_antialiasing", true);
+    shadowMapSize = archive->get("shadow_map_size", DefaultShadowMapSize);
 
     isTextureEnabled = archive->get("texture", true);
     isFogEnabled = archive->get("fog", true);
@@ -1048,6 +1059,20 @@ ConfigWidgetSet::ConfigWidgetSet(SceneRendererConfig::Impl* config_)
         });
     signalObjects.push_back(shadowAntiAliasingCheck);
 
+    shadowMapSizeCombo = new ComboBox(ownerWidget);
+    shadowMapSizeCombo->setToolTip(
+        _("Resolution of the shadow map texture. Note that large sizes consume "
+          "a large amount of GPU memory and the size may be limited by the GPU."));
+    for(int size : ShadowMapSizeChoices){
+        shadowMapSizeCombo->addItem(QString::number(size), size);
+    }
+    shadowMapSizeCombo->sigCurrentIndexChanged().connect(
+        [this](int index){
+            config->shadowMapSize = shadowMapSizeCombo->itemData(index).toInt();
+            config->updateRenderers(Shadow, true);
+        });
+    signalObjects.push_back(shadowMapSizeCombo);
+
     textureCheck = new CheckBox(_("Texture"), ownerWidget);
     textureCheck->sigToggled().connect(
         [this](bool on){
@@ -1241,6 +1266,9 @@ QWidget* ConfigWidgetSet::createLightingPanel()
     hbox->addWidget(ws.textureCheck);
     hbox->addWidget(fogCheck);
     hbox->addWidget(ws.shadowAntiAliasingCheck);
+    hbox->addSpacing(10);
+    hbox->addWidget(new QLabel(_("Shadow map size")));
+    hbox->addWidget(ws.shadowMapSizeCombo);
     hbox->addStretch();
     vbox->addLayout(hbox);
 
@@ -1297,7 +1325,7 @@ void ConfigWidgetSet::updateWidgets()
 void ConfigWidgetSet::updateShadowWidgets()
 {
     bool on = config->isShadowCastingAvailable;
-    
+
     for(int i=0; i < MaxNumShadows; ++i){
         auto& sws = shadowWidgetSets[i];
         auto& info = config->shadowInfos[i];
@@ -1306,8 +1334,16 @@ void ConfigWidgetSet::updateShadowWidgets()
         sws.lightSpin->setEnabled(on);
         sws.lightSpin->setValue(info.lightIndex + 1);
     }
-    
+
     shadowAntiAliasingCheck->setEnabled(on);
+
+    shadowMapSizeCombo->setEnabled(on);
+    for(int i=0; i < shadowMapSizeCombo->count(); ++i){
+        if(shadowMapSizeCombo->itemData(i).toInt() == config->shadowMapSize){
+            shadowMapSizeCombo->setCurrentIndex(i);
+            break;
+        }
+    }
 }
     
     

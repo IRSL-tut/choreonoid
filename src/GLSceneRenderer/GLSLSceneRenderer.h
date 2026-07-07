@@ -75,7 +75,8 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
     virtual void setAdditionalLightShadowEnabled(int index, bool on = true) override;
     virtual void clearAdditionalLightShadows() override;
     virtual void setShadowAntiAliasingEnabled(bool on) override;
-    
+    virtual void setShadowMapSize(int width, int height) override;
+
     virtual void setDefaultSmoothShading(bool on) override;
     virtual SgMaterial* defaultMaterial() override;
     virtual void enableTexture(bool on) override;
