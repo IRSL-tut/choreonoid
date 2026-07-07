@@ -317,10 +317,10 @@ void ObjSceneWriter::Impl::writeMaterial(SgMaterial* material, SgTexture* textur
 
     if(texture){
         auto image = texture->image();
-        if(image && image->hasUri()){
-            string copiedFile;
-            if(self->findOrCopyImageFile(image, toUTF8(baseDirPath.generic_string()), copiedFile)){
-                mfs << "map_Kd " << copiedFile << "\n";
+        if(image){
+            string imageFile;
+            if(self->outputImageFile(image, toUTF8(baseDirPath.generic_string()), imageFile)){
+                mfs << "map_Kd " << imageFile << "\n";
             }
         }
     }

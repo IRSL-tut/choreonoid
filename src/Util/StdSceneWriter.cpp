@@ -1226,29 +1226,27 @@ MappingPtr StdSceneWriter::Impl::writeTexture(SgTexture* texture)
     bool isValid = false;
 
     if(auto image = texture->image()){
-        if(image->hasUri()){
-            filesystem::path imageDirPath = outputBaseDirPath;
-            filesystem::path mainSceneNamePath;
-            if(!mainSceneName.empty()){
-                mainSceneNamePath = filesystem::path(fromUTF8(mainSceneName));
-                imageDirPath /= mainSceneNamePath;
+        filesystem::path imageDirPath = outputBaseDirPath;
+        filesystem::path mainSceneNamePath;
+        if(!mainSceneName.empty()){
+            mainSceneNamePath = filesystem::path(fromUTF8(mainSceneName));
+            imageDirPath /= mainSceneNamePath;
+        }
+        string imageFile;
+        if(self->outputImageFile(image, toUTF8(imageDirPath.string()), imageFile)){
+            filesystem::path path(fromUTF8(imageFile));
+            if(path.is_relative() && !mainSceneName.empty()){
+                path = mainSceneNamePath / path;
             }
-            string copiedFile;
-            if(self->findOrCopyImageFile(image, toUTF8(imageDirPath.string()), copiedFile)){
-                filesystem::path path(fromUTF8(copiedFile));
-                if(path.is_relative() && !mainSceneName.empty()){
-                    path = mainSceneNamePath / path;
-                }
-                archive->write("uri", toUTF8(path.generic_string()), DOUBLE_QUOTED);
-                if(texture->repeatS() == texture->repeatT()){
-                    archive->write("repeat", texture->repeatS());
-                } else {
-                    auto& repeat = *archive->createFlowStyleListing("repeat");
-                    repeat.append(texture->repeatS());
-                    repeat.append(texture->repeatT());
-                }
-                isValid = true;
+            archive->write("uri", toUTF8(path.generic_string()), DOUBLE_QUOTED);
+            if(texture->repeatS() == texture->repeatT()){
+                archive->write("repeat", texture->repeatS());
+            } else {
+                auto& repeat = *archive->createFlowStyleListing("repeat");
+                repeat.append(texture->repeatS());
+                repeat.append(texture->repeatT());
             }
+            isValid = true;
         }
     }
     if(!isValid){
