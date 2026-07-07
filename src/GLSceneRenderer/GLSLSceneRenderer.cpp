@@ -441,6 +441,20 @@ public:
     Matrix4 PV;
     SgUpdate boundingBoxUpdate;
 
+    // View frustum corner points of the scene camera in the world coordinate system.
+    // They are used for fitting the shadow map camera to the visible region of the scene.
+    Vector3 viewFrustumCorners[8];
+    bool hasViewFrustumCorners;
+
+    // Bounding box of the shapes that were rendered into the shadow maps in the
+    // previous frame. The shadow map camera is fitted to this box instead of the
+    // whole scene bounding box so that the elements that do not cast shadows such
+    // as line, point, and text primitives are excluded from the fitting.
+    BoundingBox shadowCasterBBox;
+    BoundingBox shadowCasterBBoxAccumulator;
+    bool isShadowCasterBBoxUpdateEnabled;
+    bool needToUpdateShadowCasterBBox;
+
     vector<SgPolygonDrawStyle*> solidWireframeStyleStack;
 
     struct DispatchedNodeInfo
@@ -658,6 +672,9 @@ public:
     bool doPick(int x, int y);
     bool renderShadowMap(int lightIndex);
     bool renderShadowMap(SgLight* light, const Isometry3& T);
+    const BoundingBox& getShadowCasterBoundingBox();
+    void updateViewFrustumCornersForShadowMapFitting();
+    bool fitShadowMapCameraToScene(SgOrthographicCamera* camera, Isometry3& io_T);
     void renderCamera(SgCamera* camera, const Isometry3& cameraPosition);
     void beginRendering();
     void endRendering();
@@ -955,6 +972,9 @@ void GLSLSceneRenderer::Impl::initialize()
     isShadowCastingAvailable = true;
     isWorldLightShadowEnabled = false;
     isRenderingShadowMap = false;
+    hasViewFrustumCorners = false;
+    isShadowCasterBBoxUpdateEnabled = false;
+    needToUpdateShadowCasterBBox = false;
     isRenderingViewportOverlay = false;
     isLowMemoryConsumptionMode = false;
     isBoundingBoxRenderingMode = false;
@@ -1815,6 +1835,32 @@ void GLSLSceneRenderer::Impl::setupFullLightingRendering()
         isRenderingVisibleImage = false;
         isRenderingShadowMap = true;
 
+        // The shadow map camera fitting is only used for directional lights
+        bool hasDirectionalShadowLight = false;
+        auto worldLight = self->worldLight();
+        if(isWorldLightShadowEnabled && worldLight->on() &&
+           dynamic_cast<SgDirectionalLight*>(worldLight)){
+            hasDirectionalShadowLight = true;
+        } else {
+            for(auto& lightIndex : shadowLightIndices){
+                SgLight* light;
+                Isometry3 T;
+                self->getLightInfo(lightIndex, light, T);
+                if(light && light->on() && dynamic_cast<SgDirectionalLight*>(light)){
+                    hasDirectionalShadowLight = true;
+                    break;
+                }
+            }
+        }
+        needToUpdateShadowCasterBBox = hasDirectionalShadowLight;
+        if(hasDirectionalShadowLight){
+            // This must be done before the viewport is switched to the shadow map size
+            // because the view volume calculation depends on the viewport aspect ratio
+            updateViewFrustumCornersForShadowMapFitting();
+
+            shadowCasterBBoxAccumulator.clear();
+        }
+
         int w, h;
         program->getShadowMapSize(w, h);
         auto vp0 = self->viewport(); // preserve the original viewport size
@@ -2010,6 +2056,173 @@ bool GLSLSceneRenderer::getPickingImage(Image& out_image)
 }
 
 
+const BoundingBox& GLSLSceneRenderer::Impl::getShadowCasterBoundingBox()
+{
+    // The whole scene bounding box is used until the shadow caster bounding box
+    // is obtained by the first shadow map rendering
+    return !shadowCasterBBox.empty() ? shadowCasterBBox : self->sceneRoot()->boundingBox();
+}
+
+
+void GLSLSceneRenderer::Impl::updateViewFrustumCornersForShadowMapFitting()
+{
+    hasViewFrustumCorners = false;
+
+    auto camera = self->currentCamera();
+    if(!camera){
+        return;
+    }
+    SgPerspectiveCamera* pers = dynamic_cast<SgPerspectiveCamera*>(camera);
+    SgOrthographicCamera* ortho = pers ? nullptr : dynamic_cast<SgOrthographicCamera*>(camera);
+    if(!pers && !ortho){
+        return;
+    }
+
+    const Isometry3& T = self->currentCameraPosition();
+    const double zn = camera->nearClipDistance();
+    double zf = camera->farClipDistance();
+
+    /*
+      The far clip distance of the scene camera does not necessarily reflect the
+      actually rendered range, especially when the infinite far override is active.
+      Therefore the far distance used for the frustum corner calculation is limited
+      to the distance covering the shadow casters.
+    */
+    const BoundingBox& casterBBox = getShadowCasterBoundingBox();
+    if(!casterBBox.empty()){
+        const Vector3 eye = T.translation();
+        const Vector3 viewDir = -T.linear().col(2);
+        const Vector3& bmin = casterBBox.min();
+        const Vector3& bmax = casterBBox.max();
+        double dmax = 0.0;
+        for(int i=0; i < 8; ++i){
+            const Vector3 corner(
+                (i & 1) ? bmax.x() : bmin.x(),
+                (i & 2) ? bmax.y() : bmin.y(),
+                (i & 4) ? bmax.z() : bmin.z());
+            dmax = std::max(dmax, viewDir.dot(corner - eye));
+        }
+        if(isReversedDepthBufferActive && isInfiniteFarOverrideEnabled){
+            // The stored far clip distance is not used for the actual rendering
+            zf = dmax;
+        } else {
+            zf = std::min(zf, dmax);
+        }
+        zf = std::max(zf, zn * 1.01);
+    }
+
+    if(pers){
+        const double t = tan(self->getEffectiveFovy(pers) / 2.0);
+        const double aspect = self->aspectRatio();
+        const double yn = t * zn;
+        const double xn = yn * aspect;
+        const double yf = t * zf;
+        const double xf = yf * aspect;
+        viewFrustumCorners[0] = T * Vector3(-xn, -yn, -zn);
+        viewFrustumCorners[1] = T * Vector3( xn, -yn, -zn);
+        viewFrustumCorners[2] = T * Vector3(-xn,  yn, -zn);
+        viewFrustumCorners[3] = T * Vector3( xn,  yn, -zn);
+        viewFrustumCorners[4] = T * Vector3(-xf, -yf, -zf);
+        viewFrustumCorners[5] = T * Vector3( xf, -yf, -zf);
+        viewFrustumCorners[6] = T * Vector3(-xf,  yf, -zf);
+        viewFrustumCorners[7] = T * Vector3( xf,  yf, -zf);
+        hasViewFrustumCorners = true;
+
+    } else {
+        GLfloat left, right, bottom, top;
+        self->getViewVolume(ortho, left, right, bottom, top);
+        viewFrustumCorners[0] = T * Vector3(left,  bottom, -zn);
+        viewFrustumCorners[1] = T * Vector3(right, bottom, -zn);
+        viewFrustumCorners[2] = T * Vector3(left,  top,    -zn);
+        viewFrustumCorners[3] = T * Vector3(right, top,    -zn);
+        viewFrustumCorners[4] = T * Vector3(left,  bottom, -zf);
+        viewFrustumCorners[5] = T * Vector3(right, bottom, -zf);
+        viewFrustumCorners[6] = T * Vector3(left,  top,    -zf);
+        viewFrustumCorners[7] = T * Vector3(right, top,    -zf);
+        hasViewFrustumCorners = true;
+    }
+}
+
+
+/**
+   Fits the orthographic shadow map camera to the region of the scene visible in the
+   current view frustum so that the shadow of a directional light can be cast anywhere
+   in the scene while keeping the effective shadow map resolution as high as possible.
+   \return false if the fitting is not possible (e.g. the scene is empty)
+*/
+bool GLSLSceneRenderer::Impl::fitShadowMapCameraToScene(SgOrthographicCamera* camera, Isometry3& io_T)
+{
+    const BoundingBox& bbox = getShadowCasterBoundingBox();
+    if(bbox.empty()){
+        return false;
+    }
+
+    // The light coordinate frame, where the light direction corresponds to -Z
+    const Matrix3 R = io_T.linear();
+    const Matrix3 Rt = R.transpose();
+
+    // The shadow caster bounding box in the light coordinate frame
+    constexpr double dmax = std::numeric_limits<double>::max();
+    Vector3 smin = Vector3::Constant(dmax);
+    Vector3 smax = Vector3::Constant(-dmax);
+    const Vector3& bmin = bbox.min();
+    const Vector3& bmax = bbox.max();
+    for(int i=0; i < 8; ++i){
+        const Vector3 corner(
+            (i & 1) ? bmax.x() : bmin.x(),
+            (i & 2) ? bmax.y() : bmin.y(),
+            (i & 4) ? bmax.z() : bmin.z());
+        const Vector3 p = Rt * corner;
+        smin = smin.cwiseMin(p);
+        smax = smax.cwiseMax(p);
+    }
+
+    // Restrict the shadow region to the part of the view frustum overlapping the
+    // shadow caster bounding box. If they do not overlap, the whole box is covered.
+    Vector3 rmin = smin;
+    Vector3 rmax = smax;
+    if(hasViewFrustumCorners){
+        Vector3 fmin = Vector3::Constant(dmax);
+        Vector3 fmax = Vector3::Constant(-dmax);
+        for(auto& corner : viewFrustumCorners){
+            const Vector3 p = Rt * corner;
+            fmin = fmin.cwiseMin(p);
+            fmax = fmax.cwiseMax(p);
+        }
+        const Vector3 imin = smin.cwiseMax(fmin);
+        const Vector3 imax = smax.cwiseMin(fmax);
+        if((imin.array() < imax.array()).all()){
+            rmin = imin;
+            rmax = imax;
+        }
+    }
+
+    double size = std::max(rmax.x() - rmin.x(), rmax.y() - rmin.y());
+    size = std::max(size * 1.02, 0.01); // margin to absorb the texel snapping displacement
+
+    // Quantize the camera position in the units of shadow map texels to suppress
+    // shadow edge shimmering when the viewpoint moves
+    int w, h;
+    fullLightingProgram->getShadowMapSize(w, h);
+    const double texelSize = size / std::min(w, h);
+    const double cx = std::round((rmin.x() + rmax.x()) / 2.0 / texelSize) * texelSize;
+    const double cy = std::round((rmin.y() + rmax.y()) / 2.0 / texelSize) * texelSize;
+
+    // The depth range must cover all the casters on the light side so that casters
+    // outside the view frustum can cast shadows into the visible region
+    const double zMargin = (smax.z() - rmin.z()) * 0.01 + 0.001;
+    const double zTop = smax.z() + zMargin;
+    const double zBottom = rmin.z() - zMargin;
+
+    camera->setHeight(size);
+    camera->setNearClipDistance(0.0);
+    camera->setFarClipDistance(zTop - zBottom);
+    io_T.translation() = R * Vector3(cx, cy, zTop);
+
+    return true;
+}
+
+
 bool GLSLSceneRenderer::Impl::renderShadowMap(int lightIndex)
 {
     SgLight* light;
@@ -2032,16 +2245,35 @@ bool GLSLSceneRenderer::Impl::renderShadowMap(SgLight* light, const Isometry3& T
             // Set reversed depth mode for shadow map generation
             fullLightingProgram->setUseReversedDepth(isReversedDepthBufferActive);
 
-            // Copy scene camera's clip distances to shadow map camera for scene scale adaptation.
-            // TODO: Consider adding shadow range parameters to SgLight in the future.
-            auto sceneCamera = self->currentCamera();
-            shadowMapCamera->setNearClipDistance(sceneCamera->nearClipDistance());
-            shadowMapCamera->setFarClipDistance(sceneCamera->farClipDistance());
+            auto orthoShadowMapCamera = dynamic_cast<SgOrthographicCamera*>(shadowMapCamera);
+
+            // The shadow caster bounding box for the shadow map camera fitting is
+            // updated in the first directional light pass of the frame. The passes
+            // render the same set of shapes, so doing it once is sufficient.
+            isShadowCasterBBoxUpdateEnabled =
+                (orthoShadowMapCamera != nullptr) && needToUpdateShadowCasterBBox;
+
+            bool fitted = false;
+            if(orthoShadowMapCamera){
+                fitted = fitShadowMapCameraToScene(orthoShadowMapCamera, Tc);
+            }
+            if(!fitted){
+                // Copy scene camera's clip distances to shadow map camera for scene scale adaptation.
+                // TODO: Consider adding shadow range parameters to SgLight in the future.
+                auto sceneCamera = self->currentCamera();
+                shadowMapCamera->setNearClipDistance(sceneCamera->nearClipDistance());
+                shadowMapCamera->setFarClipDistance(sceneCamera->farClipDistance());
+            }
 
             renderCamera(shadowMapCamera, Tc);
             fullLightingProgram->setShadowMapViewProjection(PV);
             fullLightingProgram->shadowMapProgram()->initializeShadowMapBuffer();
             renderChildNodes(self->sceneRoot());
+
+            if(isShadowCasterBBoxUpdateEnabled){
+                shadowCasterBBox = shadowCasterBBoxAccumulator;
+                needToUpdateShadowCasterBBox = false;
+            }
 
             if(USE_GL_FLUSH_FUNCTION_IN_SHADOW_MAP_RENDERING){
                 glFlush();
@@ -3442,7 +3674,7 @@ void GLSLSceneRenderer::Impl::renderShape(SgShape* shape)
 void GLSLSceneRenderer::Impl::renderShapeMain(SgShape* shape, const Affine3& modelTransform, int pickIndex)
 {
     auto mesh = shape->mesh();
-    
+
     if(isRenderingPickingImage){
         setPickColor(pickIndex);
     } else {
@@ -3471,6 +3703,12 @@ void GLSLSceneRenderer::Impl::renderShapeMain(SgShape* shape, const Affine3& mod
     } else {
         if(!isRenderingShadowMap){
             applyCullingMode(mesh);
+        } else if(isShadowCasterBBoxUpdateEnabled){
+            BoundingBox bb = mesh->boundingBox();
+            if(!bb.empty()){
+                bb.transform(modelTransform);
+                shadowCasterBBoxAccumulator.expandBy(bb);
+            }
         }
         drawVertexResource(resource, GL_TRIANGLES, modelTransform);
 
