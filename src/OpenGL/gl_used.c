@@ -42,6 +42,7 @@ int cnoidLoadGL(GLADloadfunc load)
     glad_glBindSampler = (PFNGLBINDSAMPLERPROC)load("glBindSampler");
     glad_glBindTexture = (PFNGLBINDTEXTUREPROC)load("glBindTexture");
     glad_glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)load("glBindVertexArray");
+    glad_glBeginConditionalRender = (PFNGLBEGINCONDITIONALRENDERPROC)load("glBeginConditionalRender");
     glad_glBeginQuery = (PFNGLBEGINQUERYPROC)load("glBeginQuery");
     glad_glBlendFunc = (PFNGLBLENDFUNCPROC)load("glBlendFunc");
     glad_glBlitFramebuffer = (PFNGLBLITFRAMEBUFFERPROC)load("glBlitFramebuffer");
@@ -78,6 +79,7 @@ int cnoidLoadGL(GLADloadfunc load)
     glad_glEnable = (PFNGLENABLEPROC)load("glEnable");
     glad_glEnableClientState = (PFNGLENABLECLIENTSTATEPROC)load("glEnableClientState");
     glad_glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)load("glEnableVertexAttribArray");
+    glad_glEndConditionalRender = (PFNGLENDCONDITIONALRENDERPROC)load("glEndConditionalRender");
     glad_glEndQuery = (PFNGLENDQUERYPROC)load("glEndQuery");
     glad_glFlush = (PFNGLFLUSHPROC)load("glFlush");
     glad_glFogf = (PFNGLFOGFPROC)load("glFogf");
