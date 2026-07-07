@@ -820,6 +820,9 @@ protected:
 typedef ref_ptr<SgPreprocessed> SgPreprocessedPtr;
 
 
+class SgPbrMaterialExtension;
+typedef ref_ptr<SgPbrMaterialExtension> SgPbrMaterialExtensionPtr;
+
 class SgMaterial;
 typedef ref_ptr<SgMaterial> SgMaterialPtr;
 

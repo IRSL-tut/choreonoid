@@ -10,11 +10,107 @@
 
 namespace cnoid {
 
+/**
+   This class stores a set of PBR (Physically Based Rendering) material properties
+   based on the metallic-roughness model of glTF 2.0. An instance of this class can
+   be attached to SgMaterial as an optional extension object so that the existing
+   material model of SgMaterial remains unchanged. Renderers that do not support
+   PBR just ignore this extension.
+*/
+class CNOID_EXPORT SgPbrMaterialExtension : public SgObject
+{
+public:
+    SgPbrMaterialExtension();
+    SgPbrMaterialExtension(const SgPbrMaterialExtension& org, CloneMap* cloneMap = nullptr);
+    ~SgPbrMaterialExtension();
+
+    virtual int numChildObjects() const override;
+    virtual SgObject* childObject(int index) override;
+
+    const Vector3f& baseColorFactor() const { return baseColorFactor_; }
+    template<typename Derived> void setBaseColorFactor(const Eigen::MatrixBase<Derived>& c) {
+        baseColorFactor_ = c.template cast<Vector3f::Scalar>(); }
+
+    float metallicFactor() const { return metallicFactor_; }
+    void setMetallicFactor(float f) { metallicFactor_ = f; }
+
+    float roughnessFactor() const { return roughnessFactor_; }
+    void setRoughnessFactor(float f) { roughnessFactor_ = f; }
+
+    const Vector3f& emissiveFactor() const { return emissiveFactor_; }
+    template<typename Derived> void setEmissiveFactor(const Eigen::MatrixBase<Derived>& c) {
+        emissiveFactor_ = c.template cast<Vector3f::Scalar>(); }
+
+    //! The emissive strength defined in the KHR_materials_emissive_strength extension of glTF
+    float emissiveStrength() const { return emissiveStrength_; }
+    void setEmissiveStrength(float s) { emissiveStrength_ = s; }
+
+    float occlusionStrength() const { return occlusionStrength_; }
+    void setOcclusionStrength(float s) { occlusionStrength_ = s; }
+
+    float normalScale() const { return normalScale_; }
+    void setNormalScale(float s) { normalScale_ = s; }
+
+    enum AlphaMode { Opaque, Mask, Blend };
+    AlphaMode alphaMode() const { return alphaMode_; }
+    void setAlphaMode(AlphaMode mode) { alphaMode_ = mode; }
+
+    //! The alpha threshold used when the alpha mode is Mask
+    float alphaCutoff() const { return alphaCutoff_; }
+    void setAlphaCutoff(float a) { alphaCutoff_ = a; }
+
+    SgTexture* baseColorTexture() { return baseColorTexture_; }
+    const SgTexture* baseColorTexture() const { return baseColorTexture_; }
+    SgTexture* setBaseColorTexture(SgTexture* texture);
+
+    SgTexture* metallicRoughnessTexture() { return metallicRoughnessTexture_; }
+    const SgTexture* metallicRoughnessTexture() const { return metallicRoughnessTexture_; }
+    SgTexture* setMetallicRoughnessTexture(SgTexture* texture);
+
+    SgTexture* normalTexture() { return normalTexture_; }
+    const SgTexture* normalTexture() const { return normalTexture_; }
+    SgTexture* setNormalTexture(SgTexture* texture);
+
+    SgTexture* occlusionTexture() { return occlusionTexture_; }
+    const SgTexture* occlusionTexture() const { return occlusionTexture_; }
+    SgTexture* setOcclusionTexture(SgTexture* texture);
+
+    SgTexture* emissiveTexture() { return emissiveTexture_; }
+    const SgTexture* emissiveTexture() const { return emissiveTexture_; }
+    SgTexture* setEmissiveTexture(SgTexture* texture);
+
+protected:
+    virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    Vector3f baseColorFactor_;
+    Vector3f emissiveFactor_;
+    float metallicFactor_;
+    float roughnessFactor_;
+    float emissiveStrength_;
+    float occlusionStrength_;
+    float normalScale_;
+    float alphaCutoff_;
+    AlphaMode alphaMode_;
+    SgTexturePtr baseColorTexture_;
+    SgTexturePtr metallicRoughnessTexture_;
+    SgTexturePtr normalTexture_;
+    SgTexturePtr occlusionTexture_;
+    SgTexturePtr emissiveTexture_;
+
+    SgTexture* setTextureSlot(SgTexturePtr& slot, SgTexture* texture);
+};
+
+
 class CNOID_EXPORT SgMaterial : public SgObject
 {
 public:
     SgMaterial();
-    SgMaterial(const SgMaterial& org);
+    SgMaterial(const SgMaterial& org, CloneMap* cloneMap = nullptr);
+    ~SgMaterial();
+
+    virtual int numChildObjects() const override;
+    virtual SgObject* childObject(int index) override;
 
     void copyMaterialPropertiesFrom(const SgMaterial* other);
 
@@ -45,6 +141,12 @@ public:
     float transparency() const { return transparency_; }
     void setTransparency(float t) { transparency_ = t; }
 
+    bool hasPbrExtension() const { return pbrExtension_ != nullptr; }
+    SgPbrMaterialExtension* pbrExtension() { return pbrExtension_; }
+    const SgPbrMaterialExtension* pbrExtension() const { return pbrExtension_; }
+    SgPbrMaterialExtension* setPbrExtension(SgPbrMaterialExtension* extension);
+    SgPbrMaterialExtension* getOrCreatePbrExtension();
+
 protected:
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
 
@@ -55,6 +157,7 @@ private:
     float ambientIntensity_;
     float transparency_;
     float specularExponent_;
+    SgPbrMaterialExtensionPtr pbrExtension_;
 };
 
 

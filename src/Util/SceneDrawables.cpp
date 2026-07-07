@@ -39,10 +39,146 @@ struct NodeClassRegistration {
 
 }
 
+SgPbrMaterialExtension::SgPbrMaterialExtension()
+{
+    setAttributes(Composite | Appearance);
+
+    // The default values conform to the glTF 2.0 specification
+    baseColorFactor_ << 1.0f, 1.0f, 1.0f;
+    emissiveFactor_.setZero();
+    metallicFactor_ = 1.0f;
+    roughnessFactor_ = 1.0f;
+    emissiveStrength_ = 1.0f;
+    occlusionStrength_ = 1.0f;
+    normalScale_ = 1.0f;
+    alphaCutoff_ = 0.5f;
+    alphaMode_ = Opaque;
+}
+
+
+SgPbrMaterialExtension::SgPbrMaterialExtension(const SgPbrMaterialExtension& org, CloneMap* cloneMap)
+    : SgObject(org)
+{
+    baseColorFactor_ = org.baseColorFactor_;
+    emissiveFactor_ = org.emissiveFactor_;
+    metallicFactor_ = org.metallicFactor_;
+    roughnessFactor_ = org.roughnessFactor_;
+    emissiveStrength_ = org.emissiveStrength_;
+    occlusionStrength_ = org.occlusionStrength_;
+    normalScale_ = org.normalScale_;
+    alphaCutoff_ = org.alphaCutoff_;
+    alphaMode_ = org.alphaMode_;
+
+    if(cloneMap && checkNonNodeCloning(*cloneMap)){
+        auto getClone = [cloneMap](const SgTexture* texture) -> SgTexture* {
+            return texture ? cloneMap->getClone<SgTexture>(texture) : nullptr;
+        };
+        setBaseColorTexture(getClone(org.baseColorTexture_));
+        setMetallicRoughnessTexture(getClone(org.metallicRoughnessTexture_));
+        setNormalTexture(getClone(org.normalTexture_));
+        setOcclusionTexture(getClone(org.occlusionTexture_));
+        setEmissiveTexture(getClone(org.emissiveTexture_));
+    } else {
+        setBaseColorTexture(const_cast<SgTexture*>(org.baseColorTexture_.get()));
+        setMetallicRoughnessTexture(const_cast<SgTexture*>(org.metallicRoughnessTexture_.get()));
+        setNormalTexture(const_cast<SgTexture*>(org.normalTexture_.get()));
+        setOcclusionTexture(const_cast<SgTexture*>(org.occlusionTexture_.get()));
+        setEmissiveTexture(const_cast<SgTexture*>(org.emissiveTexture_.get()));
+    }
+}
+
+
+SgPbrMaterialExtension::~SgPbrMaterialExtension()
+{
+    SgTexture* textures[] = {
+        baseColorTexture_, metallicRoughnessTexture_, normalTexture_,
+        occlusionTexture_, emissiveTexture_ };
+    for(auto texture : textures){
+        if(texture){
+            texture->removeParent(this);
+        }
+    }
+}
+
+
+Referenced* SgPbrMaterialExtension::doClone(CloneMap* cloneMap) const
+{
+    return new SgPbrMaterialExtension(*this, cloneMap);
+}
+
+
+int SgPbrMaterialExtension::numChildObjects() const
+{
+    int n = 0;
+    if(baseColorTexture_) ++n;
+    if(metallicRoughnessTexture_) ++n;
+    if(normalTexture_) ++n;
+    if(occlusionTexture_) ++n;
+    if(emissiveTexture_) ++n;
+    return n;
+}
+
+
+SgObject* SgPbrMaterialExtension::childObject(int index)
+{
+    SgObject* objects[5] = { 0, 0, 0, 0, 0 };
+    int i = 0;
+    if(baseColorTexture_) objects[i++] = baseColorTexture_;
+    if(metallicRoughnessTexture_) objects[i++] = metallicRoughnessTexture_;
+    if(normalTexture_) objects[i++] = normalTexture_;
+    if(occlusionTexture_) objects[i++] = occlusionTexture_;
+    if(emissiveTexture_) objects[i++] = emissiveTexture_;
+    return objects[index];
+}
+
+
+SgTexture* SgPbrMaterialExtension::setTextureSlot(SgTexturePtr& slot, SgTexture* texture)
+{
+    if(slot){
+        slot->removeParent(this);
+    }
+    slot = texture;
+    if(texture){
+        texture->addParent(this);
+    }
+    return texture;
+}
+
+
+SgTexture* SgPbrMaterialExtension::setBaseColorTexture(SgTexture* texture)
+{
+    return setTextureSlot(baseColorTexture_, texture);
+}
+
+
+SgTexture* SgPbrMaterialExtension::setMetallicRoughnessTexture(SgTexture* texture)
+{
+    return setTextureSlot(metallicRoughnessTexture_, texture);
+}
+
+
+SgTexture* SgPbrMaterialExtension::setNormalTexture(SgTexture* texture)
+{
+    return setTextureSlot(normalTexture_, texture);
+}
+
+
+SgTexture* SgPbrMaterialExtension::setOcclusionTexture(SgTexture* texture)
+{
+    return setTextureSlot(occlusionTexture_, texture);
+}
+
+
+SgTexture* SgPbrMaterialExtension::setEmissiveTexture(SgTexture* texture)
+{
+    return setTextureSlot(emissiveTexture_, texture);
+}
+
+
 SgMaterial::SgMaterial()
 {
-    setAttribute(Appearance);
-    
+    setAttributes(Composite | Appearance);
+
     ambientIntensity_ = 1.0f;
     diffuseColor_ << 1.0f, 1.0f, 1.0f;
     emissiveColor_.setZero();
@@ -52,10 +188,22 @@ SgMaterial::SgMaterial()
 }
 
 
-SgMaterial::SgMaterial(const SgMaterial& org)
+SgMaterial::SgMaterial(const SgMaterial& org, CloneMap* cloneMap)
     : SgObject(org)
 {
     copyMaterialPropertiesFrom(&org);
+
+    if(cloneMap && checkNonNodeCloning(*cloneMap) && org.pbrExtension_){
+        setPbrExtension(cloneMap->getClone<SgPbrMaterialExtension>(org.pbrExtension_));
+    }
+}
+
+
+SgMaterial::~SgMaterial()
+{
+    if(pbrExtension_){
+        pbrExtension_->removeParent(this);
+    }
 }
 
 
@@ -67,12 +215,47 @@ void SgMaterial::copyMaterialPropertiesFrom(const SgMaterial* other)
     specularColor_ = other->specularColor_;
     specularExponent_ = other->specularExponent_;
     transparency_ = other->transparency_;
+    setPbrExtension(const_cast<SgPbrMaterialExtension*>(other->pbrExtension_.get()));
 }
 
 
-Referenced* SgMaterial::doClone(CloneMap*) const
+Referenced* SgMaterial::doClone(CloneMap* cloneMap) const
 {
-    return new SgMaterial(*this);
+    return new SgMaterial(*this, cloneMap);
+}
+
+
+int SgMaterial::numChildObjects() const
+{
+    return pbrExtension_ ? 1 : 0;
+}
+
+
+SgObject* SgMaterial::childObject(int index)
+{
+    return (index == 0) ? pbrExtension_.get() : nullptr;
+}
+
+
+SgPbrMaterialExtension* SgMaterial::setPbrExtension(SgPbrMaterialExtension* extension)
+{
+    if(pbrExtension_){
+        pbrExtension_->removeParent(this);
+    }
+    pbrExtension_ = extension;
+    if(extension){
+        extension->addParent(this);
+    }
+    return extension;
+}
+
+
+SgPbrMaterialExtension* SgMaterial::getOrCreatePbrExtension()
+{
+    if(!pbrExtension_){
+        setPbrExtension(new SgPbrMaterialExtension);
+    }
+    return pbrExtension_;
 }
 
 
