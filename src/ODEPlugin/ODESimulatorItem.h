@@ -20,7 +20,11 @@ public:
 
     enum StepMode { STEP_ITERATIVE, STEP_BIG_MATRIX, NUM_STEP_MODES };
 
+    enum CollisionSpaceType {
+        SIMPLE_SPACE, HASH_SPACE, SWEEP_AND_PRUNE_SPACE, NUM_COLLISION_SPACE_TYPES };
+
     void setStepMode(int value);
+    void setCollisionSpaceType(int type);
     void setGravity(const Vector3& gravity);
     void setFriction(double friction);
     void setJointLimitMode(bool on);

@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-25 12:41+0900\n"
+"POT-Creation-Date: 2026-07-07 17:53+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -16,14 +16,43 @@ msgstr ""
 msgid "ODESimulatorItem"
 msgstr "ODEシミュレータアイテム"
 
+msgid ""
+"{0} has joint-axis inertia at joint \"{1}\" ({2}). ODESimulatorItem cannot reproduce it directly, "
+"so it is approximately added to the link inertia. This behavior can be changed with the \"Add "
+"joint-axis inertia to link inertia\" property."
+msgstr ""
+"{0} の関節 \"{1}\" には軸慣性 ({2}) が設定されています。ODESimulatorItem は軸慣性そのものを再現で"
+"きないため、不正確な近似としてリンクの慣性に加算します。この挙動は「軸慣性をリンク慣性に加算」プロ"
+"パティで変更できます。"
+
+msgid ""
+"{0} has joint-axis inertia at joint \"{1}\" ({2}). ODESimulatorItem does not support it directly. "
+"Enable \"Add joint-axis inertia to link inertia\" to approximately add it to the link inertia."
+msgstr ""
+"{0} の関節 \"{1}\" には軸慣性 ({2}) が設定されています。ODESimulatorItem は軸慣性そのものをサポー"
+"トしていません。「軸慣性をリンク慣性に加算」をONにすると、不正確な近似としてリンクの慣性に加算でき"
+"ます。"
+
 msgid "Iterative (quick step)"
 msgstr "反復(quick step)"
 
 msgid "Big matrix"
 msgstr ""
 
+msgid "Simple"
+msgstr "シンプル"
+
+msgid "Hash"
+msgstr "ハッシュ"
+
+msgid "Sweep and prune"
+msgstr "スイープ&プルーン"
+
 msgid "Step mode"
 msgstr "ステップモード"
+
+msgid "Collision space type"
+msgstr "干渉検出空間タイプ"
 
 msgid "Gravity"
 msgstr "重力加速度"
@@ -63,9 +92,3 @@ msgstr "2Dモード"
 
 msgid "Use WorldItem's Collision Detector"
 msgstr "ワールドアイテムの干渉検出器を使用"
-
-msgid "{0} has joint-axis inertia at joint \"{1}\" ({2}). ODESimulatorItem cannot reproduce it directly, so it is approximately added to the link inertia. This behavior can be changed with the \"Add joint-axis inertia to link inertia\" property."
-msgstr "{0} の関節 \"{1}\" には軸慣性 ({2}) が設定されています。ODESimulatorItem は軸慣性そのものを再現できないため、不正確な近似としてリンクの慣性に加算します。この挙動は「軸慣性をリンク慣性に加算」プロパティで変更できます。"
-
-msgid "{0} has joint-axis inertia at joint \"{1}\" ({2}). ODESimulatorItem does not support it directly. Enable \"Add joint-axis inertia to link inertia\" to approximately add it to the link inertia."
-msgstr "{0} の関節 \"{1}\" には軸慣性 ({2}) が設定されています。ODESimulatorItem は軸慣性そのものをサポートしていません。「軸慣性をリンク慣性に加算」をONにすると、不正確な近似としてリンクの慣性に加算できます。"

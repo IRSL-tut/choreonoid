@@ -188,6 +188,7 @@ public:
     SurfaceDriveLinkMap surfaceDriveLinks;
 
     Selection stepMode;
+    Selection collisionSpaceType;
     Vector3 gravity;
     double friction;
     bool isJointLimitMode;
@@ -227,6 +228,7 @@ public:
     ~ODESimulatorItemImpl();
     void clear();
     bool initializeSimulation(const std::vector<SimulationBody*>& simBodies);
+    dSpaceID createCollisionSpace(dSpaceID parentSpaceID);
     void addBody(ODEBody* odeBody);
     void setExtraJoints(const std::vector<SimulationBody*>& simBodies);
     bool stepSimulation(const std::vector<SimulationBody*>& activeSimBodies);
@@ -817,7 +819,7 @@ void ODEBody::createBody(ODESimulatorItemImpl* simImpl)
     worldID = body->isStaticModel() ? 0 : simImpl->worldID;
 
     if(!simImpl->useWorldCollisionDetector){
-        spaceID = dHashSpaceCreate(simImpl->spaceID);
+        spaceID = simImpl->createCollisionSpace(simImpl->spaceID);
         dSpaceSetCleanup(spaceID, 0);
     }
 
@@ -973,7 +975,8 @@ ODESimulatorItem::ODESimulatorItem()
 
 ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self)
     : self(self),
-      stepMode(ODESimulatorItem::NUM_STEP_MODES, CNOID_GETTEXT_DOMAIN_NAME)
+      stepMode(ODESimulatorItem::NUM_STEP_MODES, CNOID_GETTEXT_DOMAIN_NAME),
+      collisionSpaceType(ODESimulatorItem::NUM_COLLISION_SPACE_TYPES, CNOID_GETTEXT_DOMAIN_NAME)
 
 {
     initialize();
@@ -981,6 +984,11 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self)
     stepMode.setSymbol(ODESimulatorItem::STEP_ITERATIVE,  N_("Iterative (quick step)"));
     stepMode.setSymbol(ODESimulatorItem::STEP_BIG_MATRIX, N_("Big matrix"));
     stepMode.select(ODESimulatorItem::STEP_ITERATIVE);
+
+    collisionSpaceType.setSymbol(ODESimulatorItem::SIMPLE_SPACE, N_("Simple"));
+    collisionSpaceType.setSymbol(ODESimulatorItem::HASH_SPACE, N_("Hash"));
+    collisionSpaceType.setSymbol(ODESimulatorItem::SWEEP_AND_PRUNE_SPACE, N_("Sweep and prune"));
+    collisionSpaceType.select(ODESimulatorItem::SIMPLE_SPACE);
     
     gravity << 0.0, 0.0, -DEFAULT_GRAVITY_ACCELERATION;
     globalERP = 0.4;
@@ -1013,6 +1021,7 @@ ODESimulatorItemImpl::ODESimulatorItemImpl(ODESimulatorItem* self, const ODESimu
     initialize();
 
     stepMode = org.stepMode;
+    collisionSpaceType = org.collisionSpaceType;
     gravity = org.gravity;
     globalERP = org.globalERP;
     globalCFM = org.globalCFM;
@@ -1060,6 +1069,12 @@ ODESimulatorItemImpl::~ODESimulatorItemImpl()
 void ODESimulatorItem::setStepMode(int value)
 {
     impl->stepMode.select(value);
+}
+
+
+void ODESimulatorItem::setCollisionSpaceType(int type)
+{
+    impl->collisionSpaceType.select(type);
 }
 
 
@@ -1190,6 +1205,20 @@ bool ODESimulatorItem::initializeSimulation(const std::vector<SimulationBody*>& 
 }
 
 
+
+dSpaceID ODESimulatorItemImpl::createCollisionSpace(dSpaceID parentSpaceID)
+{
+    switch(collisionSpaceType.which()){
+    case ODESimulatorItem::SIMPLE_SPACE:
+        return dSimpleSpaceCreate(parentSpaceID);
+    case ODESimulatorItem::SWEEP_AND_PRUNE_SPACE:
+        return dSweepAndPruneSpaceCreate(parentSpaceID, dSAP_AXES_XYZ);
+    case ODESimulatorItem::HASH_SPACE:
+    default:
+        return dHashSpaceCreate(parentSpaceID);
+    }
+}
+
 bool ODESimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
     clear();
@@ -1206,7 +1235,7 @@ bool ODESimulatorItemImpl::initializeSimulation(const std::vector<SimulationBody
     if(useWorldCollisionDetector){
         bodyCollisionDetector.setCollisionDetector(self->getOrCreateCollisionDetector());
     } else {
-        spaceID = dHashSpaceCreate(0);
+        spaceID = createCollisionSpace(0);
         dSpaceSetCleanup(spaceID, 0);
     }
 
@@ -1694,6 +1723,7 @@ void ODESimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 void ODESimulatorItemImpl::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Step mode"), stepMode, changeProperty(stepMode));
+    putProperty(_("Collision space type"), collisionSpaceType, changeProperty(collisionSpaceType));
 
     putProperty(_("Gravity"), str(gravity), [&](const string& v){ return toVector3(v, gravity); });
 
@@ -1739,6 +1769,7 @@ bool ODESimulatorItem::store(Archive& archive)
 void ODESimulatorItemImpl::store(Archive& archive)
 {
     archive.write("step_mode", stepMode.selectedSymbol());
+    archive.write("collision_space_type", collisionSpaceType.selectedSymbol());
     write(archive, "gravity", gravity);
     archive.write("friction", friction);
     if(isJointLimitMode){
@@ -1776,6 +1807,9 @@ void ODESimulatorItemImpl::restore(const Archive& archive)
     string symbol;
     if(archive.read({ "step_mode", "stepMode" }, symbol)){
         stepMode.select(symbol);
+    }
+    if(archive.read("collision_space_type", symbol)){
+        collisionSpaceType.select(symbol);
     }
     read(archive, "gravity", gravity);
     archive.read("friction", friction);
