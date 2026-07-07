@@ -222,7 +222,7 @@ if(MSVC)
 else()
   include_directories(${include_dirs})
 endif()
-include_directories(BEFORE ${PROJECT_SOURCE_DIR}/thirdparty/fast_float-0.8.0/include)
+include_directories(BEFORE ${PROJECT_SOURCE_DIR}/thirdparty/fast_float-8.2.10/include)
 link_directories(${LIBYAML_LIBRARY_DIRS})
 
 

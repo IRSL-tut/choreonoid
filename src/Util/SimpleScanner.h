@@ -296,7 +296,13 @@ public:
 
     void readEx(float& out_value)
     {
-        auto result = fast_float::from_chars(pos, bufEndPos, out_value);
+        // The format flags emulate the default behavior of fast_float 0.8.0,
+        // which accepted leading whitespace and a leading plus sign
+        auto result = fast_float::from_chars(
+            pos, bufEndPos, out_value,
+            fast_float::chars_format::general |
+            fast_float::chars_format::allow_leading_plus |
+            fast_float::chars_format::skip_white_space);
         if(result.ec == std::errc()){
             pos = result.ptr;
         } else {
@@ -313,7 +319,11 @@ public:
 
     void readEx(double& out_value)
     {
-        auto result = fast_float::from_chars(pos, bufEndPos, out_value);
+        auto result = fast_float::from_chars(
+            pos, bufEndPos, out_value,
+            fast_float::chars_format::general |
+            fast_float::chars_format::allow_leading_plus |
+            fast_float::chars_format::skip_white_space);
         if(result.ec == std::errc()){
             pos = result.ptr;
         } else {
