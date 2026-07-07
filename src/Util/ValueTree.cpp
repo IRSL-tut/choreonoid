@@ -635,7 +635,7 @@ void Mapping::setKeyQuoteStyle(StringStyle style)
 }
 
 
-ValueNode* Mapping::find(const std::string& key) const
+ValueNodeRef<> Mapping::find(const std::string& key) const
 {
     if(!isValid()){
         throwNotMappingException();
@@ -649,7 +649,7 @@ ValueNode* Mapping::find(const std::string& key) const
 }
 
 
-ValueNode* Mapping::find(std::initializer_list<const char*> keys) const
+ValueNodeRef<> Mapping::find(std::initializer_list<const char*> keys) const
 {
     if(!isValid()){
         throwNotMappingException();
@@ -664,7 +664,7 @@ ValueNode* Mapping::find(std::initializer_list<const char*> keys) const
 }
 
 
-Mapping* Mapping::findMapping(const std::string& key) const
+MappingRef Mapping::findMapping(const std::string& key) const
 {
     if(!isValid()){
         throwNotMappingException();
@@ -680,7 +680,7 @@ Mapping* Mapping::findMapping(const std::string& key) const
 }
 
 
-Mapping* Mapping::findMapping(std::initializer_list<const char*> keys) const
+MappingRef Mapping::findMapping(std::initializer_list<const char*> keys) const
 {
     if(!isValid()){
         throwNotMappingException();
@@ -698,7 +698,7 @@ Mapping* Mapping::findMapping(std::initializer_list<const char*> keys) const
 }
 
 
-Listing* Mapping::findListing(const std::string& key) const
+ListingRef Mapping::findListing(const std::string& key) const
 {
     if(!isValid()){
         throwNotMappingException();
@@ -714,7 +714,7 @@ Listing* Mapping::findListing(const std::string& key) const
 }
 
 
-Listing* Mapping::findListing(std::initializer_list<const char*> keys) const
+ListingRef Mapping::findListing(std::initializer_list<const char*> keys) const
 {
     if(!isValid()){
         throwNotMappingException();

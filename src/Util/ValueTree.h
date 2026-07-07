@@ -28,6 +28,36 @@ enum StringStyle { PLAIN_STRING, YAML_PLAIN_STRING = PLAIN_STRING,
 };
 #endif
 
+/*
+   API conventions on how the value tree node classes return nodes and values.
+   The return type tells whether the caller has to check the result:
+
+   - Reference (Mapping::get, Mapping::operator[], Listing::operator[], etc.):
+     The existence and the type of the target are guaranteed, and no check is
+     needed on the caller side; an exception is thrown when the guarantee is
+     broken. This form is intended for reading values in a concise form.
+
+   - ValueNodeRef (the find functions of Mapping):
+     The target may not exist. The returned object works as the boolean value
+     corresponding to the validity in boolean contexts, and the node pointer
+     stored in it is never nullptr; a special invalid node object is set when
+     the target is not found so that the node access can also be written in a
+     flow style. See the comment of the ValueNodeRef class for details.
+
+   - Raw pointer (toScalar, toMapping, toListing, Listing::at, etc.):
+     The returned pointer is never nullptr; an exception is thrown when the
+     requested access is not possible. This form is intended for handling nodes
+     as objects, such as storing them in ref_ptr and chaining the node access.
+     A nullable raw pointer is not used in this API; whether a check is needed
+     is expressed by ValueNodeRef.
+
+   - Boolean return value with an output argument (the read functions):
+     The target is optional; the value is stored in the output argument and
+     true is returned only when the target exists and has the expected type.
+
+   New functions should also follow these conventions.
+*/
+
 class CNOID_EXPORT ValueNode : public ClonableReferenced
 {
     struct Initializer {
@@ -107,6 +137,11 @@ public:
 
     template<typename T> T to() const;
 
+    /**
+       The following conversion functions return the pointer to this node as the
+       specified node type. The returned pointer is never nullptr; an exception
+       is thrown when this node is not of the specified type.
+    */
     const ScalarNode* toScalar() const;
     ScalarNode* toScalar();
     
@@ -284,6 +319,55 @@ inline const std::string& ValueNode::toString() const
 }
 
 
+/**
+   This class is used as the return type of the find functions of Mapping.
+   The stored node pointer is never nullptr; when the node is not found, a pointer
+   to a special invalid node object is stored so that the node access can be written
+   in a flow style without inserting the validity check of each pointer. In that
+   case, the check can be done by isValid() at any position of the flow. In addition
+   to this original convention, this class works as the boolean value corresponding
+   to isValid() in boolean contexts, so that the following idiom is also available:
+
+   \code
+   if(auto mapping = parent->findMapping(key)){ ... }
+   \endcode
+
+   Note that this class is a smart pointer derived from ref_ptr, and it is
+   implicitly converted to the raw node pointer or ref_ptr. The conversion
+   never results in nullptr.
+
+   \note (Future plan) Deriving from ref_ptr adds a pair of reference count
+   operations (about 7.5 ns) to every find call. This design is adopted for now
+   because it keeps the full source compatibility with the existing code,
+   including the copy initialization of a smart pointer variable
+   (MappingPtr p = mapping->findMapping(key);), which requires two user-defined
+   conversions and is only allowed by the derived-to-base conversion. Once such
+   copy initializations are rewritten with auto, a raw pointer variable, or the
+   direct initialization (MappingPtr p(mapping->findMapping(key));), the base
+   class of this class can be replaced with a non-owning lightweight wrapper
+   that just holds a raw node pointer. That will make the overhead of this class
+   completely zero while keeping all the other usages valid, including the
+   isValid() checks and the flow-style accesses. The remaining copy
+   initializations will then be detected as compile errors, so the replacement
+   does not cause any silent runtime breakage. On the other hand, replacing the
+   return type of the find functions with a nullable raw pointer is NOT planned;
+   it would give no additional performance gain over the non-owning wrapper, and
+   the existing flow-style code would compile fine but crash at runtime.
+*/
+template<class NodeType = ValueNode>
+class ValueNodeRef : public ref_ptr<NodeType>
+{
+public:
+    ValueNodeRef(NodeType* node) : ref_ptr<NodeType>(node) { }
+
+    //! This boolean conversion returns the validity of the found node instead of the null check
+    explicit operator bool() const { return (*this)->isValid(); }
+};
+
+typedef ValueNodeRef<Mapping> MappingRef;
+typedef ValueNodeRef<Listing> ListingRef;
+
+
 class CNOID_EXPORT Mapping : public ValueNode
 {
     typedef std::map<std::string, ValueNodePtr> Container;
@@ -333,12 +417,12 @@ public:
         
     void setKeyQuoteStyle(StringStyle style);
 
-    ValueNode* find(const std::string& key) const;
-    ValueNode* find(std::initializer_list<const char*> keys) const;
-    Mapping* findMapping(const std::string& key) const;
-    Mapping* findMapping(std::initializer_list<const char*> keys) const;
-    Listing* findListing(const std::string& key) const;
-    Listing* findListing(std::initializer_list<const char*> keys) const;
+    ValueNodeRef<> find(const std::string& key) const;
+    ValueNodeRef<> find(std::initializer_list<const char*> keys) const;
+    MappingRef findMapping(const std::string& key) const;
+    MappingRef findMapping(std::initializer_list<const char*> keys) const;
+    ListingRef findListing(const std::string& key) const;
+    ListingRef findListing(std::initializer_list<const char*> keys) const;
 
     ValueNodePtr extract(const std::string& key);
     ValueNodePtr extract(std::initializer_list<const char*> keys);
@@ -592,6 +676,11 @@ public:
         return values.back();
     }
 
+    /**
+       The element access for handling the element as a node object, such as
+       storing it in ref_ptr and chaining the node access. The returned pointer
+       is never nullptr, and the index must be within the valid range.
+    */
     ValueNode* at(int i) const {
         return values[i];
     }
@@ -607,7 +696,9 @@ public:
     void write(int i, const std::string& value, StringStyle stringStyle = PLAIN_STRING);
 
     /**
-       \todo This operator should return ValueNode*.
+       The element access for reading the element value in a concise form.
+       Use the at function instead to handle the element as a node object.
+       The index must be within the valid range.
     */
     ValueNode& operator[](int i) const {
         return *values[i];
