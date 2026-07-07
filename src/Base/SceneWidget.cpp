@@ -1414,7 +1414,7 @@ void SceneWidget::Impl::updateLatestEvent(QMouseEvent* event)
 void SceneWidget::Impl::updateLatestEventPath(bool forceFullPicking)
 {
     if(needToUpdateViewportInformation ||
-       (!forceFullPicking && isLightweightViewChangeEnabled)){
+       (!forceFullPicking && isLightweightViewChangeEnabled && isDraggingView())){
         return;
     }
     
