@@ -9,6 +9,7 @@
 #include <yaml.h>
 #include <filesystem>
 #include <functional>
+#include <fast_float/fast_float.h>
 #include "gettext.h"
 
 #ifdef _WIN32
@@ -47,6 +48,46 @@ constexpr double TO_RADIAN = PI / 180.0;
 
 void hash_combine(std::size_t& seed, std::size_t hash) {
     seed ^= hash + 0x9e3779b9 + (seed<<6) + (seed>>2);
+}
+
+/*
+   The following scalar parsing functions use the fast_float library instead
+   of strtod / strtol to make the conversions locale-independent and faster.
+   The original strtod / strtol behaviors are emulated: leading whitespace
+   and a leading plus sign are accepted, and out_end returns the position
+   just after the parsed part.
+*/
+
+inline const char* skipSpaces(const char* p, const char* end)
+{
+    while(p != end && std::isspace((unsigned char)*p)){
+        ++p;
+    }
+    return p;
+}
+
+template<typename T>
+bool parseFloatingNumber(const std::string& s, T& out_value, const char*& out_end)
+{
+    auto result = fast_float::from_chars(
+        s.data(), s.data() + s.size(), out_value,
+        fast_float::chars_format::general |
+        fast_float::chars_format::allow_leading_plus |
+        fast_float::chars_format::skip_white_space);
+    out_end = result.ptr;
+    return result.ec == std::errc();
+}
+
+inline bool parseInt(const std::string& s, int& out_value, const char*& out_end)
+{
+    const char* end = s.data() + s.size();
+    const char* p = skipSpaces(s.data(), end);
+    if(p != end && *p == '+' && (p + 1) != end && std::isdigit((unsigned char)p[1])){
+        ++p; // The integer overload of from_chars does not accept a leading plus sign
+    }
+    auto result = fast_float::from_chars(p, end, out_value, 10);
+    out_end = result.ptr;
+    return result.ec == std::errc();
 }
 
 }
@@ -172,15 +213,10 @@ ValueNode& ValueNode::operator=(const ValueNode&)
 bool ValueNode::read(int &out_value) const
 {
     if(isScalar()){
-        const char* nptr = &(static_cast<const ScalarNode* const>(this)->stringValue_[0]);
-        char* endptr;
-        out_value = strtol(nptr, &endptr, 10);
-        if(endptr > nptr){
-            // Check if remaining characters are all whitespace
-            while(*endptr != '\0' && std::isspace(static_cast<unsigned char>(*endptr))){
-                endptr++;
-            }
-            if(*endptr == '\0'){
+        const std::string& s = static_cast<const ScalarNode* const>(this)->stringValue_;
+        const char* endptr;
+        if(parseInt(s, out_value, endptr)){
+            if(skipSpaces(endptr, s.data() + s.size()) == s.data() + s.size()){
                 return true;
             }
         }
@@ -196,12 +232,10 @@ int ValueNode::toInt() const
     }
 
     const ScalarNode* const scalar = static_cast<const ScalarNode* const>(this);
-    
-    const char* nptr = &(scalar->stringValue_[0]);
-    char* endptr;
-    const int value = strtol(nptr, &endptr, 10);
 
-    if(endptr == nptr){
+    int value;
+    const char* endptr;
+    if(!parseInt(scalar->stringValue_, value, endptr)){
         ScalarTypeMismatchException ex;
         ex.setPosition(line(), column());
         ex.setMessage(formatR(_("The value \"{}\" must be an integer value"), scalar->stringValue_));
@@ -215,15 +249,10 @@ int ValueNode::toInt() const
 bool ValueNode::read(double& out_value) const
 {
     if(isScalar()){
-        const char* nptr = &(static_cast<const ScalarNode* const>(this)->stringValue_[0]);
-        char* endptr;
-        out_value = strtod(nptr, &endptr);
-        if(endptr > nptr){
-            // Check if remaining characters are all whitespace
-            while(*endptr != '\0' && std::isspace(static_cast<unsigned char>(*endptr))){
-                endptr++;
-            }
-            if(*endptr == '\0'){
+        const std::string& s = static_cast<const ScalarNode* const>(this)->stringValue_;
+        const char* endptr;
+        if(parseFloatingNumber(s, out_value, endptr)){
+            if(skipSpaces(endptr, s.data() + s.size()) == s.data() + s.size()){
                 return true;
             }
         }
@@ -235,15 +264,10 @@ bool ValueNode::read(double& out_value) const
 bool ValueNode::read(float& out_value) const
 {
     if(isScalar()){
-        const char* nptr = &(static_cast<const ScalarNode* const>(this)->stringValue_[0]);
-        char* endptr;
-        out_value = strtof(nptr, &endptr);
-        if(endptr > nptr){
-            // Check if remaining characters are all whitespace
-            while(*endptr != '\0' && std::isspace(static_cast<unsigned char>(*endptr))){
-                endptr++;
-            }
-            if(*endptr == '\0'){
+        const std::string& s = static_cast<const ScalarNode* const>(this)->stringValue_;
+        const char* endptr;
+        if(parseFloatingNumber(s, out_value, endptr)){
+            if(skipSpaces(endptr, s.data() + s.size()) == s.data() + s.size()){
                 return true;
             }
         }
@@ -260,11 +284,9 @@ double ValueNode::toDouble() const
 
     const ScalarNode* const scalar = static_cast<const ScalarNode* const>(this);
 
-    const char* nptr = &(scalar->stringValue_[0]);
-    char* endptr;
-    const double value = strtod(nptr, &endptr);
-
-    if(endptr == nptr){
+    double value;
+    const char* endptr;
+    if(!parseFloatingNumber(scalar->stringValue_, value, endptr)){
         ScalarTypeMismatchException ex;
         ex.setPosition(line(), column());
         ex.setMessage(formatR(_("The value \"{}\" must be a floating point number"), scalar->stringValue_));
@@ -283,11 +305,9 @@ float ValueNode::toFloat() const
 
     const ScalarNode* const scalar = static_cast<const ScalarNode* const>(this);
 
-    const char* nptr = &(scalar->stringValue_[0]);
-    char* endptr;
-    const float value = strtof(nptr, &endptr);
-
-    if(endptr == nptr){
+    float value;
+    const char* endptr;
+    if(!parseFloatingNumber(scalar->stringValue_, value, endptr)){
         ScalarTypeMismatchException ex;
         ex.setPosition(line(), column());
         ex.setMessage(formatR(_("The value \"{}\" must be a floating point number"), scalar->stringValue_));
