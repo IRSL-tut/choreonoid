@@ -17,6 +17,29 @@ public:
     enum RendererType { GL1_RENDERER, GLSL_RENDERER };
     static int rendererType();
     static GLSceneRenderer* create(SgGroup* root = nullptr);
+
+    /**
+       The rendering mode of transparent objects. This is a system-wide setting
+       shared by all the renderer instances including the ones used for the
+       vision sensor simulation. In the sorted rendering mode, transparent
+       objects are rendered by the alpha blending in back-to-front sorted
+       order, which cannot correctly handle intersecting objects. In the depth
+       peeling mode, the overlaps of transparent objects are resolved pixel by
+       pixel, which gives the correct rendering result even for intersecting
+       objects. In the supersampled depth peeling mode, the transparent object
+       layers are additionally rendered at doubled resolution and downsampled
+       in the compositing so that the silhouettes of the transparent objects
+       are anti-aliased at the cost of the additional GPU memory and fill rate.
+    */
+    enum TransparentRenderingMode {
+        SortedTransparentRendering,
+        DepthPeelingTransparentRendering,
+        SupersampledDepthPeelingTransparentRendering,
+        NumTransparentRenderingModes
+    };
+    static void setTransparentRenderingMode(int mode);
+    static int transparentRenderingMode();
+    static SignalProxy<void()> sigTransparentRenderingModeChanged();
     
     GLSceneRenderer(SgGroup* root = nullptr);
     virtual ~GLSceneRenderer();

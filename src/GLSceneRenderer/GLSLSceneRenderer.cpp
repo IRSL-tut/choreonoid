@@ -499,7 +499,6 @@ public:
     int pickingImageHeight;
 
     // Resources for the depth peeling of the transparent object rendering
-    bool isDepthPeelingEnabled;
     bool isDepthPeelingAvailable; // Set to false when the resource initialization fails
     int maxNumDepthPeelingLayers;
     GLuint depthPeelingFBO;
@@ -507,11 +506,14 @@ public:
     vector<GLuint> depthPeelingLayerTextures;
     int depthPeelingBufferWidth;
     int depthPeelingBufferHeight;
+    int depthPeelingBufferScale; // 2 in the supersampled depth peeling mode, otherwise 1
     GLuint depthPeelingQuery; // Occlusion query for detecting empty layers
     GLuint depthPeelingVAO;   // Empty VAO for the full-screen passes
     GLSLProgram depthPeelingInitProgram;
     GLSLProgram depthPeelingCompositeProgram;
     GLint depthPeelingInitUseMsaaLocation;
+    GLint depthPeelingInitViewportScaleLocation;
+    GLint depthPeelingCompositeViewportScaleLocation;
     bool areDepthPeelingProgramsInitialized;
 
     LightingMode lightingMode;
@@ -946,7 +948,6 @@ void GLSLSceneRenderer::Impl::initialize()
     isReversedDepthBufferActive = false;
     isInfiniteFarOverrideEnabled = true;
 
-    isDepthPeelingEnabled = true;
     maxNumDepthPeelingLayers = 4;
 
     lightingMode = NormalLighting;
@@ -2403,9 +2404,14 @@ void GLSLSceneRenderer::Impl::renderTransparentObjects(bool isDepthPeelingAllowe
       are rendered by the back-to-front sorted alpha blending, which is also used
       as the fallback when the depth peeling is not available.
     */
+    int transparentRenderingMode = GLSceneRenderer::transparentRenderingMode();
+    bool isDepthPeelingMode =
+        (transparentRenderingMode == GLSceneRenderer::DepthPeelingTransparentRendering) ||
+        (transparentRenderingMode == GLSceneRenderer::SupersampledDepthPeelingTransparentRendering);
+
     bool depthPeelingDone = false;
-    if(isDepthPeelingAllowed && hasDepthPeelableEntries &&
-       isDepthPeelingEnabled && !isRenderingPickingImage &&
+    if(isDepthPeelingAllowed && hasDepthPeelableEntries && isDepthPeelingMode &&
+       !isRenderingPickingImage &&
        currentProgram == fullLightingProgram.get()){
         if(initializeDepthPeelingResources()){
             renderTransparentObjectsWithDepthPeeling();
@@ -2459,7 +2465,23 @@ bool GLSLSceneRenderer::Impl::initializeDepthPeelingResources()
     if(vp.w <= 0 || vp.h <= 0){
         return false;
     }
-    bool sizeChanged = (vp.w != depthPeelingBufferWidth || vp.h != depthPeelingBufferHeight);
+
+    // In the supersampled depth peeling mode, the peeling buffers are doubled
+    // in resolution to apply anti-aliasing to the transparent object silhouettes
+    int scale = 1;
+    if(GLSceneRenderer::transparentRenderingMode() ==
+       GLSceneRenderer::SupersampledDepthPeelingTransparentRendering){
+        scale = 2;
+        GLint maxTextureSize = 0;
+        glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+        if(vp.w * scale > maxTextureSize || vp.h * scale > maxTextureSize){
+            scale = 1; // Fall back to the normal resolution
+        }
+    }
+    const int w = vp.w * scale;
+    const int h = vp.h * scale;
+
+    bool sizeChanged = (w != depthPeelingBufferWidth || h != depthPeelingBufferHeight);
     int numLayers = std::max(1, maxNumDepthPeelingLayers);
     bool numLayersChanged = (static_cast<size_t>(numLayers) != depthPeelingLayerTextures.size());
     if(!sizeChanged && !numLayersChanged && depthPeelingFBO){
@@ -2479,6 +2501,8 @@ bool GLSLSceneRenderer::Impl::initializeDepthPeelingResources()
             glUniform1i(
                 depthPeelingInitProgram.getUniformLocation("depthTextureMS"), DepthPeelingWorkTextureUnitMS);
             depthPeelingInitUseMsaaLocation = depthPeelingInitProgram.getUniformLocation("useMsaa");
+            depthPeelingInitViewportScaleLocation =
+                depthPeelingInitProgram.getUniformLocation("viewportScale");
 
             depthPeelingCompositeProgram.loadShader(
                 ":/GLSceneRenderer/shader/DepthPeeling.vert", GL_VERTEX_SHADER);
@@ -2488,6 +2512,8 @@ bool GLSLSceneRenderer::Impl::initializeDepthPeelingResources()
             depthPeelingCompositeProgram.use();
             glUniform1i(
                 depthPeelingCompositeProgram.getUniformLocation("layerTexture"), DepthPeelingWorkTextureUnit);
+            depthPeelingCompositeViewportScaleLocation =
+                depthPeelingCompositeProgram.getUniformLocation("viewportScale");
 
             glUseProgram(0);
             areDepthPeelingProgramsInitialized = true;
@@ -2526,7 +2552,7 @@ bool GLSLSceneRenderer::Impl::initializeDepthPeelingResources()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, vp.w, vp.h, 0,
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, w, h, 0,
                      GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
     }
 
@@ -2545,7 +2571,7 @@ bool GLSLSceneRenderer::Impl::initializeDepthPeelingResources()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, vp.w, vp.h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     }
     glActiveTexture(GL_TEXTURE0);
 
@@ -2566,8 +2592,9 @@ bool GLSLSceneRenderer::Impl::initializeDepthPeelingResources()
         return false;
     }
 
-    depthPeelingBufferWidth = vp.w;
-    depthPeelingBufferHeight = vp.h;
+    depthPeelingBufferWidth = w;
+    depthPeelingBufferHeight = h;
+    depthPeelingBufferScale = scale;
 
     return true;
 }
@@ -2602,6 +2629,7 @@ void GLSLSceneRenderer::Impl::releaseDepthPeelingResources(bool isGLContextActiv
     depthPeelingLayerTextures.clear();
     depthPeelingBufferWidth = 0;
     depthPeelingBufferHeight = 0;
+    depthPeelingBufferScale = 1;
     depthPeelingQuery = 0;
     depthPeelingVAO = 0;
     areDepthPeelingProgramsInitialized = false;
@@ -2674,6 +2702,7 @@ void GLSLSceneRenderer::Impl::renderTransparentObjectsWithDepthPeeling()
         depthPeelingInitProgram.use();
         bool useMsaa = (msaaSamples > 1);
         glUniform1i(depthPeelingInitUseMsaaLocation, useMsaa);
+        glUniform1i(depthPeelingInitViewportScaleLocation, depthPeelingBufferScale);
         if(useMsaa){
             glActiveTexture(GL_TEXTURE0 + DepthPeelingWorkTextureUnitMS);
             glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, depthTexture);
@@ -2718,9 +2747,13 @@ void GLSLSceneRenderer::Impl::renderTransparentObjectsWithDepthPeeling()
     if(numLayers > 0){
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        // The composite shader outputs the layer colors in the premultiplied
+        // alpha form so that the supersampled texels can be averaged correctly
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
         depthPeelingCompositeProgram.use();
+        glUniform1i(depthPeelingCompositeViewportScaleLocation, depthPeelingBufferScale);
         glBindVertexArray(depthPeelingVAO);
         glActiveTexture(GL_TEXTURE0 + DepthPeelingWorkTextureUnit);
         for(int i = numLayers - 1; i >= 0; --i){
@@ -5168,18 +5201,6 @@ void GLSLSceneRenderer::setLowMemoryConsumptionMode(bool on)
         impl->isLowMemoryConsumptionMode = on;
         requestToClearResources();
     }
-}
-
-
-void GLSLSceneRenderer::setDepthPeelingEnabled(bool on)
-{
-    impl->isDepthPeelingEnabled = on;
-}
-
-
-bool GLSLSceneRenderer::isDepthPeelingEnabled() const
-{
-    return impl->isDepthPeelingEnabled;
 }
 
 

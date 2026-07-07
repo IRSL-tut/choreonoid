@@ -12,6 +12,8 @@ namespace {
 
 int rendererType_ = GLSceneRenderer::GLSL_RENDERER;
 bool isStandardDepthBufferForced_ = false;
+int transparentRenderingMode_ = GLSceneRenderer::DepthPeelingTransparentRendering;
+Signal<void()> sigTransparentRenderingModeChanged_;
 
 }
 
@@ -57,6 +59,27 @@ GLSceneRenderer* GLSceneRenderer::create(SgGroup* root)
     } else {
         return new GLSLSceneRenderer(root);
     }
+}
+
+
+void GLSceneRenderer::setTransparentRenderingMode(int mode)
+{
+    if(mode != transparentRenderingMode_){
+        transparentRenderingMode_ = mode;
+        sigTransparentRenderingModeChanged_();
+    }
+}
+
+
+int GLSceneRenderer::transparentRenderingMode()
+{
+    return transparentRenderingMode_;
+}
+
+
+SignalProxy<void()> GLSceneRenderer::sigTransparentRenderingModeChanged()
+{
+    return sigTransparentRenderingModeChanged_;
 }
 
 
