@@ -513,12 +513,22 @@ public:
     // Resources for the depth peeling of the transparent object rendering
     bool isDepthPeelingAvailable; // Set to false when the resource initialization fails
     int maxNumDepthPeelingLayers;
-    GLuint depthPeelingFBO;
+
+    /*
+      The framebuffer objects used in the peeling passes. The attachment
+      combination of each pass is fixed, so one framebuffer object is built
+      for each pass in advance and each pass only needs a cheap
+      glBindFramebuffer call instead of more expensive attachment changes.
+    */
+    vector<GLuint> depthPeelingPassFBOs;
+    GLuint depthPeelingClearFBO; // For clearing the initial "previously peeled depth" texture
+
     GLuint peeledDepthTextures[2]; // Ping-pong depth textures for the peeling passes
     vector<GLuint> depthPeelingLayerTextures;
     int depthPeelingBufferWidth;
     int depthPeelingBufferHeight;
     int depthPeelingBufferScale; // 2 in the supersampled depth peeling mode, otherwise 1
+    GLint maxDepthPeelingTextureSize; // Cache of GL_MAX_TEXTURE_SIZE (0 until it is obtained)
     vector<GLuint> depthPeelingQueries; // Per-layer occlusion queries for detecting empty layers
     GLuint depthPeelingVAO; // Empty VAO for the full-screen passes
     GLSLProgram depthPeelingInitProgram;
@@ -2524,9 +2534,10 @@ bool GLSLSceneRenderer::Impl::initializeDepthPeelingResources()
     if(GLSceneRenderer::transparentRenderingMode() ==
        GLSceneRenderer::SupersampledDepthPeelingTransparentRendering){
         scale = 2;
-        GLint maxTextureSize = 0;
-        glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
-        if(vp.w * scale > maxTextureSize || vp.h * scale > maxTextureSize){
+        if(maxDepthPeelingTextureSize == 0){
+            glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxDepthPeelingTextureSize);
+        }
+        if(vp.w * scale > maxDepthPeelingTextureSize || vp.h * scale > maxDepthPeelingTextureSize){
             scale = 1; // Fall back to the normal resolution
         }
     }
@@ -2536,7 +2547,7 @@ bool GLSLSceneRenderer::Impl::initializeDepthPeelingResources()
     bool sizeChanged = (w != depthPeelingBufferWidth || h != depthPeelingBufferHeight);
     int numLayers = std::max(1, maxNumDepthPeelingLayers);
     bool numLayersChanged = (static_cast<size_t>(numLayers) != depthPeelingLayerTextures.size());
-    if(!sizeChanged && !numLayersChanged && depthPeelingFBO){
+    if(!sizeChanged && !numLayersChanged && !depthPeelingPassFBOs.empty()){
         return true;
     }
 
@@ -2580,9 +2591,6 @@ bool GLSLSceneRenderer::Impl::initializeDepthPeelingResources()
 
     if(!depthPeelingVAO){
         glGenVertexArrays(1, &depthPeelingVAO);
-    }
-    if(!depthPeelingFBO){
-        glGenFramebuffers(1, &depthPeelingFBO);
     }
     if(numLayersChanged && !depthPeelingQueries.empty()){
         glDeleteQueries(depthPeelingQueries.size(), depthPeelingQueries.data());
@@ -2634,15 +2642,46 @@ bool GLSLSceneRenderer::Impl::initializeDepthPeelingResources()
 
     GLint prevFBO;
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevFBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, depthPeelingFBO);
-    glFramebufferTexture2D(
-        GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, peeledDepthTextures[0], 0);
-    glFramebufferTexture2D(
-        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, depthPeelingLayerTextures[0], 0);
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+    /*
+      Build the framebuffer object of each peeling pass with the fixed
+      attachment combination. Note that the framebuffer objects are still
+      valid after the resizing because the attached texture objects are kept
+      and only their storages are re-allocated.
+    */
+    bool isFramebufferComplete = true;
+    if(numLayersChanged && !depthPeelingPassFBOs.empty()){
+        glDeleteFramebuffers(depthPeelingPassFBOs.size(), depthPeelingPassFBOs.data());
+        depthPeelingPassFBOs.clear();
+    }
+    if(depthPeelingPassFBOs.empty()){
+        depthPeelingPassFBOs.resize(numLayers, 0);
+        glGenFramebuffers(numLayers, depthPeelingPassFBOs.data());
+        for(int i=0; i < numLayers; ++i){
+            glBindFramebuffer(GL_FRAMEBUFFER, depthPeelingPassFBOs[i]);
+            glFramebufferTexture2D(
+                GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, peeledDepthTextures[i % 2], 0);
+            glFramebufferTexture2D(
+                GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, depthPeelingLayerTextures[i], 0);
+            if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
+                isFramebufferComplete = false;
+            }
+        }
+    }
+    if(!depthPeelingClearFBO){
+        glGenFramebuffers(1, &depthPeelingClearFBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthPeelingClearFBO);
+        glFramebufferTexture2D(
+            GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, peeledDepthTextures[1], 0);
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+        if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
+            isFramebufferComplete = false;
+        }
+    }
     glBindFramebuffer(GL_FRAMEBUFFER, prevFBO);
 
-    if(status != GL_FRAMEBUFFER_COMPLETE){
+    if(!isFramebufferComplete){
         os() << _("Depth peeling is disabled because its framebuffer is not complete.") << endl;
         releaseDepthPeelingResources(true);
         isDepthPeelingAvailable = false;
@@ -2660,8 +2699,11 @@ bool GLSLSceneRenderer::Impl::initializeDepthPeelingResources()
 void GLSLSceneRenderer::Impl::releaseDepthPeelingResources(bool isGLContextActive)
 {
     if(isGLContextActive){
-        if(depthPeelingFBO){
-            glDeleteFramebuffers(1, &depthPeelingFBO);
+        if(!depthPeelingPassFBOs.empty()){
+            glDeleteFramebuffers(depthPeelingPassFBOs.size(), depthPeelingPassFBOs.data());
+        }
+        if(depthPeelingClearFBO){
+            glDeleteFramebuffers(1, &depthPeelingClearFBO);
         }
         if(peeledDepthTextures[0]){
             glDeleteTextures(2, peeledDepthTextures);
@@ -2680,13 +2722,15 @@ void GLSLSceneRenderer::Impl::releaseDepthPeelingResources(bool isGLContextActiv
             depthPeelingCompositeProgram.release();
         }
     }
-    depthPeelingFBO = 0;
+    depthPeelingPassFBOs.clear();
+    depthPeelingClearFBO = 0;
     peeledDepthTextures[0] = 0;
     peeledDepthTextures[1] = 0;
     depthPeelingLayerTextures.clear();
     depthPeelingBufferWidth = 0;
     depthPeelingBufferHeight = 0;
     depthPeelingBufferScale = 1;
+    maxDepthPeelingTextureSize = 0;
     depthPeelingQueries.clear();
     depthPeelingVAO = 0;
     areDepthPeelingProgramsInitialized = false;
@@ -2751,10 +2795,13 @@ void GLSLSceneRenderer::Impl::renderTransparentObjectsWithDepthPeeling()
         }
     }
 
-    GLint prevFBO;
-    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevFBO);
-    GLint prevViewport[4];
-    glGetIntegerv(GL_VIEWPORT, prevViewport);
+    /*
+      The framebuffer object and the viewport of the main rendering, which are
+      restored after the peeling. They are determined without glGetIntegerv
+      because the glGet functions can be very expensive on the drivers that
+      process the GL commands in a dedicated thread.
+    */
+    const GLuint mainFBO = (msaaSamples > 1 && msaaFBO) ? msaaFBO : defaultFBO;
 
     const int w = depthPeelingBufferWidth;
     const int h = depthPeelingBufferHeight;
@@ -2765,7 +2812,6 @@ void GLSLSceneRenderer::Impl::renderTransparentObjectsWithDepthPeeling()
     // It makes the first pass keep all the fragments.
     const double noPeeledDepth = isReversedDepthBufferActive ? 1.0 : 0.0;
 
-    glBindFramebuffer(GL_FRAMEBUFFER, depthPeelingFBO);
     glViewport(0, 0, w, h);
 
     const int scale = depthPeelingBufferScale;
@@ -2773,8 +2819,7 @@ void GLSLSceneRenderer::Impl::renderTransparentObjectsWithDepthPeeling()
     glScissor(sx0 * scale, sy0 * scale, (sx1 - sx0) * scale, (sy1 - sy0) * scale);
 
     // Initialize the "previously peeled depth" texture for the first pass
-    glFramebufferTexture2D(
-        GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, peeledDepthTextures[1], 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthPeelingClearFBO);
     glClearDepth(noPeeledDepth);
     glClear(GL_DEPTH_BUFFER_BIT);
     glClearDepth(defaultClearDepth);
@@ -2791,13 +2836,9 @@ void GLSLSceneRenderer::Impl::renderTransparentObjectsWithDepthPeeling()
 
     for(int i=0; i < maxNumLayers; ++i){
 
-        int writeIndex = i % 2;
-        int prevIndex = 1 - writeIndex;
+        int prevIndex = 1 - (i % 2);
 
-        glFramebufferTexture2D(
-            GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, peeledDepthTextures[writeIndex], 0);
-        glFramebufferTexture2D(
-            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, depthPeelingLayerTextures[i], 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthPeelingPassFBOs[i]);
 
         // The alpha channel must be written into the layer texture although
         // the alpha writing is disabled in the main framebuffer rendering.
@@ -2857,8 +2898,8 @@ void GLSLSceneRenderer::Impl::renderTransparentObjectsWithDepthPeeling()
 
     // Composite the extracted layers over the scene in back-to-front order.
     // The compositing of an empty layer is skipped by the conditional rendering.
-    glBindFramebuffer(GL_FRAMEBUFFER, prevFBO);
-    glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
+    glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
+    glViewport(vp.x, vp.y, vp.w, vp.h);
     glScissor(sx0, sy0, sx1 - sx0, sy1 - sy0);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
 
