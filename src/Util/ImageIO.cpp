@@ -1,10 +1,12 @@
 #include "ImageIO.h"
+#include "MessageOut.h"
 #include "UTF8.h"
 #include "Format.h"
 #include <filesystem>
 #include <png.h>
 #include <algorithm>
 #include <cstring>
+#include <climits>
 
 extern "C" {
 #define XMD_H
@@ -415,6 +417,52 @@ bool ImageIO::load(Image& image, const std::string& filename, std::ostream& os)
     }
 
     return loaded;
+}
+
+
+bool ImageIO::load(Image& image, const void* data, size_t size, MessageOut* mout)
+{
+    if(!mout){
+        mout = MessageOut::nullout();
+    }
+    if(size > INT_MAX){
+        mout->putErrorln(_("The image data cannot be loaded because it is too large."));
+        return false;
+    }
+
+    auto buf = static_cast<const stbi_uc*>(data);
+    const int bufSize = static_cast<int>(size);
+    int width, height, numComponents;
+
+    stbi_set_flip_vertically_on_load(isUpsideDown_ ? 1 : 0);
+
+    if(stbi_is_hdr_from_memory(buf, bufSize)){
+        float* pixels = stbi_loadf_from_memory(buf, bufSize, &width, &height, &numComponents, 0);
+        if(!pixels){
+            mout->putErrorln(
+                formatR(_("The image data cannot be loaded. {0}"), stbi_failure_reason()));
+            return false;
+        }
+        image.setSize(width, height, numComponents, Image::Float32);
+        std::memcpy(
+            image.floatPixels(), pixels,
+            sizeof(float) * static_cast<size_t>(width) * height * numComponents);
+        stbi_image_free(pixels);
+    } else {
+        unsigned char* pixels = stbi_load_from_memory(buf, bufSize, &width, &height, &numComponents, 0);
+        if(!pixels){
+            mout->putErrorln(
+                formatR(_("The image data cannot be loaded. {0}"), stbi_failure_reason()));
+            return false;
+        }
+        image.setSize(width, height, numComponents);
+        std::memcpy(
+            image.pixels(), pixels,
+            static_cast<size_t>(width) * height * numComponents);
+        stbi_image_free(pixels);
+    }
+
+    return true;
 }
 
 

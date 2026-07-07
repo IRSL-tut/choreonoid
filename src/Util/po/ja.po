@@ -112,6 +112,12 @@ msgstr "画像ファイル \"{0}\" をロードできません．"
 msgid "Image file \"{0}\" cannot be decoded as TIFF."
 msgstr "画像ファイル \"{0}\" をTIFFとしてデコードできません．"
 
+msgid "The image data cannot be loaded because it is too large."
+msgstr "画像データが大きすぎるため読み込めません．"
+
+msgid "The image data cannot be loaded. {0}"
+msgstr "画像データを読み込めません．{0}"
+
 msgid "The image file format of \"{0}\" is not supported."
 msgstr "\"{0}\" の画像ファイル形式はサポートされていません．"
 
