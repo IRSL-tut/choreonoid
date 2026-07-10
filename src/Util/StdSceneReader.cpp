@@ -1341,9 +1341,32 @@ SgMesh* StdSceneReader::Impl::readResourceAsGeometry(Mapping* info, int meshOpti
     } else if(resource.info){
         scene = readNode(resource.info->toMapping());
     }
-    auto shape = dynamic_cast<SgShape*>(scene);
 
-    if(!shape){
+    /*
+       A resource file may store a single mesh in a hierarchy that contains container
+       nodes such as the coordinate conversion transforms of glTF files. Such a
+       hierarchy is accepted as a geometry resource if it is a sequence of single-child
+       containers ending with a single shape and the total transform is identity.
+    */
+    SgShape* shape = nullptr;
+    Affine3 T = Affine3::Identity();
+    SgNode* node = scene;
+    while(node){
+        if((shape = dynamic_cast<SgShape*>(node))){
+            break;
+        }
+        auto group = node->toGroupNode();
+        if(!group || group->numChildren() != 1){
+            break;
+        }
+        if(auto transform = dynamic_cast<SgTransform*>(group)){
+            Affine3 T0;
+            transform->getTransform(T0);
+            T = T * T0;
+        }
+        node = group->child(0);
+    }
+    if(!shape || !T.isApprox(Affine3::Identity())){
         info->throwException(_("A resouce specified as a geometry must be a single mesh"));
     }
     auto mesh = shape->mesh();
