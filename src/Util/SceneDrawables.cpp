@@ -294,7 +294,8 @@ SgImage::SgImage(std::shared_ptr<Image> sharedImage)
 
 SgImage::SgImage(const SgImage& org)
     : SgObject(org),
-      image_(org.image_)
+      image_(org.image_),
+      sourceData_(org.sourceData_)
 {
 
 }
@@ -311,6 +312,8 @@ Image& SgImage::image()
     if(image_.use_count() > 1){
         image_ = std::make_shared<Image>(*image_);
     }
+    // The image may be modified through the returned reference
+    sourceData_.reset();
     return *image_;
 }
 
@@ -320,6 +323,8 @@ unsigned char* SgImage::pixels()
     if(image_.use_count() > 1){
         image_ = std::make_shared<Image>(*image_);
     }
+    // The image may be modified through the returned pointer
+    sourceData_.reset();
     return image_->pixels();
 }
 
@@ -329,6 +334,8 @@ float* SgImage::floatPixels()
     if(image_.use_count() > 1){
         image_ = std::make_shared<Image>(*image_);
     }
+    // The image may be modified through the returned pointer
+    sourceData_.reset();
     return image_->floatPixels();
 }
 

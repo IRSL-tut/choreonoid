@@ -169,6 +169,32 @@ public:
     SgImage(std::shared_ptr<Image> sharedImage);
     SgImage(const SgImage& org);
 
+    /**
+       The image file data from which this image object was created, such as the
+       content of a PNG or JPEG file embedded in a glTF file. A loader can attach
+       this to the image object so that a writer can output the original data
+       without re-encoding the image. The attached data is automatically discarded
+       when the image is modified through a non-const accessor of SgImage.
+    */
+    class SourceData : public Referenced
+    {
+    public:
+        SourceData(std::vector<unsigned char> data, const std::string& mimeType)
+            : data_(std::move(data)), mimeType_(mimeType) { }
+        const std::vector<unsigned char>& data() const { return data_; }
+        //! The IANA media type of the data such as "image/png" and "image/jpeg"
+        const std::string& mimeType() const { return mimeType_; }
+    private:
+        std::vector<unsigned char> data_;
+        std::string mimeType_;
+    };
+
+    SourceData* sourceData() { return sourceData_; }
+    const SourceData* sourceData() const { return sourceData_; }
+    bool hasSourceData() const { return sourceData_ != nullptr; }
+    void setSourceData(SourceData* data) { sourceData_ = data; }
+    void clearSourceData() { sourceData_.reset(); }
+
     Image& image();
     const Image& image() const { return *image_; }
     const Image& constImage() const { return *image_; }
@@ -197,6 +223,7 @@ protected:
 
 private:
     std::shared_ptr<Image> image_;
+    ref_ptr<SourceData> sourceData_;
 };
 
 
