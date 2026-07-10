@@ -42,7 +42,9 @@ public:
         LinkToOriginalModelFiles,
         CopyModelFiles,
         ReplaceWithStdSceneFiles,
-        ReplaceWithObjModelFiles
+        ReplaceWithObjModelFiles,
+        ReplaceWithGlbModelFiles,
+        ReplaceWithGltfModelFiles
     };
     void setExtModelFileMode(int mode);
     int extModelFileMode() const;

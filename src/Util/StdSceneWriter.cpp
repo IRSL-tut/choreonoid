@@ -1,6 +1,7 @@
 #include "StdSceneWriter.h"
 #include "YAMLWriter.h"
 #include "ObjSceneWriter.h"
+#include "GLTFSceneWriter.h"
 #include "SceneGraph.h"
 #include "SceneDrawables.h"
 #include "SceneLights.h"
@@ -45,6 +46,7 @@ public:
     unique_ptr<YAMLWriter> yamlWriter;
     unique_ptr<StdSceneWriter> subSceneWriter;
     unique_ptr<ObjSceneWriter> objSceneWriter;
+    unique_ptr<GLTFSceneWriter> gltfSceneWriter;
     int numSkippedNode;
     string mainSceneName;
     string outputBaseDirectory;
@@ -66,6 +68,7 @@ public:
     YAMLWriter* getOrCreateYamlWriter();
     StdSceneWriter* getOrCreateSubSceneWriter();
     ObjSceneWriter* getOrCreateObjSceneWriter();
+    GLTFSceneWriter* getOrCreateGltfSceneWriter();
     void setOutputBaseDirectory(const std::string& directory);
     void ensureUriSchemeProcessor();
     bool writeScene(const std::string& filename, SgNode* node, const std::vector<SgNode*>* pnodes);
@@ -200,6 +203,9 @@ void StdSceneWriter::setMessageSink(std::ostream& os)
     if(impl->objSceneWriter){
         impl->objSceneWriter->setMessageSink(os);
     }
+    if(impl->gltfSceneWriter){
+        impl->gltfSceneWriter->setMessageSink(os);
+    }
 }
 
 
@@ -231,6 +237,16 @@ ObjSceneWriter* StdSceneWriter::Impl::getOrCreateObjSceneWriter()
         objSceneWriter->setMessageSink(os());
     }
     return objSceneWriter.get();
+}
+
+
+GLTFSceneWriter* StdSceneWriter::Impl::getOrCreateGltfSceneWriter()
+{
+    if(!gltfSceneWriter){
+        gltfSceneWriter.reset(new GLTFSceneWriter);
+        gltfSceneWriter->setMessageSink(os());
+    }
+    return gltfSceneWriter.get();
 }
 
 
@@ -716,6 +732,10 @@ bool StdSceneWriter::Impl::replaceOriginalModelFile
     }
     if(extModelFileMode == ReplaceWithObjModelFiles){
         path += ".obj";
+    } else if(extModelFileMode == ReplaceWithGlbModelFiles){
+        path += ".glb";
+    } else if(extModelFileMode == ReplaceWithGltfModelFiles){
+        path += ".gltf";
     } else {
         path += ".scen";
     }
@@ -749,6 +769,11 @@ bool StdSceneWriter::Impl::replaceOriginalModelFile
             */
             if(extModelFileMode == ReplaceWithObjModelFiles){
                 auto writer = getOrCreateObjSceneWriter();
+                writer->setMaterialEnabled(isAppearanceEnabled);
+                replaced = writer->writeScene(filename, node);
+            } else if(extModelFileMode == ReplaceWithGlbModelFiles ||
+                      extModelFileMode == ReplaceWithGltfModelFiles){
+                auto writer = getOrCreateGltfSceneWriter();
                 writer->setMaterialEnabled(isAppearanceEnabled);
                 replaced = writer->writeScene(filename, node);
             } else {

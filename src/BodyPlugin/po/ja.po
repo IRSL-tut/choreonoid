@@ -305,6 +305,12 @@ msgstr "標準シーンファイルに置き換え"
 msgid "Replace with OBJ model files"
 msgstr "OBJモデルファイルに置き換え"
 
+msgid "Replace with glTF binary (GLB) model files"
+msgstr "glTFバイナリ（GLB）モデルファイルに置き換え"
+
+msgid "Replace with glTF model files"
+msgstr "glTFモデルファイルに置き換え"
+
 msgid "Integrate transforms"
 msgstr "座標変換を統合"
 
@@ -337,6 +343,9 @@ msgstr "標準シーンファイル"
 
 msgid "OBJ file"
 msgstr "OBJファイル"
+
+msgid "glTF file"
+msgstr "glTFファイル"
 
 msgid "Group selection"
 msgstr "グループの選択"

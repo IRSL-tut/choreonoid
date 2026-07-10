@@ -26,7 +26,9 @@ public:
         LinkToOriginalModelFiles = StdSceneWriter::LinkToOriginalModelFiles,
         CopyModelFiles           = StdSceneWriter::CopyModelFiles,
         ReplaceWithStdSceneFiles = StdSceneWriter::ReplaceWithStdSceneFiles,
-        ReplaceWithObjModelFiles = StdSceneWriter::ReplaceWithObjModelFiles
+        ReplaceWithObjModelFiles = StdSceneWriter::ReplaceWithObjModelFiles,
+        ReplaceWithGlbModelFiles = StdSceneWriter::ReplaceWithGlbModelFiles,
+        ReplaceWithGltfModelFiles = StdSceneWriter::ReplaceWithGltfModelFiles
     };
     void setExtModelFileMode(int mode);
     int extModelFileMode() const;

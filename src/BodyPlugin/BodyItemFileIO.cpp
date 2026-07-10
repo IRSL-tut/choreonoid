@@ -6,6 +6,7 @@
 #include <cnoid/StdBodyWriter>
 #include <cnoid/StdSceneWriter>
 #include <cnoid/ObjSceneWriter>
+#include <cnoid/GLTFSceneWriter>
 #include <cnoid/FilePathVariableProcessor>
 #include <cnoid/ItemManager>
 #include <cnoid/SceneGraph>
@@ -68,6 +69,17 @@ public:
     virtual void createOptionPanelForSaving() override;
 };
 
+class GltfFileExporter : public SceneFileExporterBase
+{
+    unique_ptr<GLTFSceneWriter> sceneWriter;
+
+public:
+    GltfFileExporter();
+    GLTFSceneWriter* ensureSceneWriter();
+    virtual bool saveScene(const std::string& filename, SgGroup* scene) override;
+    virtual void createOptionPanelForSaving() override;
+};
+
 
 BodyItemBodyFileIO* bodyFileIO;
 SceneFileImporter* meshFileIO;
@@ -85,6 +97,7 @@ void BodyItem::registerBodyItemFileIoSet(ItemManager* im)
 
     im->addFileIO<BodyItem>(new StdSceneFileExporter);
     im->addFileIO<BodyItem>(new ObjFileExporter);
+    im->addFileIO<BodyItem>(new GltfFileExporter);
 }
 
 
@@ -143,6 +156,10 @@ void BodyItemFileIoBase::addExtModelFileModeCombo(QBoxLayout* box)
         _("Embed models"), StdSceneWriter::EmbedModels);
     extModelFileModeCombo->addItem(
         _("Replace with standard scene files"), StdSceneWriter::ReplaceWithStdSceneFiles);
+    extModelFileModeCombo->addItem(
+        _("Replace with glTF model files"), StdSceneWriter::ReplaceWithGltfModelFiles);
+    extModelFileModeCombo->addItem(
+        _("Replace with glTF binary (GLB) model files"), StdSceneWriter::ReplaceWithGlbModelFiles);
     extModelFileModeCombo->addItem(
         _("Replace with OBJ model files"), StdSceneWriter::ReplaceWithObjModelFiles);
     box->addWidget(extModelFileModeCombo);
@@ -481,6 +498,39 @@ bool ObjFileExporter::saveScene(const std::string& filename, SgGroup* scene)
 
 
 void ObjFileExporter::createOptionPanelForSaving()
+{
+    auto hbox = new QHBoxLayout;
+    addShapeTypeCombo(hbox);
+    addCoordinateCombo(hbox);
+    hbox->addStretch();
+    optionVBox->addLayout(hbox);
+}
+
+
+GltfFileExporter::GltfFileExporter()
+    : SceneFileExporterBase(_("glTF file"), "GLTF-FILE", "glb")
+{
+    setExtensionsForSaving({ "glb", "gltf" });
+}
+
+
+GLTFSceneWriter* GltfFileExporter::ensureSceneWriter()
+{
+    if(!sceneWriter){
+        sceneWriter.reset(new GLTFSceneWriter);
+        sceneWriter->setMessageSink(os());
+    }
+    return sceneWriter.get();
+}
+
+
+bool GltfFileExporter::saveScene(const std::string& filename, SgGroup* scene)
+{
+    return ensureSceneWriter()->writeScene(filename, scene);
+}
+
+
+void GltfFileExporter::createOptionPanelForSaving()
 {
     auto hbox = new QHBoxLayout;
     addShapeTypeCombo(hbox);
