@@ -116,9 +116,9 @@ copyrighted by other developers.
  * Sol (https://github.com/ThePhD/sol2)
    see thirdparty/sol2/LICENSE
 
- * stb_image (https://github.com/nothings/stb)
+ * stb_image and stb_image_write (https://github.com/nothings/stb)
    MIT license or public domain (see the license notice at the end of
-   thirdparty/stb/stb_image.h)
+   each header file in thirdparty/stb)
 
  * Xacro (https://github.com/ros/xacro)
    see thirdparty/xacro-1.14.20/package.xml
