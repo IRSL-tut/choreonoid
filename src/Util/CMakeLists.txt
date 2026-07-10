@@ -79,6 +79,7 @@ set(sources
   ObjSceneWriter.cpp
   GLTFSceneLoader.cpp
   GLTFSceneWriter.cpp
+  ColladaSceneLoader.cpp
   stb_image_write_impl.cpp
   VRML.cpp
   VRMLParser.cpp
@@ -203,6 +204,7 @@ set(headers
   ObjSceneWriter.h
   GLTFSceneLoader.h
   GLTFSceneWriter.h
+  ColladaSceneLoader.h
   SimpleScanner.h
   VRML.h
   VRMLParser.h
@@ -230,6 +232,10 @@ else()
 endif()
 include_directories(BEFORE ${PROJECT_SOURCE_DIR}/thirdparty/fast_float-8.2.10/include)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty)
+include_directories(${PUGIXML_STATIC_INCLUDE_DIRS})
+if(PUGIXML_STATIC_LIBRARY_DIRS)
+  link_directories(${PUGIXML_STATIC_LIBRARY_DIRS})
+endif()
 link_directories(${LIBYAML_LIBRARY_DIRS})
 
 
@@ -245,7 +251,8 @@ choreonoid_add_library(${target} SHARED ${sources} ${mofiles} HEADERS ${headers}
 
 set(libraries
   PUBLIC fmt::fmt ${GETTEXT_LIBRARIES}
-  PRIVATE ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES} ${libzip_LIBRARIES})
+  PRIVATE ${LIBYAML_LIBRARIES} ${PNG_LIBRARIES} ${JPEG_LIBRARIES} ${libzip_LIBRARIES}
+  ${PUGIXML_STATIC_LIBRARIES})
 if(CNOID_USE_TIFF)
   set(libraries ${libraries} PRIVATE ${TIFF_LIBRARIES})
   target_compile_definitions(CnoidUtil PRIVATE CNOID_USE_TIFF)

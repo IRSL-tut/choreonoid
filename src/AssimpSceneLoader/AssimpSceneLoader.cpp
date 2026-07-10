@@ -99,8 +99,12 @@ public:
 
 void AssimpSceneLoader::initializeClass()
 {
+    /*
+       Note that the dae (Collada) format is not registered here because it is loaded
+       by ColladaSceneLoader in the Util library, which this loader must not override.
+    */
     SceneLoader::registerLoader(
-        { "dae", "blend", "x", "dxf" },
+        { "blend", "x", "dxf" },
         []() -> shared_ptr<AbstractSceneLoader> { return std::make_shared<AssimpSceneLoader>(); });
 }
     
