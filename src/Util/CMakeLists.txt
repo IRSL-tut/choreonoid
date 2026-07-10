@@ -77,6 +77,9 @@ set(sources
   STLSceneLoader.cpp
   ObjSceneLoader.cpp
   ObjSceneWriter.cpp
+  GLTFSceneLoader.cpp
+  GLTFSceneWriter.cpp
+  stb_image_write_impl.cpp
   VRML.cpp
   VRMLParser.cpp
   VRMLWriter.cpp
@@ -198,6 +201,8 @@ set(headers
   STLSceneLoader.h
   ObjSceneLoader.h
   ObjSceneWriter.h
+  GLTFSceneLoader.h
+  GLTFSceneWriter.h
   SimpleScanner.h
   VRML.h
   VRMLParser.h
