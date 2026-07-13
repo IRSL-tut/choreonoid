@@ -414,6 +414,7 @@ public:
     int  numGaussSeidelInitialIteration;
     double gaussSeidelErrorCriterion;
     int  numCollisionDetectionThreads;
+    bool isPrimitiveCollisionDetectionEnabled;
     double contactCorrectionDepth;
     double contactCorrectionVelocityRatio;
 
@@ -543,6 +544,7 @@ ConstraintForceSolver::Impl::Impl(DyWorldBase& world)
     numGaussSeidelInitialIteration = DEFAULT_NUM_GAUSS_SEIDEL_INITIAL_ITERATION;
     gaussSeidelErrorCriterion = DEFAULT_GAUSS_SEIDEL_ERROR_CRITERION;
     numCollisionDetectionThreads = 0;
+    isPrimitiveCollisionDetectionEnabled = true;
     contactCorrectionDepth = DEFAULT_CONTACT_CORRECTION_DEPTH;
     contactCorrectionVelocityRatio = DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO;
 
@@ -776,6 +778,12 @@ void ConstraintForceSolver::Impl::initialize(void)
 
     if(!bodyCollisionDetector.collisionDetector()){
         bodyCollisionDetector.setCollisionDetector(new AISTCollisionDetector);
+    }
+
+    // The primitive collision detection mode must be set before the body
+    // geometries are added to the detector
+    if(auto aist = dynamic_cast<AISTCollisionDetector*>(bodyCollisionDetector.collisionDetector())){
+        aist->setPrimitiveCollisionDetectionEnabled(isPrimitiveCollisionDetectionEnabled);
     }
 
     initializeContactMaterials();
@@ -2736,6 +2744,18 @@ void ConstraintForceSolver::setNumCollisionDetectionThreads(int n)
 int ConstraintForceSolver::numCollisionDetectionThreads() const
 {
     return impl->numCollisionDetectionThreads;
+}
+
+
+void ConstraintForceSolver::setPrimitiveCollisionDetectionEnabled(bool on)
+{
+    impl->isPrimitiveCollisionDetectionEnabled = on;
+}
+
+
+bool ConstraintForceSolver::isPrimitiveCollisionDetectionEnabled() const
+{
+    return impl->isPrimitiveCollisionDetectionEnabled;
 }
 
 

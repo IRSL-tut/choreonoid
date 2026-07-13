@@ -43,6 +43,14 @@ public:
     std::optional<double> detectDistanceToRayIntersection(
         GeometryHandle geometry, const Vector3& point, const Vector3& direction);
 
+    /**
+       Enable the analytic collision detection based on the primitive shape
+       information (box, sphere, cylinder, cone, and capsule) instead of the
+       mesh-based detection. This must be set before adding geometries.
+    */
+    void setPrimitiveCollisionDetectionEnabled(bool on);
+    bool isPrimitiveCollisionDetectionEnabled() const;
+
 private:
     class Impl;
     Impl* impl;

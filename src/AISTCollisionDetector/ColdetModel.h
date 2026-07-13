@@ -19,7 +19,19 @@ class ColdetModelInternalModel;
 class CNOID_EXPORT ColdetModel : public Referenced
 {
 public:
-    enum PrimitiveType { SP_MESH, SP_BOX, SP_CYLINDER, SP_CONE, SP_SPHERE, SP_PLANE };
+    /**
+       Primitive shape types.
+       The order of the types follows that of SgMesh::PrimitiveType.
+       The parameters of each primitive type set by setPrimitiveParam are as follows:
+       - SP_BOX: half extents along the local x, y, z axes (3 parameters)
+       - SP_SPHERE: radius
+       - SP_CYLINDER: radius and height. The axis is along the local y-axis.
+       - SP_CONE: radius of the base circle and height. The axis is along the
+         local y-axis and the apex is at the +y end.
+       - SP_CAPSULE: radius and the height of the cylindrical part.
+         The axis is along the local y-axis.
+    */
+    enum PrimitiveType { SP_MESH, SP_BOX, SP_SPHERE, SP_CYLINDER, SP_CONE, SP_CAPSULE };
 
     /**
      * @brief constructor
@@ -179,10 +191,15 @@ public:
 
     /**
      * @brief set position and orientation of primitive
-     * @param R orientation relative to link (length = 9)  
+     * @param R orientation relative to link (length = 9)
      * @param p position relative to link (length = 3)
      */
     void setPrimitivePosition(const double* R, const double* p);
+
+    /**
+       @brief set position and orientation of primitive relative to the model frame
+    */
+    void setPrimitiveLocalPosition(const Isometry3& T);
         
     /**
      * @brief compute distance between a point and this mesh along ray
@@ -202,6 +219,12 @@ public:
                                       double i_radius);
 
     void getBoundingBoxData(const int depth, std::vector<Vector3>& out_boxes);
+
+    /**
+       @brief get the axis-aligned bounding box of the whole model in the model-local frame
+       @return true if the model has a valid bounding volume tree
+    */
+    bool getLocalBoundingBox(Vector3& out_center, Vector3& out_halfExtents) const;
         
     int getAABBTreeDepth();
     int getAABBmaxNum();
@@ -209,10 +232,19 @@ public:
 
 private:
     void initialize();
-        
+
     ColdetModelInternalModel* internalModel;
     IceMaths::Matrix4x4* transform;
     IceMaths::Matrix4x4* pTransform; ///< transform of primitive
+
+    /**
+       The following double-precision transforms hold the same information as
+       the above single-precision transforms and are used by the analytic
+       primitive shape collision detection.
+    */
+    Isometry3 position_;
+    Isometry3 primitiveLocalPosition_;
+
     std::string name_;
     bool isValid_;
 

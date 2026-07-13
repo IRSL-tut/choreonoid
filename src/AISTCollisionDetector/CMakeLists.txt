@@ -4,6 +4,7 @@ set(sources
   AISTCollisionDetector.cpp
   ColdetModel.cpp
   ColdetModelPair.cpp
+  PrimitiveCollision.cpp
   StdCollisionPairInserter.cpp
   TriOverlap.cpp
   SSVTreeCollider.cpp
@@ -31,7 +32,6 @@ set(sources
   Opcode/OPC_RayCollider.cpp
   Opcode/OPC_SphereCollider.cpp
   Opcode/OPC_Picking.cpp
-  Opcode/OPC_PlanesCollider.cpp
   )
 
 set(headers
@@ -40,6 +40,7 @@ set(headers
   ColdetModel.h
   ColdetModelPair.h
   CollisionPairInserter.h
+  PrimitiveCollision.h
   exportdecl.h
   )
 

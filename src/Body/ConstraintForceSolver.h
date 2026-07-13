@@ -54,6 +54,13 @@ public:
     void setNumCollisionDetectionThreads(int n);
     int numCollisionDetectionThreads() const;
 
+    /**
+       Enable the analytic collision detection based on the primitive shape
+       information when the AIST collision detector is used.
+    */
+    void setPrimitiveCollisionDetectionEnabled(bool on);
+    bool isPrimitiveCollisionDetectionEnabled() const;
+
     void setContactDepthCorrection(double depth, double velocityRatio);
     double contactCorrectionDepth();
     double contactCorrectionVelocityRatio();

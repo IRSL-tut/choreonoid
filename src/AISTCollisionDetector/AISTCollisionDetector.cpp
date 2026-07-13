@@ -37,11 +37,64 @@ public:
     int groupId;
     bool isEnabled;
     bool isStatic;
-    std::optional<Isometry3> localPosition;
     ColdetModelExPtr sibling;
-    
-    ColdetModelEx() : groupId(0), isEnabled(true), isStatic(false) { }
+
+    /**
+       Bounding sphere of the whole geometry including all the sibling
+       models, which is set on the main (top) model of the chain and used
+       for rejecting distant geometry pairs before the sub pair iteration.
+       The radius is negative when the sphere is not available.
+    */
+    Vector3 boundingSphereLocalCenter;
+    Vector3 boundingSphereCenter;
+    double boundingSphereRadius;
+
+    /**
+       Bounding sphere of this component model itself, which is used for
+       rejecting distant sub pairs in the iteration over the component
+       combinations of the composite geometries.
+    */
+    Vector3 componentSphereLocalCenter;
+    Vector3 componentSphereCenter;
+    double componentSphereRadius;
+
+    /**
+       True for the model which holds the merged mesh of the primitive
+       components. The model is used only for the distance and ray casting
+       queries and is excluded from the collision pair detection to avoid
+       counting the same shapes twice.
+    */
+    bool isQueryOnlyModel;
+
+    ColdetModelEx() : groupId(0), isEnabled(true), isStatic(false), isQueryOnlyModel(false) {
+        boundingSphereLocalCenter.setZero();
+        boundingSphereCenter.setZero();
+        boundingSphereRadius = -1.0;
+        componentSphereLocalCenter.setZero();
+        componentSphereCenter.setZero();
+        componentSphereRadius = -1.0;
+    }
 };
+
+//! Check the overlap of the geometry-level bounding spheres of a model pair
+inline bool testGeometryBoundingSphereOverlap(ColdetModelEx* model0, ColdetModelEx* model1)
+{
+    if(model0->boundingSphereRadius < 0.0 || model1->boundingSphereRadius < 0.0){
+        return true; // The spheres are not available; the pair cannot be rejected
+    }
+    const double rsum = model0->boundingSphereRadius + model1->boundingSphereRadius;
+    return (model0->boundingSphereCenter - model1->boundingSphereCenter).squaredNorm() <= rsum * rsum;
+}
+
+//! Check the overlap of the component-level bounding spheres of a model pair
+inline bool testComponentBoundingSphereOverlap(ColdetModelEx* model0, ColdetModelEx* model1)
+{
+    if(model0->componentSphereRadius < 0.0 || model1->componentSphereRadius < 0.0){
+        return true;
+    }
+    const double rsum = model0->componentSphereRadius + model1->componentSphereRadius;
+    return (model0->componentSphereCenter - model1->componentSphereCenter).squaredNorm() <= rsum * rsum;
+}
 
 class ColdetModelPairEx;
 typedef ref_ptr<ColdetModelPairEx> ColdetModelPairExPtr;
@@ -64,12 +117,24 @@ public:
     ColdetModelPairEx(ColdetModelEx* model1, ColdetModelEx* model2)
         : ColdetModelPair(model1, model2)
     {
+        // Create the sub pairs for all the combinations of the model
+        // components when the models are composite ones
         ColdetModelPairEx* last = this;
-        for(auto sibling1 = model1->sibling; sibling1; sibling1 = sibling1->sibling){
-            for(auto sibling2 = model2->sibling; sibling2; sibling2 = sibling2->sibling){
-                last->sibling = new ColdetModelPairEx;
-                last->sibling->set(sibling1, sibling2);
-                last = last->sibling->sibling;
+        for(ColdetModelEx* m1 = model1; m1; m1 = m1->sibling){
+            if(m1->isQueryOnlyModel){
+                continue;
+            }
+            for(ColdetModelEx* m2 = model2; m2; m2 = m2->sibling){
+                if(m2->isQueryOnlyModel){
+                    continue;
+                }
+                if(m1 == model1 && m2 == model2){
+                    continue; // handled by this pair itself
+                }
+                auto subPair = new ColdetModelPairEx;
+                subPair->set(m1, m2);
+                last->sibling = subPair;
+                last = subPair;
             }
         }
     }
@@ -80,6 +145,49 @@ public:
 
     ColdetModelPairExPtr sibling;
 };
+
+
+/**
+   Compute the bounding sphere covering all the component models of the
+   geometry and store it in the main model. All the component meshes are
+   represented in the same geometry-local frame.
+*/
+void computeGeometryBoundingSphere(ColdetModelEx* mainModel)
+{
+    Vector3 lower, upper;
+    bool initialized = false;
+    for(ColdetModelEx* model = mainModel; model; model = model->sibling){
+        Vector3 center, halfExtents;
+        if(model->getLocalBoundingBox(center, halfExtents)){
+            model->componentSphereLocalCenter = center;
+            model->componentSphereCenter = center;
+            model->componentSphereRadius = halfExtents.norm();
+        } else if(model->componentSphereRadius >= 0.0){
+            // A mesh-less primitive component model whose bounding sphere
+            // has been analytically set at the extraction
+            center = model->componentSphereLocalCenter;
+            halfExtents = Vector3::Constant(model->componentSphereRadius);
+        } else {
+            mainModel->boundingSphereRadius = -1.0;
+            return;
+        }
+        if(!initialized){
+            lower = center - halfExtents;
+            upper = center + halfExtents;
+            initialized = true;
+        } else {
+            lower = lower.cwiseMin(center - halfExtents);
+            upper = upper.cwiseMax(center + halfExtents);
+        }
+    }
+    if(!initialized){
+        mainModel->boundingSphereRadius = -1.0;
+        return;
+    }
+    mainModel->boundingSphereLocalCenter = 0.5 * (lower + upper);
+    mainModel->boundingSphereCenter = mainModel->boundingSphereLocalCenter;
+    mainModel->boundingSphereRadius = (0.5 * (upper - lower)).norm();
+}
 
 
 bool copyCollisionPairCollisions(ColdetModelPairEx* srcPair, CollisionPair& destPair, bool doReserve = false)
@@ -133,14 +241,19 @@ public:
     MeshExtractor* meshExtractor;
     bool isReady;
     bool isDynamicGeometryPairChangeEnabled;
+    bool isPrimitiveCollisionDetectionEnabled;
     CollisionPair collisionPair;
-        
+
     Impl();
     Impl(const AISTCollisionDetector::Impl& org);
     ~Impl();
     void initialize();
     std::optional<GeometryHandle> addGeometry(SgNode* geometry);
+    std::optional<GeometryHandle> addGeometryWithPrimitiveExtraction(SgNode* geometry);
     void addMesh(ColdetModelEx* model);
+    void addMeshOrPrimitive(
+        ColdetModelEx* meshModel, ColdetModelEx* queryMeshModel,
+        vector<ColdetModelExPtr>& primitiveModels);
     void makeReady();
     bool checkIfGroupPairEnabled(int groupId1, int groupId2);
     bool checkIfModelPairEnabled(ColdetModelPairEx* modelPair);
@@ -176,6 +289,7 @@ AISTCollisionDetector::AISTCollisionDetector()
 AISTCollisionDetector::Impl::Impl()
 {
     isDynamicGeometryPairChangeEnabled = false;
+    isPrimitiveCollisionDetectionEnabled = true;
     maxNumThreads = 0;
 
     initialize();
@@ -191,6 +305,7 @@ AISTCollisionDetector::AISTCollisionDetector(const AISTCollisionDetector& org)
 AISTCollisionDetector::Impl::Impl(const AISTCollisionDetector::Impl& org)
 {
     isDynamicGeometryPairChangeEnabled = org.isDynamicGeometryPairChangeEnabled;
+    isPrimitiveCollisionDetectionEnabled = org.isPrimitiveCollisionDetectionEnabled;
     maxNumThreads = org.maxNumThreads;
 
     initialize();
@@ -235,6 +350,24 @@ void AISTCollisionDetector::setNumThreads(int n)
     impl->maxNumThreads = n;
 }
 
+
+/**
+   Enable the analytic collision detection based on the primitive shape
+   information. This function must be called before adding geometries;
+   the geometries added while the mode is disabled are always processed
+   as triangle meshes.
+*/
+void AISTCollisionDetector::setPrimitiveCollisionDetectionEnabled(bool on)
+{
+    impl->isPrimitiveCollisionDetectionEnabled = on;
+}
+
+
+bool AISTCollisionDetector::isPrimitiveCollisionDetectionEnabled() const
+{
+    return impl->isPrimitiveCollisionDetectionEnabled;
+}
+
         
 void AISTCollisionDetector::clearGeometries()
 {
@@ -261,16 +394,85 @@ std::optional<GeometryHandle> AISTCollisionDetector::addGeometry(SgNode* geometr
 std::optional<GeometryHandle> AISTCollisionDetector::Impl::addGeometry(SgNode* geometry)
 {
     if(geometry){
+        if(isPrimitiveCollisionDetectionEnabled){
+            return addGeometryWithPrimitiveExtraction(geometry);
+        }
         ColdetModelExPtr model = new ColdetModelEx;
         if(meshExtractor->extract(geometry, [&]() { addMesh(model); })){
             model->setName(geometry->name());
             model->build();
             if(model->isValid()){
+                computeGeometryBoundingSphere(model);
                 models.push_back(model);
                 isReady = false;
                 return getHandle(model);
             }
         }
+    }
+    return std::nullopt;
+}
+
+
+/**
+   Add a geometry with extracting the primitive shape information.
+   The shape components which are not primitives are merged into a single
+   mesh model like the normal addGeometry function, and each primitive
+   shape component is registered as an individual model with its primitive
+   information. The models are linked by the sibling chain and share the
+   same geometry handle.
+   Note that every model including a primitive one also holds its own
+   triangle mesh so that the detection can always fall back to the
+   mesh-based algorithms.
+*/
+std::optional<GeometryHandle> AISTCollisionDetector::Impl::addGeometryWithPrimitiveExtraction(SgNode* geometry)
+{
+    ColdetModelExPtr meshModel = new ColdetModelEx;
+    ColdetModelExPtr queryMeshModel = new ColdetModelEx;
+    vector<ColdetModelExPtr> primitiveModels;
+
+    if(!meshExtractor->extract(
+           geometry,
+           [&]() { addMeshOrPrimitive(meshModel, queryMeshModel, primitiveModels); })){
+        return std::nullopt;
+    }
+
+    ColdetModelExPtr mainModel;
+    ColdetModelEx* lastModel = nullptr;
+    auto appendModel = [&](ColdetModelExPtr& model){
+        model->setName(geometry->name());
+        if(!mainModel){
+            mainModel = model;
+        } else {
+            lastModel->sibling = model;
+        }
+        lastModel = model;
+    };
+
+    if(meshModel->getNumVertices() > 0){
+        meshModel->build();
+        if(meshModel->isValid()){
+            appendModel(meshModel);
+        }
+    }
+
+    // The primitive component models do not hold meshes; their triangles
+    // are merged into the query-only mesh model instead
+    for(auto& model : primitiveModels){
+        appendModel(model);
+    }
+    if(!primitiveModels.empty() && queryMeshModel->getNumVertices() > 0){
+        queryMeshModel->build();
+        if(queryMeshModel->isValid()){
+            queryMeshModel->isQueryOnlyModel = true;
+            appendModel(queryMeshModel);
+        }
+    }
+
+    if(mainModel){
+        computeGeometryBoundingSphere(mainModel);
+        models.push_back(mainModel);
+        isReady = false;
+        return getHandle(mainModel);
     }
     return std::nullopt;
 }
@@ -301,22 +503,173 @@ void AISTCollisionDetector::Impl::addMesh(ColdetModelEx* model)
 }
 
 
+/**
+   Check if the current mesh of the mesh extractor is a supported primitive
+   shape, and register it as an individual primitive model if so. Otherwise
+   the mesh is merged into the shared mesh model.
+   A primitive model holds only the primitive parameters and does not hold
+   the mesh; the tessellated triangles are merged into the query-only mesh
+   model which covers the distance and ray casting queries.
+*/
+void AISTCollisionDetector::Impl::addMeshOrPrimitive
+(ColdetModelEx* meshModel, ColdetModelEx* queryMeshModel, vector<ColdetModelExPtr>& primitiveModels)
+{
+    SgMesh* mesh = meshExtractor->currentMesh();
+
+    int primitiveType = ColdetModel::SP_MESH;
+    switch(mesh->primitiveType()){
+    case SgMesh::BoxType:      primitiveType = ColdetModel::SP_BOX;      break;
+    case SgMesh::SphereType:   primitiveType = ColdetModel::SP_SPHERE;   break;
+    case SgMesh::CylinderType: primitiveType = ColdetModel::SP_CYLINDER; break;
+    case SgMesh::ConeType:     primitiveType = ColdetModel::SP_CONE;     break;
+    case SgMesh::CapsuleType:  primitiveType = ColdetModel::SP_CAPSULE;  break;
+    default: break;
+    }
+
+    bool doAddPrimitive = false;
+    Vector3 scale = Vector3::Ones();
+    Vector3 translationByScaling = Vector3::Zero();
+
+    if(primitiveType != ColdetModel::SP_MESH){
+        if(!meshExtractor->isCurrentScaled()){
+            doAddPrimitive = true;
+        } else {
+            Affine3 S =
+                meshExtractor->currentTransformWithoutScaling().inverse() *
+                meshExtractor->currentTransform();
+            if(S.linear().isDiagonal()){
+                translationByScaling = S.translation();
+                scale = S.linear().diagonal();
+                auto isEqual = [](double a, double b){ return fabs(a - b) <= 1.0e-9 * fabs(a); };
+                switch(primitiveType){
+                case ColdetModel::SP_BOX:
+                    doAddPrimitive = true;
+                    break;
+                case ColdetModel::SP_SPHERE:
+                case ColdetModel::SP_CAPSULE:
+                    // The shape with the hemisphere parts must be uniformly scaled
+                    doAddPrimitive = isEqual(scale.x(), scale.y()) && isEqual(scale.x(), scale.z());
+                    break;
+                case ColdetModel::SP_CYLINDER:
+                case ColdetModel::SP_CONE:
+                    // The circle cross sections must be kept circular
+                    doAddPrimitive = isEqual(scale.x(), scale.z());
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+    }
+
+    if(!doAddPrimitive){
+        addMesh(meshModel);
+        return;
+    }
+
+    // The tessellated triangles of the primitive are merged into the
+    // query-only mesh model
+    addMesh(queryMeshModel);
+
+    ColdetModelExPtr model = new ColdetModelEx;
+    model->setPrimitiveType(static_cast<ColdetModel::PrimitiveType>(primitiveType));
+
+    double boundingRadius = 0.0;
+
+    switch(primitiveType){
+    case ColdetModel::SP_BOX: {
+        const Vector3& s = mesh->primitive<SgMesh::Box>().size;
+        const Vector3 halfExtents = 0.5 * Vector3(s.x() * scale.x(), s.y() * scale.y(), s.z() * scale.z());
+        model->setNumPrimitiveParams(3);
+        model->setPrimitiveParam(0, halfExtents.x());
+        model->setPrimitiveParam(1, halfExtents.y());
+        model->setPrimitiveParam(2, halfExtents.z());
+        boundingRadius = halfExtents.norm();
+        break;
+    }
+    case ColdetModel::SP_SPHERE: {
+        const auto& sphere = mesh->primitive<SgMesh::Sphere>();
+        const double radius = sphere.radius * scale.x();
+        model->setNumPrimitiveParams(1);
+        model->setPrimitiveParam(0, radius);
+        boundingRadius = radius;
+        break;
+    }
+    case ColdetModel::SP_CYLINDER: {
+        const auto& cylinder = mesh->primitive<SgMesh::Cylinder>();
+        const double radius = cylinder.radius * scale.x();
+        const double height = cylinder.height * scale.y();
+        model->setNumPrimitiveParams(2);
+        model->setPrimitiveParam(0, radius);
+        model->setPrimitiveParam(1, height);
+        boundingRadius = sqrt(radius * radius + height * height / 4.0);
+        break;
+    }
+    case ColdetModel::SP_CONE: {
+        const auto& cone = mesh->primitive<SgMesh::Cone>();
+        const double radius = cone.radius * scale.x();
+        const double height = cone.height * scale.y();
+        model->setNumPrimitiveParams(2);
+        model->setPrimitiveParam(0, radius);
+        model->setPrimitiveParam(1, height);
+        boundingRadius = sqrt(radius * radius + height * height / 4.0);
+        break;
+    }
+    case ColdetModel::SP_CAPSULE: {
+        const auto& capsule = mesh->primitive<SgMesh::Capsule>();
+        const double radius = capsule.radius * scale.x();
+        const double height = capsule.height * scale.y();
+        model->setNumPrimitiveParams(2);
+        model->setPrimitiveParam(0, radius);
+        model->setPrimitiveParam(1, height);
+        boundingRadius = height / 2.0 + radius;
+        break;
+    }
+    default:
+        break;
+    }
+
+    Isometry3 T = meshExtractor->currentTransformWithoutScaling();
+    T.translation() += T.linear() * translationByScaling;
+    model->setPrimitiveLocalPosition(T);
+
+    // The bounding sphere of a mesh-less primitive model is analytically
+    // determined here instead of being derived from the mesh BVH
+    model->componentSphereLocalCenter = T.translation();
+    model->componentSphereCenter = T.translation();
+    model->componentSphereRadius = boundingRadius;
+
+    primitiveModels.push_back(model);
+}
+
+
+/**
+   The following attribute setting functions apply the given value to all the
+   component models of a composite geometry so that the sibling models always
+   share the same attributes as the main model.
+*/
 void AISTCollisionDetector::setCustomObject(GeometryHandle geometry, Referenced* object)
 {
-    getColdetModel(geometry)->object = object;
+    for(auto model = getColdetModel(geometry); model; model = model->sibling){
+        model->object = object;
+    }
 }
 
 
 void AISTCollisionDetector::setGeometryStatic(GeometryHandle geometry, bool isStatic)
 {
-    getColdetModel(geometry)->isStatic = isStatic;
+    for(auto model = getColdetModel(geometry); model; model = model->sibling){
+        model->isStatic = isStatic;
+    }
     impl->isReady = false;
 }
 
 
 void AISTCollisionDetector::setGroup(GeometryHandle geometry, int groupId)
 {
-    getColdetModel(geometry)->groupId = groupId;
+    for(auto model = getColdetModel(geometry); model; model = model->sibling){
+        model->groupId = groupId;
+    }
 }
 
 
@@ -350,7 +703,9 @@ void AISTCollisionDetector::ignoreGeometryPair(GeometryHandle geometry1, Geometr
 
 void AISTCollisionDetector::setGeometryEnabled(GeometryHandle geometry, bool isEnabled)
 {
-    getColdetModel(geometry)->isEnabled = isEnabled;
+    for(auto model = getColdetModel(geometry); model; model = model->sibling){
+        model->isEnabled = isEnabled;
+    }
 }
 
 
@@ -489,13 +844,10 @@ bool AISTCollisionDetector::Impl::checkIfModelPairEnabled(ColdetModelPairEx* mod
 void AISTCollisionDetector::updatePosition(GeometryHandle geometry, const Isometry3& position)
 {
     auto model = getColdetModel(geometry);
+    model->boundingSphereCenter = position * model->boundingSphereLocalCenter;
     do {
-        if(model->localPosition){
-            Isometry3 T = position * (*model->localPosition);
-            model->setPosition(T);
-        } else {
-            model->setPosition(position);
-        }
+        model->setPosition(position);
+        model->componentSphereCenter = position * model->componentSphereLocalCenter;
         model = model->sibling;
     } while(model);
 }
@@ -505,15 +857,14 @@ void AISTCollisionDetector::updatePositions
 (std::function<void(Referenced* object, Isometry3*& out_Position)> positionQuery)
 {
     for(ColdetModelEx* model : impl->models){ // Do not use auto&
+        // The position query is done only once per geometry here because all
+        // the component models of a composite geometry share the same position
+        Isometry3* T;
+        positionQuery(model->object, T);
+        model->boundingSphereCenter = (*T) * model->boundingSphereLocalCenter;
         do {
-            Isometry3* T;
-            positionQuery(model->object, T);
-            if(model->localPosition){
-                Isometry3 T2 = (*T) * (*model->localPosition);
-                model->setPosition(T2);
-            } else {
-                model->setPosition(*T);
-            }
+            model->setPosition(*T);
+            model->componentSphereCenter = (*T) * model->componentSphereLocalCenter;
             model = model->sibling; // Elements in models are overridden here if auto& is used
         } while(model);
     }
@@ -535,15 +886,20 @@ bool AISTCollisionDetector::Impl::detectCollisions
     auto& collisions = collisionPair.collisions();
 
     for(ColdetModelPairEx* modelPair : modelPairs){ // Do not use auto&
+        if(!testGeometryBoundingSphereOverlap(modelPair->model(0), modelPair->model(1))){
+            continue; // Reject the distant pair without iterating the sub pairs
+        }
         collisions.clear();
         do {
             auto model0 = modelPair->model(0);
             auto model1 = modelPair->model(1);
             if(getHandle(modelPair->model(0)) == geometry || getHandle(modelPair->model(1)) == geometry){
                 if(model0->isEnabled && model1->isEnabled){
-                    if(!isDynamicGeometryPairChangeEnabled || checkIfModelPairEnabled(modelPair)){
-                        if(!modelPair->detectCollisions().empty()){
-                            copyCollisionPairCollisions(modelPair, collisionPair);
+                    if(testComponentBoundingSphereOverlap(model0, model1)){
+                        if(!isDynamicGeometryPairChangeEnabled || checkIfModelPairEnabled(modelPair)){
+                            if(!modelPair->detectCollisions().empty()){
+                                copyCollisionPairCollisions(modelPair, collisionPair);
+                            }
                         }
                     }
                 }
@@ -583,12 +939,17 @@ bool AISTCollisionDetector::Impl::detectCollisions(const std::function<bool(cons
     auto& collisions = collisionPair.collisions();
 
     for(ColdetModelPairEx* modelPair : modelPairs){ // Do not use auto&
+        if(!testGeometryBoundingSphereOverlap(modelPair->model(0), modelPair->model(1))){
+            continue; // Reject the distant pair without iterating the sub pairs
+        }
         collisions.clear();
         do {
             if(modelPair->model(0)->isEnabled && modelPair->model(1)->isEnabled){
-                if(!isDynamicGeometryPairChangeEnabled || checkIfModelPairEnabled(modelPair)){
-                    if(!modelPair->detectCollisions().empty()){
-                        copyCollisionPairCollisions(modelPair, collisionPair);
+                if(testComponentBoundingSphereOverlap(modelPair->model(0), modelPair->model(1))){
+                    if(!isDynamicGeometryPairChangeEnabled || checkIfModelPairEnabled(modelPair)){
+                        if(!modelPair->detectCollisions().empty()){
+                            copyCollisionPairCollisions(modelPair, collisionPair);
+                        }
                     }
                 }
             }
@@ -642,11 +1003,16 @@ void AISTCollisionDetector::Impl::extractCollisionsOfAssignedPairs()
 
         CollisionPair& cpair = collisionPairSlots[i];
         cpair.clearCollisions();
+        if(!testGeometryBoundingSphereOverlap(modelPair->model(0), modelPair->model(1))){
+            continue; // Reject the distant pair without iterating the sub pairs
+        }
         do {
             if(modelPair->model(0)->isEnabled && modelPair->model(1)->isEnabled){
-                if(!isDynamicGeometryPairChangeEnabled || checkIfModelPairEnabled(modelPair)){
-                    if(!modelPair->detectCollisions().empty()){
-                        copyCollisionPairCollisions(modelPair, cpair, true);
+                if(testComponentBoundingSphereOverlap(modelPair->model(0), modelPair->model(1))){
+                    if(!isDynamicGeometryPairChangeEnabled || checkIfModelPairEnabled(modelPair)){
+                        if(!modelPair->detectCollisions().empty()){
+                            copyCollisionPairCollisions(modelPair, cpair, true);
+                        }
                     }
                 }
             }
@@ -677,13 +1043,44 @@ bool AISTCollisionDetector::Impl::dispatchCollisionsInCollisionPairArrays
 double AISTCollisionDetector::detectDistance
 (GeometryHandle geometry1, GeometryHandle geometry2, Vector3& out_point1, Vector3& out_point2)
 {
-    return ColdetModelPair::computeDistance(
-        getColdetModel(geometry1), getColdetModel(geometry2), out_point1.data(), out_point2.data());
+    ColdetModelEx* model1 = getColdetModel(geometry1);
+    ColdetModelEx* model2 = getColdetModel(geometry2);
+
+    if(!model1->sibling && !model2->sibling){
+        return ColdetModelPair::computeDistance(
+            model1, model2, out_point1.data(), out_point2.data());
+    }
+
+    // Take the minimum distance over all the component combinations of
+    // the composite geometries
+    double minDistance = -1.0;
+    for(ColdetModelEx* m1 = model1; m1; m1 = m1->sibling){
+        for(ColdetModelEx* m2 = model2; m2; m2 = m2->sibling){
+            Vector3 p1, p2;
+            const double d = ColdetModelPair::computeDistance(m1, m2, p1.data(), p2.data());
+            if(d >= 0.0 && (minDistance < 0.0 || d < minDistance)){
+                minDistance = d;
+                out_point1 = p1;
+                out_point2 = p2;
+            }
+        }
+    }
+    return minDistance;
 }
 
 
 std::optional<double> AISTCollisionDetector::detectDistanceToRayIntersection
 (GeometryHandle geometry, const Vector3& point, const Vector3& direction)
 {
-    return getColdetModel(geometry)->computeDistanceWithRay(point.data(), direction.data());
+    std::optional<double> minDistance;
+    for(ColdetModelEx* model = getColdetModel(geometry); model; model = model->sibling){
+        if(!model->isValid()){
+            continue; // Skip the mesh-less primitive component models
+        }
+        auto distance = model->computeDistanceWithRay(point.data(), direction.data());
+        if(distance && (!minDistance || *distance < *minDistance)){
+            minDistance = distance;
+        }
+    }
+    return minDistance;
 }

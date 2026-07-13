@@ -86,6 +86,7 @@ public:
     FloatingNumberString errorCriterion;
     int maxNumIterations;
     int numCollisionDetectionThreads;
+    bool isPrimitiveCollisionDetectionEnabled;
     int maxNumContactPoints;
     FloatingNumberString contactCorrectionDepth;
     FloatingNumberString contactCorrectionVelocityRatio;
@@ -161,6 +162,7 @@ AISTSimulatorItem::Impl::Impl(AISTSimulatorItem* self)
     errorCriterion = cfs.gaussSeidelErrorCriterion();
     maxNumIterations = cfs.gaussSeidelMaxNumIterations();
     numCollisionDetectionThreads = cfs.numCollisionDetectionThreads();
+    isPrimitiveCollisionDetectionEnabled = cfs.isPrimitiveCollisionDetectionEnabled();
     maxNumContactPoints = cfs.maxNumContactPoints();
     contactCorrectionDepth = cfs.contactCorrectionDepth();
     contactCorrectionVelocityRatio = cfs.contactCorrectionVelocityRatio();
@@ -196,6 +198,7 @@ AISTSimulatorItem::Impl::Impl(AISTSimulatorItem* self, const Impl& org)
     errorCriterion = org.errorCriterion;
     maxNumIterations = org.maxNumIterations;
     numCollisionDetectionThreads = org.numCollisionDetectionThreads;
+    isPrimitiveCollisionDetectionEnabled = org.isPrimitiveCollisionDetectionEnabled;
     maxNumContactPoints = org.maxNumContactPoints;
     contactCorrectionDepth = org.contactCorrectionDepth;
     contactCorrectionVelocityRatio = org.contactCorrectionVelocityRatio;
@@ -445,6 +448,7 @@ bool AISTSimulatorItem::Impl::initializeSimulation(const std::vector<SimulationB
     cfs.setGaussSeidelErrorCriterion(errorCriterion.value());
     cfs.setGaussSeidelMaxNumIterations(maxNumIterations);
     cfs.setNumCollisionDetectionThreads(numCollisionDetectionThreads);
+    cfs.setPrimitiveCollisionDetectionEnabled(isPrimitiveCollisionDetectionEnabled);
     cfs.setMaxNumContactPoints(maxNumContactPoints);
     cfs.setContactDepthCorrection(contactCorrectionDepth.value(), contactCorrectionVelocityRatio.value());
     
@@ -742,6 +746,8 @@ void AISTSimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty.min(1)(_("Max iterations"), maxNumIterations, changeProperty(maxNumIterations));
     putProperty.min(0)(_("Collision detection threads"), numCollisionDetectionThreads,
                        changeProperty(numCollisionDetectionThreads));
+    putProperty(_("Primitive shape collision detection"), isPrimitiveCollisionDetectionEnabled,
+                changeProperty(isPrimitiveCollisionDetectionEnabled));
     putProperty.min(0)(_("Max contact points"), maxNumContactPoints, changeProperty(maxNumContactPoints));
     putProperty(_("CC depth"), contactCorrectionDepth,
                 [&](const string& v){ return contactCorrectionDepth.setNonNegativeValue(v); });
@@ -774,6 +780,7 @@ bool AISTSimulatorItem::Impl::store(Archive& archive)
     archive.write("error_criterion", errorCriterion);
     archive.write("max_num_iterations", maxNumIterations);
     archive.write("num_collision_detection_threads", numCollisionDetectionThreads);
+    archive.write("primitive_shape_collision_detection", isPrimitiveCollisionDetectionEnabled);
     archive.write("max_num_contact_points", maxNumContactPoints);
     archive.write("contact_correction_depth", contactCorrectionDepth);
     archive.write("contact_correction_velocity_ratio", contactCorrectionVelocityRatio);
@@ -821,6 +828,7 @@ bool AISTSimulatorItem::Impl::restore(const Archive& archive)
     errorCriterion = archive.get({ "error_criterion", "errorCriterion" }, errorCriterion.string());
     archive.read({ "max_num_iterations", "maxNumIterations" }, maxNumIterations);
     archive.read("num_collision_detection_threads", numCollisionDetectionThreads);
+    archive.read("primitive_shape_collision_detection", isPrimitiveCollisionDetectionEnabled);
     archive.read("max_num_contact_points", maxNumContactPoints);
     contactCorrectionDepth = archive.get({ "contact_correction_depth", "contactCorrectionDepth" }, contactCorrectionDepth.string());
     contactCorrectionVelocityRatio = archive.get({ "contact_correction_velocity_ratio", "contactCorrectionVelocityRatio" }, contactCorrectionVelocityRatio.string());

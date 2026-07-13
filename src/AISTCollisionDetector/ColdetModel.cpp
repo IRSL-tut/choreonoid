@@ -67,6 +67,9 @@ void ColdetModel::initialize()
 
     pTransform = new IceMaths::Matrix4x4();
     pTransform->Identity();
+
+    position_.setIdentity();
+    primitiveLocalPosition_.setIdentity();
 }
 
 
@@ -246,6 +249,21 @@ void ColdetModel::getBoundingBoxData(const int depth, std::vector<Vector3>& out_
 }
 
 
+bool ColdetModel::getLocalBoundingBox(Vector3& out_center, Vector3& out_halfExtents) const
+{
+    const auto tree = static_cast<const Opcode::AABBCollisionTree*>(internalModel->model.GetTree());
+    if(!tree){
+        return false;
+    }
+    const Opcode::AABBCollisionNode* rootNode = tree->GetNodes();
+    const IceMaths::Point& c = rootNode->mAABB.mCenter;
+    const IceMaths::Point& e = rootNode->mAABB.mExtents;
+    out_center << c.x, c.y, c.z;
+    out_halfExtents << e.x, e.y, e.z;
+    return true;
+}
+
+
 bool ColdetModelInternalModel::build()
 {
     bool result = false;
@@ -288,7 +306,9 @@ void ColdetModel::setPosition(const Isometry3& T)
                    (float)T(0,1), (float)T(1,1), (float)T(2,1), 0.0f,
                    (float)T(0,2), (float)T(1,2), (float)T(2,2), 0.0f,
                    (float)T(0,3), (float)T(1,3), (float)T(2,3), 1.0f);
-}    
+
+    position_ = T;
+}
 
 
 #ifdef CNOID_BACKWARD_COMPATIBILITY
@@ -298,6 +318,9 @@ void ColdetModel::setPosition(const Matrix3& R, const Vector3& p)
                    (float)R(0,1), (float)R(1,1), (float)R(2,1), 0.0f,
                    (float)R(0,2), (float)R(1,2), (float)R(2,2), 0.0f,
                    (float)p(0),   (float)p(1),   (float)p(2),   1.0f);
+
+    position_.linear() = R;
+    position_.translation() = p;
 }
 #endif
 
@@ -308,6 +331,12 @@ void ColdetModel::setPosition(const double* R, const double* p)
                    (float)R[1], (float)R[4], (float)R[7], 0.0f,
                    (float)R[2], (float)R[5], (float)R[8], 0.0f,
                    (float)p[0], (float)p[1], (float)p[2], 1.0f);
+
+    position_.linear() <<
+        R[0], R[1], R[2],
+        R[3], R[4], R[5],
+        R[6], R[7], R[8];
+    position_.translation() << p[0], p[1], p[2];
 }
 
 
@@ -353,12 +382,32 @@ void ColdetModel::setPrimitivePosition(const double* R, const double* p)
                     (float)R[1], (float)R[4], (float)R[7], 0.0f,
                     (float)R[2], (float)R[5], (float)R[8], 0.0f,
                     (float)p[0], (float)p[1], (float)p[2], 1.0f);
+
+    primitiveLocalPosition_.linear() <<
+        R[0], R[1], R[2],
+        R[3], R[4], R[5],
+        R[6], R[7], R[8];
+    primitiveLocalPosition_.translation() << p[0], p[1], p[2];
+}
+
+
+void ColdetModel::setPrimitiveLocalPosition(const Isometry3& T)
+{
+    pTransform->Set((float)T(0,0), (float)T(1,0), (float)T(2,0), 0.0f,
+                    (float)T(0,1), (float)T(1,1), (float)T(2,1), 0.0f,
+                    (float)T(0,2), (float)T(1,2), (float)T(2,2), 0.0f,
+                    (float)T(0,3), (float)T(1,3), (float)T(2,3), 1.0f);
+
+    primitiveLocalPosition_ = T;
 }
 
 
 std::optional<double> ColdetModel::computeDistanceWithRay(const double *point, 
                                            const double *dir)
 {
+    if(!internalModel->model.GetTree()){
+        return std::nullopt;
+    }
     Opcode::RayCollider RC;
     Ray world_ray(Point(point[0], point[1], point[2]),
                   Point(dir[0], dir[1], dir[2]));
