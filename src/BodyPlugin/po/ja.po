@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-30 18:47+0900\n"
+"POT-Creation-Date: 2026-07-13 18:32+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -103,6 +103,9 @@ msgstr "接触補正深度"
 msgid "CC v-ratio"
 msgstr "接触補正速度係数"
 
+msgid "Drive effort output"
+msgstr "駆動トルク／力出力"
+
 msgid "Kinematic walking"
 msgstr "運動学歩行モード"
 
@@ -111,9 +114,6 @@ msgstr "2Dモード"
 
 msgid "Old accel sensor mode"
 msgstr "旧加速センサモード"
-
-msgid "Drive effort output"
-msgstr "駆動トルク／力出力"
 
 msgid "BodyBar"
 msgstr "ボディバー"
@@ -391,9 +391,7 @@ msgstr ""
 "グループ名 \"{0}\" は重複しています．新しいグループには別の名前を使用するようにしてください．"
 
 msgid "The body cannot be registered in the body library due to the lack of reference file: {0}"
-msgstr ""
-"このボディは参照ファイルが無いためボディライブラリに登録することができません．"
-"ファイル:{0}"
+msgstr "このボディは参照ファイルが無いためボディライブラリに登録することができません．ファイル:{0}"
 
 msgid "The body cannot be registered in the body library due to the lack of its name."
 msgstr "このボディは名前が無いためボディライブラリに登録することができません．"
@@ -694,6 +692,8 @@ msgid ""
 "The Collision deteciton module used in this plugin is implemented using the OPCODE library "
 "(http://www.codercorner.com/Opcode.htm).\n"
 msgstr ""
+"このプラグインで使用されている干渉検出モジュールは、OPCODEライブラリ (http://www.codercorner.com/"
+"Opcode.htm) を用いて実装されています．\n"
 
 msgid "Apply pose"
 msgstr "姿勢の適用"
@@ -1266,11 +1266,14 @@ msgstr "名前"
 msgid "Index"
 msgstr "インデックス"
 
-msgid "Offset translation"
-msgstr "並進オフセット"
+msgid "Offset translation [{0}]"
+msgstr "並進オフセット [{0}]"
 
 msgid "Offset rotation"
 msgstr "回転オフセット"
+
+msgid "Center of mass [{0}]"
+msgstr "重心 [{0}]"
 
 msgid "Inertia tensor"
 msgstr "慣性テンソル"
@@ -1284,17 +1287,23 @@ msgstr "関節タイプ"
 msgid "Joint axis"
 msgstr "関節軸"
 
-msgid "Lower joint limit"
-msgstr "関節変位下限"
+msgid "Lower joint limit [{0}]"
+msgstr "関節変位下限 [{0}]"
 
-msgid "Upper joint limit"
-msgstr "関節変位上限"
+msgid "Upper joint limit [{0}]"
+msgstr "関節変位上限 [{0}]"
 
-msgid "Lower joint velocity"
-msgstr "関節速度下限"
+msgid "Lower joint velocity [{0}]"
+msgstr "関節速度下限 [{0}]"
 
-msgid "Upper joint velocity"
-msgstr "関節速度上限"
+msgid "Upper joint velocity [{0}]"
+msgstr "関節速度上限 [{0}]"
+
+msgid "Lower joint limit (presentation value) [{0}]"
+msgstr "関節変位下限（表示値） [{0}]"
+
+msgid "Upper joint limit (presentation value) [{0}]"
+msgstr "関節変位上限（表示値） [{0}]"
 
 msgid "Joint inertia"
 msgstr "関節慣性"

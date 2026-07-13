@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-30 18:47+0900\n"
+"POT-Creation-Date: 2026-07-13 18:32+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -30,6 +30,9 @@ msgstr "タイムステップ"
 
 msgid "Num parts"
 msgstr "パート数"
+
+msgid "No window system is available. Choreonoid has been switched to no-window mode."
+msgstr "ウィンドウシステムが利用できません．Choreonoidはノーウィンドウモードに切り替わりました．"
 
 msgid "The Eigen library version {0}.{1}.{2} is used (SIMD intruction sets in use: {3})."
 msgstr ""
@@ -1144,6 +1147,30 @@ msgstr "メッセージ"
 msgid "MessageView"
 msgstr "メッセージビュー"
 
+msgid "Find"
+msgstr "検索"
+
+msgid "Find:"
+msgstr "検索文字列:"
+
+msgid "Case sensitive"
+msgstr "大文字と小文字を区別"
+
+msgid "Whole words"
+msgstr "単語単位で検索"
+
+msgid "Find Previous"
+msgstr "前を検索"
+
+msgid "Find Next"
+msgstr "次を検索"
+
+msgid "Close"
+msgstr "閉じる"
+
+msgid "Not found"
+msgstr "見つかりませんでした"
+
 msgid "Error: "
 msgstr "エラー："
 
@@ -1373,6 +1400,8 @@ msgid ""
 "\n"
 "Missing dependency: {0}"
 msgstr ""
+"\n"
+"依存関係が不足しています： {0}"
 
 msgid "The plugin entry function \"getChoreonoidPlugin\" is not found.\n"
 msgstr "プラグインエントリ関数 \"getChoreonoidPlugin\" が見つかりません．\n"
@@ -2365,27 +2394,3 @@ msgstr "仮想ジョイスティック"
 
 msgid "VirtualJoystickView"
 msgstr "仮想ジョイスティックビュー"
-
-msgid "Find"
-msgstr "検索"
-
-msgid "Find:"
-msgstr "検索文字列:"
-
-msgid "Case sensitive"
-msgstr "大文字と小文字を区別"
-
-msgid "Whole words"
-msgstr "単語単位で検索"
-
-msgid "Find Next"
-msgstr "次を検索"
-
-msgid "Find Previous"
-msgstr "前を検索"
-
-msgid "Close"
-msgstr "閉じる"
-
-msgid "Not found"
-msgstr "見つかりませんでした"

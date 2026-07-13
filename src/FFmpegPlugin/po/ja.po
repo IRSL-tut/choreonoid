@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-30 22:50+0900\n"
+"POT-Creation-Date: 2026-07-13 18:32+0900\n"
 "PO-Revision-Date: 2021-12-30 16:43+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -15,6 +15,9 @@ msgstr ""
 
 msgid "Please set image height and width as a mutiple of 8."
 msgstr "画像の高さと幅は8の倍数に設定してください．"
+
+msgid "The image size is too large for the encoder."
+msgstr "画像サイズがエンコーダに対して大きすぎます．"
 
 msgid "Executing avio_open failed."
 msgstr "avio_openの実行に失敗しました．"
@@ -46,9 +49,6 @@ msgstr "ビデオフレームデータを確保できません．"
 msgid "A video frame buffer cannot be allocated."
 msgstr "ビデオフレームバッファを確保できません．"
 
-msgid "A video frame data is not writable."
-msgstr "ビデオフレームデータに書き込むことができません．"
-
 msgid "Executing avcodec_send_frame failed."
 msgstr "avcodec_send_frameの実行に失敗しました．"
 
@@ -57,3 +57,6 @@ msgstr "av_interleaved_write_frameの実行に失敗しました： {0}"
 
 msgid "Executing av_write_trailer failed."
 msgstr "av_write_trailerの実行に失敗しました．"
+
+msgid "A video frame data is not writable."
+msgstr "ビデオフレームデータに書き込むことができません．"

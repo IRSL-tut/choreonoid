@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Choreonoid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-22 23:03+0900\n"
+"POT-Creation-Date: 2026-07-13 18:32+0900\n"
 "PO-Revision-Date: 2021-10-25 12:00+0900\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -51,6 +51,42 @@ msgstr "GSMediaViewの初期化に失敗しました．playbinプラグインが
 
 msgid "Initialization of the GSMediaView failed. The ximagesink could not be created."
 msgstr "GSMediaViewの初期化に失敗しました．ximagesinkを生成できません．"
+
+msgid "Failed to initialize COM for MFMediaView."
+msgstr "MFMediaView用のCOMの初期化に失敗しました．"
+
+msgid "Failed to initialize Media Foundation."
+msgstr "Media Foundationの初期化に失敗しました．"
+
+msgid "Media file not found: {}"
+msgstr "メディアファイルが見つかりません： {}"
+
+msgid "Failed to create Media Foundation session. HRESULT: 0x{:08X}"
+msgstr "Media Foundationセッションの作成に失敗しました．HRESULT: 0x{:08X}"
+
+msgid "Failed to create source resolver. HRESULT: 0x{:08X}"
+msgstr "ソースリゾルバの作成に失敗しました．HRESULT: 0x{:08X}"
+
+msgid "Failed to create media source from file: {}. HRESULT: 0x{:08X}"
+msgstr "ファイル {} からのメディアソースの作成に失敗しました．HRESULT: 0x{:08X}"
+
+msgid "Failed to query IMFMediaSource interface. HRESULT: 0x{:08X}"
+msgstr "IMFMediaSourceインターフェースの取得に失敗しました．HRESULT: 0x{:08X}"
+
+msgid "Failed to create topology. HRESULT: 0x{:08X}"
+msgstr "トポロジの作成に失敗しました．HRESULT: 0x{:08X}"
+
+msgid "Failed to set topology on session. HRESULT: 0x{:08X}"
+msgstr "セッションへのトポロジの設定に失敗しました．HRESULT: 0x{:08X}"
+
+msgid "Media loaded: {}"
+msgstr "メディアを読み込みました： {}"
+
+msgid "Exception while loading media: {}"
+msgstr "メディアの読み込み中に例外が発生しました： {}"
+
+msgid "Warning: Failed to add stream {} to topology"
+msgstr "警告：トポロジへのストリーム {} の追加に失敗しました"
 
 msgid "MediaItem"
 msgstr "メディアアイテム"

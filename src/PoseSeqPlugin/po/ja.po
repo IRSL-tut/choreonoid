@@ -501,7 +501,7 @@ msgid "Target body"
 msgstr "対象ボディ"
 
 msgid "Bar length"
-msgstr ""
+msgstr "バーの長さ"
 
 msgid "Select all poses after current position"
 msgstr "現在時刻後の全ポーズを選択"
