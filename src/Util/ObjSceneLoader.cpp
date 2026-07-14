@@ -255,8 +255,7 @@ SgNode* ObjSceneLoader::Impl::load(const string& filename)
     }
 
     if(scene){
-        scene->setUriWithFilePathAndCurrentDirectory(filename);
-        self->storeLengthUnitAndUpperAxisHintsAsMetadata(scene);
+        self->setFileUriInformationToScene(scene, filename);
     }
 
     scanner.close();

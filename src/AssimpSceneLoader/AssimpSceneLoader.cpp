@@ -184,8 +184,12 @@ void AssimpSceneLoader::Impl::clear()
 
 SgNode* AssimpSceneLoader::load(const std::string& filename)
 {
-    return insertTransformNodesToAdjustLengthUnitAndUpperAxis(
+    SgNode* scene = insertTransformNodesToAdjustLengthUnitAndUpperAxis(
         getOrCreateImpl()->load(filename));
+    if(scene){
+        setFileUriInformationToScene(scene, filename);
+    }
+    return scene;
 }
 
 

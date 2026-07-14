@@ -46,6 +46,15 @@ protected:
     SgNode* insertTransformNodeToAdjustUpperAxis(SgNode* node);
     void storeLengthUnitAndUpperAxisHintsAsMetadata(SgObject* object);
 
+    /**
+       Sets the URI information of the loaded file to the scene object that represents the
+       file, together with the length unit / upper axis hint metadata. Every concrete loader
+       should call this on the object corresponding to the whole file (usually the top node
+       of the loaded scene) so that downstream components such as scene / body writers can
+       restore the reference to the original file instead of embedding the loaded data.
+    */
+    void setFileUriInformationToScene(SgObject* object, const std::string& filename);
+
 private:
     LengthUnitType lengthUnitHint_;
     UpperAxisType upperAxisHint_;

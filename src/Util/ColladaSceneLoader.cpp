@@ -280,7 +280,11 @@ void ColladaSceneLoader::clearImageSearchDirectories()
 
 SgNode* ColladaSceneLoader::load(const std::string& filename)
 {
-    return insertTransformNodesToAdjustLengthUnitAndUpperAxis(impl->load(filename));
+    SgNode* scene = insertTransformNodesToAdjustLengthUnitAndUpperAxis(impl->load(filename));
+    if(scene){
+        setFileUriInformationToScene(scene, filename);
+    }
+    return scene;
 }
 
 

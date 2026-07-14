@@ -416,7 +416,7 @@ SgNode* GLTFSceneLoader::Impl::load(const string& filename)
            explicitly specified with the loader hints.
         */
         scene = self->insertTransformNodesToAdjustLengthUnitAndUpperAxis(scene);
-        self->storeLengthUnitAndUpperAxisHintsAsMetadata(scene);
+        self->setFileUriInformationToScene(scene, filename);
     }
     catch(const LoadingException& ex){
         os() << formatR(_("glTF file \"{0}\" cannot be loaded: {1}"), filename, ex.message) << endl;

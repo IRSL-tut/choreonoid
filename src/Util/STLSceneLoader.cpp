@@ -552,8 +552,7 @@ SgNode* STLSceneLoader::Impl::load(const string& filename)
         return nullptr;
     }
 
-    mesh->setUriWithFilePathAndCurrentDirectory(filename);
-    self->storeLengthUnitAndUpperAxisHintsAsMetadata(mesh);
+    self->setFileUriInformationToScene(mesh, filename);
 
     auto shape = new SgShape;
     shape->setMesh(mesh);

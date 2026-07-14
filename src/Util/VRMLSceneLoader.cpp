@@ -67,7 +67,11 @@ void VRMLSceneLoader::setMessageSink(std::ostream& os)
 
 SgNode* VRMLSceneLoader::load(const std::string& filename)
 {
-    return insertTransformNodesToAdjustLengthUnitAndUpperAxis(impl->load(filename));
+    SgNode* scene = insertTransformNodesToAdjustLengthUnitAndUpperAxis(impl->load(filename));
+    if(scene){
+        setFileUriInformationToScene(scene, filename);
+    }
+    return scene;
 }
 
 
@@ -104,8 +108,6 @@ SgNode* VRMLSceneLoader::Impl::load(const std::string& filename)
         group->removeChildAt(0);
     }
     group.reset();
-
-    node->setUriWithFilePathAndCurrentDirectory(filename);
 
     return node.retn();
 }

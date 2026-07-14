@@ -770,9 +770,7 @@ SgNode* URDFBodyLoader::Impl::createMesh(ShapeDescription& description)
             }
             return nullptr;
         }
-        if(auto uriObject = scene->findObject([](SgObject* object){ return object->hasUri(); })){
-            uriObject->setUri(description.meshUri, filePath);
-        }
+        setUriInformationToMeshScene(scene, description.meshUri, filePath);
         meshMap[filePath] = scene;
     }
 

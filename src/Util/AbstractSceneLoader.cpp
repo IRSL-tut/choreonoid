@@ -155,3 +155,10 @@ void AbstractSceneLoader::storeLengthUnitAndUpperAxisHintsAsMetadata(SgObject* o
         object->setUriMetadata(metadata);
     }
 }
+
+
+void AbstractSceneLoader::setFileUriInformationToScene(SgObject* object, const std::string& filename)
+{
+    object->setUriWithFilePathAndCurrentDirectory(filename);
+    storeLengthUnitAndUpperAxisHintsAsMetadata(object);
+}
