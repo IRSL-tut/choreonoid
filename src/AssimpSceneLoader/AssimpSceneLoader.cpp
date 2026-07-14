@@ -1,6 +1,7 @@
 #include "AssimpSceneLoader.h"
 #include <cnoid/SceneLoader>
 #include <cnoid/SceneDrawables>
+#include <cnoid/SceneUtil>
 #include <cnoid/MeshFilter>
 #include <cnoid/ImageIO>
 #include <cnoid/NullOut>
@@ -87,7 +88,6 @@ public:
     void clear();
     SgNode* load(const std::string& filename);
     SgGroup* convertAiNode(aiNode* node);
-    SgGroup* decomposeTransformation(const Affine3& T);
     SgNode* convertAiMesh(unsigned int);
     SgNode* convertAiMeshFaces(aiMesh* srcMesh);
     SgMaterial* convertAiMaterial(unsigned int);
@@ -220,8 +220,6 @@ SgNode* AssimpSceneLoader::Impl::load(const std::string& filename)
 
 SgGroup* AssimpSceneLoader::Impl::convertAiNode(aiNode* node)
 {
-    static const bool USE_AFFINE_TRANSFORM = false;
-    
     const aiMatrix4x4& S = node->mTransformation;
     Affine3 T;
     T.translation() << S[0][3], S[1][3], S[2][3];
@@ -252,28 +250,20 @@ SgGroup* AssimpSceneLoader::Impl::convertAiNode(aiNode* node)
     }
 
     SgGroupPtr group;
-    if(T.isApprox(Affine3::Identity())){
-        group = new SgGroup;
-    } else if(T.linear().isUnitary(1.0e-6)){
-        group = new SgPosTransform(Isometry3(T.matrix()));
+    SgGroup* groupToAddChildren;
+    if(USE_AFFINE_TRANSFORM &&
+       !T.isApprox(Affine3::Identity()) && !T.linear().isUnitary(1.0e-6)){
+        group = new SgAffineTransform(T);
+        groupToAddChildren = group;
     } else {
-        if(!USE_AFFINE_TRANSFORM){
-            group = decomposeTransformation(T);
-        }
-        if(!group){
-            group = new SgAffineTransform(T);
-        }
+        SgGroupPtr top;
+        SgGroupPtr bottom;
+        std::tie(top, bottom) = createTransformNodeSet(T);
+        group = top;
+        groupToAddChildren = bottom;
     }
     group->setName(node->mName.C_Str());
 
-    SgGroup* groupToAddChildren = group;
-    while(!groupToAddChildren->empty()){
-        if(auto childGroup = groupToAddChildren->child(0)->toGroupNode()){
-            groupToAddChildren = childGroup;
-        } else {
-            break;
-        }
-    }
     for(unsigned int i=0; i < node->mNumMeshes; ++i){
         SgNode* shape = convertAiMesh(node->mMeshes[i]);
         if(shape){
@@ -296,76 +286,6 @@ SgGroup* AssimpSceneLoader::Impl::convertAiNode(aiNode* node)
     }
 
     return group.retn();
-}
-
-
-SgGroup* AssimpSceneLoader::Impl::decomposeTransformation(const Affine3& T)
-{
-    Matrix3 Q = T.linear();
-
-    // With ENABLE_FLIPPED_COORDINATE_EXPANSION on, any reflection has already
-    // been baked into the descendant mesh vertices in convertAiNode, so a
-    // negative determinant should not reach here. Defensive bail-out: if it
-    // ever does, return nullptr so the caller falls back to SgAffineTransform
-    // rather than producing a broken rotation/scale decomposition.
-    if(Q.determinant() < 0.0){
-        return nullptr;
-    }
-
-    // Step 1: Use polar decomposition to decompose Q into U (rotation) and P (symmetric positive definite matrix)
-    // Polar decomposition using SVD
-    Eigen::JacobiSVD<Eigen::Matrix3d> svd(Q, Eigen::ComputeFullU | Eigen::ComputeFullV);
-    Eigen::Matrix3d R = svd.matrixU() * svd.matrixV().transpose();
-    Eigen::Matrix3d P = svd.matrixV() * svd.singularValues().asDiagonal() * svd.matrixV().transpose();
-    
-    // Step 2: Decompose P as R*S*R^T
-    // Perform eigenvalue decomposition on P (= R*S*R^T)
-    Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigensolver(P);
-    
-    if(eigensolver.info() != Eigen::Success){
-        return nullptr;
-    }
-    
-    // Get eigenvalues (scaling factors)
-    const Vector3& eigenvalues = eigensolver.eigenvalues();
-    
-    SgGroup* transformGroup = nullptr;
-    SgScaleTransform* scaleTransform = nullptr;
-
-    if(!eigenvalues.isApprox(Vector3::Zero())){
-        scaleTransform = new SgScaleTransform;
-        scaleTransform->setScale(eigenvalues);
-            
-        // Get rotation matrix R (eigenvectors)
-        Matrix3 SR = eigensolver.eigenvectors().template cast<double>();
-
-        // Ensure SR is a proper rotation matrix (determinant = +1)
-        if(SR.determinant() < 0){
-            // Flip the sign of one eigenvector
-            SR.col(0) = -SR.col(0);
-        }
-        if(!SR.isIdentity()){
-            scaleTransform->setScaleOrientation(SR);
-        }
-    }
-
-    if(R.isIdentity() && T.translation().isApprox(Vector3::Zero())){
-        transformGroup = scaleTransform;
-    } else {
-        SgPosTransform* posTransform = new SgPosTransform;
-        posTransform->setRotation(R);
-        posTransform->setTranslation(T.translation());
-        if(scaleTransform){
-            posTransform->addChild(scaleTransform);
-        }
-        transformGroup = posTransform;
-    }
-
-    if(!transformGroup){
-        transformGroup = new SgGroup;
-    }
-
-    return transformGroup;
 }
 
 

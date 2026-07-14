@@ -11,6 +11,7 @@
 #include <cnoid/EasyScanner>
 #include <cnoid/VRMLParser>
 #include <cnoid/VRMLToSGConverter>
+#include <cnoid/SceneUtil>
 #include <cnoid/ValueTree>
 #include <cnoid/NullOut>
 #include <cnoid/UTF8>
@@ -943,15 +944,14 @@ void VRMLBodyLoaderImpl::readSegmentNode(LinkInfo& iLink, VRMLProtoInstance* seg
             node->setName(segmentNode->defName);
             iLink.visualShape->addChild(node);
         } else {
-            SgTransform* transform;
-            if(T.linear().isUnitary(1.0e-6)){
-                transform = new SgPosTransform(Isometry3(T.matrix()));
-            } else {
-                transform = new SgAffineTransform(T);
-            }
-            transform->addChild(node);
-            transform->setName(segmentNode->defName);
-            iLink.visualShape->addChild(transform);
+            // A transform containing a scaling is decomposed into the transform
+            // nodes that the downstream subsystems can handle
+            SgGroupPtr top;
+            SgGroupPtr bottom;
+            std::tie(top, bottom) = createTransformNodeSet(T);
+            bottom->addChild(node);
+            top->setName(segmentNode->defName);
+            iLink.visualShape->addChild(top);
         }
     } else {
         node = new SgNode;
@@ -975,16 +975,13 @@ void VRMLBodyLoaderImpl::readSurfaceNode(LinkInfo& iLink, VRMLProtoInstance* seg
     readJointSubNodes(iLink, collisionNodes, acceptableProtoIds, T);
 
     SgGroup* group;
-    SgTransform* transform = nullptr;
+    SgGroupPtr top; // top of the transform node set corresponding to T
     if(T.isApprox(Affine3::Identity())){
         group = iLink.collisionShape;
     } else {
-        if(T.linear().isUnitary(1.0e-6)){
-            transform = new SgPosTransform(Isometry3(T.matrix()));
-        } else {
-            transform = new SgAffineTransform(T);
-        }
-        group = transform;
+        SgGroupPtr bottom;
+        std::tie(top, bottom) = createTransformNodeSet(T);
+        group = bottom;
     }
     for(size_t i=0; i < collisionNodes.size(); ++i){
         SgNodePtr node = sgConverter.convert(collisionNodes[i]);
@@ -992,9 +989,9 @@ void VRMLBodyLoaderImpl::readSurfaceNode(LinkInfo& iLink, VRMLProtoInstance* seg
             group->addChild(node);
         }
     }
-    if(transform && !transform->empty()){
-        transform->setName(segmentShapeNode->defName);
-        iLink.collisionShape->addChild(transform);
+    if(top && !group->empty()){
+        top->setName(segmentShapeNode->defName);
+        iLink.collisionShape->addChild(top);
     }
 }
 

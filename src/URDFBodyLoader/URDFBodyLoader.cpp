@@ -12,6 +12,7 @@
 #include <cnoid/RangeCamera>
 #include <cnoid/RangeSensor>
 #include <cnoid/SceneLoader>
+#include <cnoid/SceneUtil>
 #include <cnoid/UriSchemeProcessor>
 #include <filesystem>
 #include <pugixml.hpp>
@@ -776,10 +777,23 @@ SgNode* URDFBodyLoader::Impl::createMesh(ShapeDescription& description)
     }
 
     if (description.meshScale != Vector3::Ones()) {
-        auto scaler = new SgScaleTransform;
-        scaler->setScale(description.meshScale);
-        scaler->addChild(scene);
-        scene = scaler;
+        if (description.meshScale.minCoeff() < 0.0) {
+            /*
+               A negative scale (mirroring, e.g. scale="1 -1 1" used to reuse the mesh
+               of the opposite side) cannot be kept in the scene graph because the
+               downstream subsystems assume rotation-only transforms. The scale is
+               baked into a copy of the mesh scene instead; the copy also keeps the
+               cached scene shared via meshMap intact.
+            */
+            Affine3f S = Affine3f::Identity();
+            S.linear() = description.meshScale.cast<float>().asDiagonal();
+            scene = createTransformBakedScene(scene, S);
+        } else {
+            auto scaler = new SgScaleTransform;
+            scaler->setScale(description.meshScale);
+            scaler->addChild(scene);
+            scene = scaler;
+        }
     }
 
     return scene.retn();

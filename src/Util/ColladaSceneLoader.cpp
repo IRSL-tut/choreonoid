@@ -1,6 +1,8 @@
 #include "ColladaSceneLoader.h"
 #include "SceneDrawables.h"
 #include "SceneLoader.h"
+#include "SceneUtil.h"
+#include "MeshUtil.h"
 #include "EigenUtil.h"
 #include "ImageIO.h"
 #include "MeshFilter.h"
@@ -18,6 +20,7 @@
 #include <charconv>
 #include <cctype>
 #include <cstring>
+#include <optional>
 #include "gettext.h"
 
 using namespace std;
@@ -162,6 +165,15 @@ public:
     unordered_map<string, SgImagePtr> imageMap; // keyed by image id
     unordered_set<string> oneTimeWarnings;
 
+    /*
+       The transform accumulated from the node where a reflection (a transform whose
+       determinant is negative) is found. While this is active, the transforms are
+       baked into the mesh vertices instead of being kept in the scene graph, because
+       the downstream subsystems assuming rotation-only transforms cannot correctly
+       handle a reflection. See the comment in AssimpSceneLoader.cpp for details.
+    */
+    std::optional<Affine3f> bakeTransform;
+
     // Symbol to material id pairs given by a bind_material element
     typedef vector<pair<string, string>> MaterialBinding;
 
@@ -188,7 +200,7 @@ public:
     pugi::xml_node resolveUrl(pugi::xml_node node, const char* attribute);
     SgNode* loadScene(pugi::xml_node collada);
     SgNode* convertNode(pugi::xml_node node, int depth);
-    SgGroupPtr createGroupWithTransform(pugi::xml_node node);
+    Affine3 readNodeTransform(pugi::xml_node node);
     void convertNodeContents(pugi::xml_node node, SgGroup* group, int depth);
     SgNode* convertInstanceGeometry(pugi::xml_node instance);
     SgNode* convertInstanceController(pugi::xml_node instance);
@@ -283,6 +295,7 @@ void ColladaSceneLoader::Impl::clearLoadingContext()
     materialMap.clear();
     imageMap.clear();
     oneTimeWarnings.clear();
+    bakeTransform.reset();
 }
 
 
@@ -436,7 +449,31 @@ SgNode* ColladaSceneLoader::Impl::convertNode(pugi::xml_node node, int depth)
         throw LoadingException(_("The node hierarchy is too deep."));
     }
 
-    SgGroupPtr group = createGroupWithTransform(node);
+    const Affine3 T = readNodeTransform(node);
+
+    /*
+       When the node transform contains a reflection, the node and its descendants
+       are converted into plain groups and the accumulated transform is baked into
+       the mesh vertices in convertMeshPrimitive and convertLinePrimitive.
+    */
+    std::optional<Affine3f> prevBakeTransform = bakeTransform;
+    SgGroupPtr group;
+    SgGroup* contentGroup; // the node contents are added to this group owned by (or same as) group
+    if(bakeTransform || T.linear().determinant() < 0.0){
+        if(bakeTransform){
+            bakeTransform = (*bakeTransform) * T.cast<float>();
+        } else {
+            bakeTransform = T.cast<float>();
+        }
+        group = new SgGroup;
+        contentGroup = group;
+    } else {
+        SgGroupPtr top;
+        SgGroupPtr inner;
+        std::tie(top, inner) = createTransformNodeSet(T);
+        group = top;
+        contentGroup = inner;
+    }
 
     const char* name = node.attribute("name").value();
     if(name[0] == '\0'){
@@ -445,9 +482,11 @@ SgNode* ColladaSceneLoader::Impl::convertNode(pugi::xml_node node, int depth)
     }
     group->setName(name);
 
-    convertNodeContents(node, group, depth);
+    convertNodeContents(node, contentGroup, depth);
 
-    if(group->empty()){
+    bakeTransform = prevBakeTransform;
+
+    if(contentGroup->empty()){
         // Prune nodes that do not contain any shapes, such as camera and light nodes
         return nullptr;
     }
@@ -457,11 +496,10 @@ SgNode* ColladaSceneLoader::Impl::convertNode(pugi::xml_node node, int depth)
 
 
 /**
-   Creates a group node that corresponds to the transformation elements of the
-   specified node element. The transformation elements are accumulated in the
-   document order according to the COLLADA specification.
+   Reads the transformation elements of the specified node element. The elements
+   are accumulated in the document order according to the COLLADA specification.
 */
-SgGroupPtr ColladaSceneLoader::Impl::createGroupWithTransform(pugi::xml_node node)
+Affine3 ColladaSceneLoader::Impl::readNodeTransform(pugi::xml_node node)
 {
     Affine3 T = Affine3::Identity();
     vector<float> values;
@@ -509,21 +547,7 @@ SgGroupPtr ColladaSceneLoader::Impl::createGroupWithTransform(pugi::xml_node nod
         }
     }
 
-    SgGroupPtr group;
-    if(T.matrix().isIdentity(1.0e-9)){
-        group = new SgGroup;
-    } else if(T.linear().isUnitary(1.0e-6) && T.linear().determinant() > 0.0){
-        auto transform = new SgPosTransform;
-        transform->setRotation(T.linear());
-        transform->setTranslation(T.translation());
-        group = transform;
-    } else {
-        auto transform = new SgAffineTransform;
-        transform->setTransform(T);
-        group = transform;
-    }
-
-    return group;
+    return T;
 }
 
 
@@ -537,19 +561,27 @@ void ColladaSceneLoader::Impl::convertNodeContents(pugi::xml_node node, SgGroup*
             }
         } else if(strcmp(elementName, "instance_node") == 0){
             if(auto libraryNode = resolveUrl(element, "url")){
-                const string id = libraryNode.attribute("id").value();
-                auto found = libraryNodeMap.find(id);
-                if(found != libraryNodeMap.end()){
-                    if(found->second){
-                        group->addChild(found->second);
+                if(bakeTransform){
+                    // The conversion result depends on the transform being baked
+                    // into the vertices, so the library node cache is bypassed
+                    if(auto sgNode = convertNode(libraryNode, depth + 1)){
+                        group->addChild(sgNode);
                     }
                 } else {
-                    SgNodePtr sgNode = convertNode(libraryNode, depth + 1);
-                    if(!id.empty()){
-                        libraryNodeMap[id] = sgNode;
-                    }
-                    if(sgNode){
-                        group->addChild(sgNode);
+                    const string id = libraryNode.attribute("id").value();
+                    auto found = libraryNodeMap.find(id);
+                    if(found != libraryNodeMap.end()){
+                        if(found->second){
+                            group->addChild(found->second);
+                        }
+                    } else {
+                        SgNodePtr sgNode = convertNode(libraryNode, depth + 1);
+                        if(!id.empty()){
+                            libraryNodeMap[id] = sgNode;
+                        }
+                        if(sgNode){
+                            group->addChild(sgNode);
+                        }
                     }
                 }
             }
@@ -631,6 +663,15 @@ ColladaSceneLoader::Impl::MaterialBinding ColladaSceneLoader::Impl::readMaterial
 SgNode* ColladaSceneLoader::Impl::getOrConvertGeometry
 (pugi::xml_node geometry, const MaterialBinding& binding)
 {
+    /*
+       While a reflection is being baked into the mesh vertices, the conversion
+       result depends on the transform accumulated in the instantiation context,
+       so the cache must be bypassed.
+    */
+    if(bakeTransform){
+        return convertGeometry(geometry, binding);
+    }
+
     /*
        The converted geometries are cached and shared between the geometry instances.
        The cache key includes the material binding because the same geometry can be
@@ -997,6 +1038,22 @@ SgNode* ColladaSceneLoader::Impl::convertMeshPrimitive
         faceTop += faceSize;
     }
 
+    if(bakeTransform){
+        /*
+           The vertex and normal arrays can be shared with the other non-baked
+           instances via vector3ArrayMap, so they are duplicated before the
+           accumulated transform is baked into them. When the mesh does not have
+           normals, bakeTransformIntoMesh flips the winding according to the
+           determinant sign and the normals consistent with the baked vertices
+           are generated below.
+        */
+        mesh->setVertices(new SgVertexArray(*mesh->vertices()));
+        if(mesh->hasNormals()){
+            mesh->setNormals(new SgNormalArray(*mesh->normals()));
+        }
+        bakeTransformIntoMesh(mesh, *bakeTransform);
+    }
+
     if(!mesh->normals()){
         meshFilter.generateNormals(mesh, defaultCreaseAngle);
     }
@@ -1054,6 +1111,15 @@ SgNode* ColladaSceneLoader::Impl::convertLinePrimitive
 
     if(lineVertexIndices.empty()){
         return nullptr;
+    }
+
+    if(bakeTransform){
+        // Only the vertex positions need baking for line primitives.
+        // The shared vertex array is duplicated in the same way as in the
+        // mesh primitive conversion.
+        auto bakedVertices = new SgVertexArray(*lineSet->vertices());
+        transformVertices(*bakedVertices, *bakeTransform);
+        lineSet->setVertices(bakedVertices);
     }
 
     lineSet->updateBoundingBox();

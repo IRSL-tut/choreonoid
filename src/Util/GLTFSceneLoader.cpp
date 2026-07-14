@@ -1,6 +1,8 @@
 #include "GLTFSceneLoader.h"
 #include "SceneDrawables.h"
 #include "SceneLoader.h"
+#include "SceneUtil.h"
+#include "MeshUtil.h"
 #include "YAMLReader.h"
 #include "ValueTree.h"
 #include "EigenArchive.h"
@@ -19,6 +21,7 @@
 #include <cctype>
 #include <cstdint>
 #include <cstring>
+#include <optional>
 #include "gettext.h"
 
 using namespace std;
@@ -208,6 +211,17 @@ public:
     SgMaterialPtr defaultMaterial;
     unordered_set<string> oneTimeWarnings;
 
+    /*
+       The transform accumulated from the node where a reflection (a negative
+       determinant matrix or a negative scale component) is found. While this is
+       active, the transforms are baked into the mesh vertices instead of being
+       kept in the scene graph, because the downstream subsystems assuming
+       rotation-only transforms cannot correctly handle a reflection. This follows
+       the implementation note of the glTF 2.0 specification that the winding
+       order should be inverted for a transform whose determinant is negative.
+    */
+    std::optional<Affine3f> bakeTransform;
+
     Impl(GLTFSceneLoader* self);
     void clearLoadingContext();
     void warnOnce(const string& message);
@@ -310,6 +324,7 @@ void GLTFSceneLoader::Impl::clearLoadingContext()
     imageMap.clear();
     defaultMaterial.reset();
     oneTimeWarnings.clear();
+    bakeTransform.reset();
     reader.clearDocuments();
 }
 
@@ -510,6 +525,14 @@ SgNode* GLTFSceneLoader::Impl::convertNode(int nodeIndex, int depth)
     SgGroupPtr group;
     SgGroup* childContainer; // just an alias of the node to which the children are added
 
+    /*
+       When the node transform contains a reflection (a matrix whose determinant is
+       negative or a TRS with a negative scale component), the node and its
+       descendants are converted into plain groups and the accumulated transform is
+       baked into the mesh vertices in getOrCreateMesh.
+    */
+    std::optional<Affine3f> prevBakeTransform = bakeTransform;
+
     if(auto matrix = nodeInfo->findListing("matrix"); matrix->isValid()){
         if(matrix->size() != 16){
             throw LoadingException(formatR(_("Node {0} has an invalid matrix."), nodeIndex));
@@ -521,33 +544,57 @@ SgNode* GLTFSceneLoader::Impl::convertNode(int nodeIndex, int depth)
                 T.matrix()(row, col) = matrix->at(col * 4 + row)->toDouble();
             }
         }
-        auto affine = new SgAffineTransform;
-        affine->setTransform(T);
-        group = affine;
-        childContainer = group;
-    } else {
-        auto posTransform = new SgPosTransform;
-        Vector3 v;
-        if(read(nodeInfo, "translation", v)){
-            posTransform->setTranslation(v);
+        if(bakeTransform || T.linear().determinant() < 0.0){
+            if(bakeTransform){
+                bakeTransform = (*bakeTransform) * T.cast<float>();
+            } else {
+                bakeTransform = T.cast<float>();
+            }
+            group = new SgGroup;
+            childContainer = group;
+        } else {
+            SgGroupPtr top;
+            SgGroupPtr inner;
+            std::tie(top, inner) = createTransformNodeSet(T);
+            group = top;
+            childContainer = inner;
         }
+    } else {
+        Vector3 translation = Vector3::Zero();
+        read(nodeInfo, "translation", translation);
+        Quaterniond q = Quaterniond::Identity();
         if(auto rotation = nodeInfo->findListing("rotation"); rotation->isValid() && rotation->size() == 4){
-            Quaterniond q(
+            q = Quaterniond(
                 rotation->at(3)->toDouble(),  // w
                 rotation->at(0)->toDouble(),  // x
                 rotation->at(1)->toDouble(),  // y
                 rotation->at(2)->toDouble()); // z
             q.normalize();
-            posTransform->setRotation(q);
         }
-        group = posTransform;
-        childContainer = group;
-        if(read(nodeInfo, "scale", v)){
-            if(v != Vector3::Ones()){
-                auto scale = new SgScaleTransform;
-                scale->setScale(v);
-                posTransform->addChild(scale);
-                childContainer = scale;
+        Vector3 scale = Vector3::Ones();
+        read(nodeInfo, "scale", scale);
+
+        const bool hasNegativeScale = (scale.x() < 0.0 || scale.y() < 0.0 || scale.z() < 0.0);
+        if(bakeTransform || hasNegativeScale){
+            const Affine3 T = Eigen::Translation3d(translation) * q * Eigen::Scaling(scale);
+            if(bakeTransform){
+                bakeTransform = (*bakeTransform) * T.cast<float>();
+            } else {
+                bakeTransform = T.cast<float>();
+            }
+            group = new SgGroup;
+            childContainer = group;
+        } else {
+            auto posTransform = new SgPosTransform;
+            posTransform->setTranslation(translation);
+            posTransform->setRotation(q);
+            group = posTransform;
+            childContainer = group;
+            if(scale != Vector3::Ones()){
+                auto scaleTransform = new SgScaleTransform;
+                scaleTransform->setScale(scale);
+                posTransform->addChild(scaleTransform);
+                childContainer = scaleTransform;
             }
         }
     }
@@ -579,15 +626,24 @@ SgNode* GLTFSceneLoader::Impl::convertNode(int nodeIndex, int depth)
         }
     }
 
+    bakeTransform = prevBakeTransform;
+
     return group.retn();
 }
 
 
 SgGroup* GLTFSceneLoader::Impl::getOrCreateMesh(int meshIndex)
 {
-    auto found = meshGroupMap.find(meshIndex);
-    if(found != meshGroupMap.end()){
-        return found->second;
+    /*
+       While a reflection is being baked into the mesh vertices, the conversion
+       result depends on the transform accumulated in the node instantiating the
+       mesh, so the cache must be bypassed.
+    */
+    if(!bakeTransform){
+        auto found = meshGroupMap.find(meshIndex);
+        if(found != meshGroupMap.end()){
+            return found->second;
+        }
     }
 
     auto meshInfo = getListingElement(meshList, meshIndex, "meshes");
@@ -608,6 +664,27 @@ SgGroup* GLTFSceneLoader::Impl::getOrCreateMesh(int meshIndex)
                 meshGroup->addChild(shape);
             }
         }
+    }
+
+    if(bakeTransform){
+        /*
+           The vertex and normal arrays are created for each conversion and are not
+           shared with the other instances here, so the accumulated transform can be
+           baked into them directly. Line and point primitives only need the vertex
+           positions to be baked.
+        */
+        for(int i = 0; i < meshGroup->numChildren(); ++i){
+            auto child = meshGroup->child(i);
+            if(auto shape = dynamic_cast<SgShape*>(child)){
+                bakeTransformIntoMesh(shape->mesh(), *bakeTransform);
+            } else if(auto plot = dynamic_cast<SgPlot*>(child)){
+                if(plot->hasVertices()){
+                    transformVertices(*plot->vertices(), *bakeTransform);
+                    plot->invalidateBoundingBox();
+                }
+            }
+        }
+        return meshGroup.retn();
     }
 
     meshGroupMap[meshIndex] = meshGroup;

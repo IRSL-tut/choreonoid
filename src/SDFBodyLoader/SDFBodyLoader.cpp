@@ -12,6 +12,7 @@
 #include <cnoid/RangeSensor>
 #include <cnoid/RateGyroSensor>
 #include <cnoid/SceneLoader>
+#include <cnoid/SceneUtil>
 #include <cnoid/UriSchemeProcessor>
 #include <cnoid/VisionSensor>
 #include <cnoid/Format>
@@ -1330,13 +1331,19 @@ SgNode* SDFBodyLoader::Impl::createMesh(ShapeDescription& description)
             const bool hasLinear = !accumT.linear().isApprox(Matrix3::Identity());
             const bool hasTranslation = !accumT.translation().isZero();
             if (hasLinear || hasTranslation) {
-                // SgAffineTransform handles rotation, scaling, or any mix, which is what a
-                // generic accumulated transform may contain.
-                auto transform = new SgAffineTransform;
-                transform->setLinear(accumT.linear());
-                transform->translation() = accumT.translation();
-                transform->addChild(extracted);
-                scene = transform;
+                if (accumT.linear().determinant() < 0.0) {
+                    // A transform containing a reflection cannot be kept in the scene
+                    // graph, so it is baked into a copy of the extracted subtree
+                    scene = createTransformBakedScene(extracted, accumT.cast<float>());
+                } else {
+                    // The accumulated transform may contain rotation, scaling, or any
+                    // mix, which is decomposed into the corresponding transform nodes
+                    SgGroupPtr top;
+                    SgGroupPtr bottom;
+                    std::tie(top, bottom) = createTransformNodeSet(accumT);
+                    bottom->addChild(extracted);
+                    scene = top;
+                }
             } else {
                 scene = extracted;
             }
@@ -1348,10 +1355,18 @@ SgNode* SDFBodyLoader::Impl::createMesh(ShapeDescription& description)
     }
 
     if (description.meshScale != Vector3::Ones()) {
-        auto scaler = new SgScaleTransform;
-        scaler->setScale(description.meshScale);
-        scaler->addChild(scene);
-        scene = scaler;
+        if (description.meshScale.minCoeff() < 0.0) {
+            // A negative scale (mirroring) is baked into a copy of the mesh scene
+            // in the same way as in URDFBodyLoader. See the comment there.
+            Affine3f S = Affine3f::Identity();
+            S.linear() = description.meshScale.cast<float>().asDiagonal();
+            scene = createTransformBakedScene(scene, S);
+        } else {
+            auto scaler = new SgScaleTransform;
+            scaler->setScale(description.meshScale);
+            scaler->addChild(scene);
+            scene = scaler;
+        }
     }
 
     return scene.retn();
