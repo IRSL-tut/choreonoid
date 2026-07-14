@@ -161,12 +161,18 @@ struct LinkInfo
     LinkPtr link;
     // Pose of the link frame expressed in the model frame.
     Isometry3 modelPose;
+    // Pose of the frame of the joint connecting this link to its parent, expressed in the
+    // SDF link frame. Identity for a root link and when the joint has no 'pose' element.
+    // A Choreonoid link frame is always its joint frame, so the SDF joint frame is adopted
+    // as the Choreonoid link frame; see buildJoint.
+    Isometry3 jointPose;
     // Name of the frame the pose is relative to ("" means the model frame).
     string poseRelativeTo;
     bool poseResolved;
 
     LinkInfo()
         : modelPose(Isometry3::Identity()),
+          jointPose(Isometry3::Identity()),
           poseResolved(false)
     { }
 };
@@ -266,7 +272,9 @@ public:
     void setMaterialToAllShapeNodes(SgNode* node, SgMaterial* material);
     size_t selectParentJoint(const vector<ResolvedJoint>& candidates);
     bool buildJoint(
-        std::unordered_map<string, LinkInfo>& linkInfoMap, const ResolvedJoint& joint);
+        Body* body, std::unordered_map<string, LinkInfo>& linkInfoMap,
+        const ResolvedJoint& joint);
+    void expressLinkContentsInJointFrame(Body* body, Link* link, const Isometry3& jointPose);
     int countDescendants(Link* link);
     void attachStrayRoot(LinkInfo* strayInfo, Link* newParent, const string& jointName,
                         bool isReversed);
@@ -547,7 +555,7 @@ bool SDFBodyLoader::Impl::load(Body* body, const string& filename)
             }
             os() << "." << endl;
         }
-        if (!buildJoint(linkInfoMap, candidates[selected])) {
+        if (!buildJoint(body, linkInfoMap, candidates[selected])) {
             return false;
         }
     }
@@ -612,10 +620,12 @@ bool SDFBodyLoader::Impl::load(Body* body, const string& filename)
         }
     }
 
-    // In SDF, each link pose is expressed in the model frame by default. Choreonoid links hold
-    // the offset position relative to the parent link, so the relative offsets are computed by
-    // traversing the tree from the root.
-    rootInfo->link->setOffsetPosition(rootInfo->modelPose);
+    // In SDF, each link pose is expressed in the model frame by default, and a joint frame
+    // may be placed anywhere relative to its child link. A Choreonoid link frame is always
+    // its joint frame, so the model-frame pose of each link's joint frame (the SDF link pose
+    // combined with the joint pose adopted in buildJoint) is used to compute the offset
+    // relative to the parent by traversing the tree from the root.
+    rootInfo->link->setOffsetPosition(rootInfo->modelPose * rootInfo->jointPose);
 
     // Traverses the tree to set the offset position of each non-root link.
     vector<Link*> stack;
@@ -623,11 +633,14 @@ bool SDFBodyLoader::Impl::load(Body* body, const string& filename)
     while (!stack.empty()) {
         Link* parent = stack.back();
         stack.pop_back();
-        const Isometry3& parentModelPose = linkInfoMap[parent->name()].modelPose;
+        const LinkInfo& parentInfo = linkInfoMap[parent->name()];
+        const Isometry3 parentJointFramePose = parentInfo.modelPose * parentInfo.jointPose;
         for (Link* child = parent->child(); child; child = child->sibling()) {
-            const Isometry3& childModelPose = linkInfoMap[child->name()].modelPose;
-            // T_parent_child = T_model_parent^-1 * T_model_child
-            child->setOffsetPosition(parentModelPose.inverse(Eigen::Isometry) * childModelPose);
+            const LinkInfo& childInfo = linkInfoMap[child->name()];
+            // T_parent_child = T_model_parentJointFrame^-1 * T_model_childJointFrame
+            child->setOffsetPosition(
+                parentJointFramePose.inverse(Eigen::Isometry)
+                * (childInfo.modelPose * childInfo.jointPose));
             stack.push_back(child);
         }
     }
@@ -1843,8 +1856,39 @@ size_t SDFBodyLoader::Impl::selectParentJoint(const vector<ResolvedJoint>& candi
 }
 
 
+// Re-expresses the contents of a link (the inertial parameters, the shape nodes, and the
+// devices), which have been loaded in the SDF link frame, in the frame of the joint that
+// connects the link to its parent. 'jointPose' is the pose of the joint frame expressed in
+// the SDF link frame. This is needed because a Choreonoid link frame is always its joint
+// frame, while an SDF joint frame may be placed anywhere relative to the child link frame.
+void SDFBodyLoader::Impl::expressLinkContentsInJointFrame(
+    Body* body, Link* link, const Isometry3& jointPose)
+{
+    const Isometry3 T = jointPose.inverse(Eigen::Isometry);
+
+    link->setCenterOfMass(T * link->centerOfMass());
+    // The inertia tensor is about the center of mass, so only its orientation changes.
+    const Matrix3& R = jointPose.linear();
+    link->setInertia(R.transpose() * link->I() * R);
+
+    for (SgGroup* group : {link->visualShape(), link->collisionShape()}) {
+        if (!group->empty()) {
+            SgPosTransformPtr transform = new SgPosTransform(T);
+            group->moveChildrenTo(transform);
+            group->addChild(transform);
+        }
+    }
+
+    for (Device* device : body->devices()) {
+        if (device->link() == link) {
+            device->setLocalPosition(T * device->T_local());
+        }
+    }
+}
+
+
 bool SDFBodyLoader::Impl::buildJoint(
-    std::unordered_map<string, LinkInfo>& linkInfoMap, const ResolvedJoint& joint)
+    Body* body, std::unordered_map<string, LinkInfo>& linkInfoMap, const ResolvedJoint& joint)
 {
     const xml_node& jointNode = joint.node;
     const string& jointName = joint.jointName;
@@ -1854,10 +1898,34 @@ bool SDFBodyLoader::Impl::buildJoint(
 
     // The existence of the parent and child links has already been verified by the caller.
     const LinkPtr parent = linkInfoMap.find(parentName)->second.link;
-    const LinkPtr child = linkInfoMap.find(childName)->second.link;
+    LinkInfo& childInfo = linkInfoMap.find(childName)->second;
+    const LinkPtr child = childInfo.link;
 
     parent->appendChild(child);
     child->setJointName(jointName);
+
+    // The joint 'pose' element gives the pose of the joint frame expressed in the child link
+    // frame (the default in all SDF versions). A Choreonoid link frame is always its joint
+    // frame, so the SDF joint frame is adopted as the Choreonoid link frame of the child
+    // link: the link contents that have been loaded in the SDF link frame are re-expressed
+    // in the joint frame here, and the link offsets are computed from the joint frames after
+    // the whole tree is built (see load()).
+    Isometry3 jointPose;
+    string jointPoseRelativeTo;
+    if (!readPoseElement(jointNode, jointPose, jointPoseRelativeTo)) {
+        os() << formatR(_(" in the joint \"{0}\"."), jointName) << endl;
+        return false;
+    }
+    if (!jointPoseRelativeTo.empty() && jointPoseRelativeTo != childName) {
+        os() << formatR(_("Warning: the pose of the joint \"{0}\" is relative to the "
+                          "frame \"{1}\", which is not supported; the child link frame "
+                          "is assumed instead."),
+                        jointName, jointPoseRelativeTo) << endl;
+    }
+    if (!jointPose.isApprox(Isometry3::Identity())) {
+        childInfo.jointPose = jointPose;
+        expressLinkContentsInJointFrame(body, child, jointPose);
+    }
 
     if (jointType == "revolute" || jointType == "continuous") {
         child->setJointType(Link::RevoluteJoint);
@@ -1879,9 +1947,10 @@ bool SDFBodyLoader::Impl::buildJoint(
                           "is treated as a fixed joint."), jointType, jointName) << endl;
     }
 
-    // 'axis' element. Choreonoid stores the joint axis in the child link frame, so any axis
-    // written in another frame must be rotated into the child link frame here. The frame in
-    // which <axis><xyz> is expressed depends on the SDF version and on a few attributes:
+    // 'axis' element. Choreonoid stores the joint axis in the child link frame, which is the
+    // SDF joint frame adopted above, so any axis written in another frame must be rotated
+    // into the joint frame here. The frame in which <axis><xyz> is expressed depends on the
+    // SDF version and on a few attributes:
     //   - SDF 1.6 and earlier: defaults to the joint frame. <use_parent_model_frame>true</...>
     //     selects the model frame instead.
     //   - SDF 1.7 and later: defaults to the child link frame. The 'expressed_in' attribute
@@ -1926,25 +1995,15 @@ bool SDFBodyLoader::Impl::buildJoint(
             }
         }
 
-        // Rotates the axis vector into the child link frame.
+        // Rotates the axis vector into the joint frame. An axis expressed in the joint frame
+        // (the SDF 1.6 and earlier default) is already in the adopted link frame and is used
+        // as is.
         if (axisFrame == ModelFrame) {
-            const Isometry3& childModelPose = linkInfoMap.find(childName)->second.modelPose;
-            axis = childModelPose.linear().transpose() * axis;
+            const Isometry3 jointFrameModelPose = childInfo.modelPose * childInfo.jointPose;
+            axis = jointFrameModelPose.linear().transpose() * axis;
             axis.normalize();
-        } else if (axisFrame == JointFrame) {
-            // The joint <pose> is the joint frame expressed in the child link frame.
-            Isometry3 jointPose;
-            string jointPoseRelativeTo;
-            if (!readPoseElement(jointNode, jointPose, jointPoseRelativeTo)) {
-                return false;
-            }
-            if (!jointPoseRelativeTo.empty() && jointPoseRelativeTo != childName) {
-                os() << formatR(_("Warning: the pose of the joint \"{0}\" is relative to the "
-                                  "frame \"{1}\", which is not supported; the child link frame "
-                                  "is assumed instead."),
-                                jointName, jointPoseRelativeTo) << endl;
-            }
-            axis = jointPose.linear() * axis;
+        } else if (axisFrame == ChildLinkFrame) {
+            axis = childInfo.jointPose.linear().transpose() * axis;
             axis.normalize();
         }
 
