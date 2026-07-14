@@ -244,8 +244,7 @@ SimulationManager::updateBodyLinkMap(const std::list<Body*>& bodyList)
         UtilityImpl::linkAttributeFromBodyMappingInfo(const_cast<Body*>(body), linkAttrMap);
 
         for(auto itl = begin(linkAttrMap) ; itl !=end(linkAttrMap) ; ++itl){
-            auto handle = *_collisionDetector->addGeometry(const_cast<Link*>(itl->first)->collisionShape());
-            itl->second.setGeometryHandle(handle);
+            itl->second.setGeometryHandle(_collisionDetector->addGeometry(const_cast<Link*>(itl->first)->collisionShape()));
 
             _linkBodyMap[const_cast<Link*>(itl->first)] = std::make_tuple(const_cast<Body*>(body), itl->second);
 
@@ -534,11 +533,19 @@ SimulationManager::midDynamicFunction(SimulatorItem* simItem, MulticopterSimulat
             for(auto itl = begin(_effectLinkBodyMap) ; itl !=end(_effectLinkBodyMap) ; ++itl){
                 int size=effectMap.size();
                 double min=-1.0;
-                CollisionDetector::GeometryHandle handle2=*linkAttribute(const_cast<Link*>(itl->first)).getGeometryHandle();
+                auto optHandle2=linkAttribute(const_cast<Link*>(itl->first)).getGeometryHandle();
+                if(!optHandle2){
+                    continue;
+                }
+                CollisionDetector::GeometryHandle handle2=*optHandle2;
                 _collisionDetector->updatePosition(handle2,const_cast<Link*>(itl->first)->position());
 
                 for(auto itll = begin(linkAry) ; itll != end(linkAry) ; ++itll){
-                    CollisionDetector::GeometryHandle handle1=*linkAttribute(const_cast<Link*>(*itll)).getGeometryHandle();
+                    auto optHandle1=linkAttribute(const_cast<Link*>(*itll)).getGeometryHandle();
+                    if(!optHandle1){
+                        continue;
+                    }
+                    CollisionDetector::GeometryHandle handle1=*optHandle1;
                     _collisionDetector->updatePosition(handle1,const_cast<Link*>(*itll)->position());
                     double d = _collisionDetector->detectDistance(handle1,handle2,v1,v2);
 
