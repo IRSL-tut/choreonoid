@@ -262,6 +262,14 @@ public:
     bool readGeometry(const xml_node& geometryNode, ShapeDescription& description);
     SgNode* createShape(ShapeDescription& description);
     SgNode* createMesh(ShapeDescription& description);
+    SgNodePtr loadMeshScene(const ShapeDescription& description);
+    SgNodePtr extractSubmesh(SgNode* scene, const ShapeDescription& description);
+    SgNodePtr applyAccumulatedTransform(SgNode* node, const Affine3& T);
+    SgNodePtr applyMeshScale(SgNode* scene, const Vector3& scale);
+    // Recursively collects every shape node whose SgNode::name() equals targetName, each
+    // together with the transform accumulated from 'node' down to the shape.
+    void collectNamedShapes(SgNode* node, const string& targetName, const Affine3& parentTransform,
+                            std::vector<std::pair<SgShapePtr, Affine3>>& out_shapes);
     // Recursively searches 'node' for a descendant whose SgNode::name() equals targetName.
     // On a match, sets out_node and out_transform (the accumulated transform from 'node' to
     // the matched descendant) and returns true. The first match in pre-order wins; the search
@@ -1283,8 +1291,24 @@ SgNode* SDFBodyLoader::Impl::createShape(ShapeDescription& description)
 
 SgNode* SDFBodyLoader::Impl::createMesh(ShapeDescription& description)
 {
-    SgNodePtr scene;
+    SgNodePtr scene = loadMeshScene(description);
+    if (!scene) {
+        return nullptr;
+    }
+    if (!description.submeshName.empty()) {
+        scene = extractSubmesh(scene, description);
+    }
+    if (description.meshScale != Vector3::Ones()) {
+        scene = applyMeshScale(scene, description.meshScale);
+    }
+    return scene.retn();
+}
 
+
+// Loads the mesh file referenced by the URI of the description. The loaded scene is cached
+// in meshMap and shared by all the mesh elements referencing the same file.
+SgNodePtr SDFBodyLoader::Impl::loadMeshScene(const ShapeDescription& description)
+{
     const string filePath = uriSchemeProcessor.getFilePath(description.meshUri);
     if (filePath.empty()) {
         os() << uriSchemeProcessor.errorMessage() << endl;
@@ -1293,94 +1317,179 @@ SgNode* SDFBodyLoader::Impl::createMesh(ShapeDescription& description)
 
     auto it = meshMap.find(filePath);
     if (it != meshMap.end()) {
-        scene = it->second;
-    } else {
-        bool isSupportedFormat = false;
-        scene = sceneLoader.load(filePath, isSupportedFormat);
-        if (!scene) {
-            if (!isSupportedFormat) {
-                os() << formatR(_("Warning: the format of the mesh file \"{0}\" is not supported."),
-                                description.meshUri);
-            } else {
-                // The format is recognized but the loader rejected the file (e.g. Assimp may
-                // refuse a Collada file with malformed texture references). The underlying
-                // loader has already emitted its own diagnostic, so we just supply the mesh
-                // file context here.
-                os() << formatR(_("Warning: failed to load the mesh file \"{0}\"."),
-                                description.meshUri);
-            }
-            return nullptr;
-        }
-        setUriInformationToMeshScene(scene, description.meshUri, filePath);
-        meshMap[filePath] = scene;
+        return it->second;
     }
 
-    // SDF <submesh>: extract the named subtree. The shared, cached scene is kept intact (the
-    // matched node is referenced rather than detached) so that other links referencing the
-    // same mesh URI can still use their own submeshes.
-    //
-    // The matched node and everything below it is kept as-is: vertices and all transforms
-    // (including the node's own placement) define the submesh in the mesh file's coordinate
-    // system. With <center>false the SDF link is meant to inherit that placement; with
-    // <center>true the bounding box center is shifted to the origin instead. Transforms
-    // above the matched node (e.g. a unit-system scale on the visual_scene root) are also
-    // kept so that lengths come out in meters.
-    if (!description.submeshName.empty()) {
-        SgNode* sub = nullptr;
-        Affine3 accumT;
-        if (findNamedSubNode(scene, description.submeshName, Affine3::Identity(), sub, accumT)) {
-            SgNodePtr extracted = sub;
-            if (description.submeshCenter) {
-                // Recenter the extracted submesh's bounding box at the origin. The bbox is in
-                // the extracted node's own frame; transform through accumT so the world-space
-                // center sits at the origin.
-                BoundingBox bbox = extracted->boundingBox();
-                if (!bbox.empty()) {
-                    accumT.translation() -= accumT.linear() * bbox.center();
+    bool isSupportedFormat = false;
+    SgNodePtr scene = sceneLoader.load(filePath, isSupportedFormat);
+    if (!scene) {
+        if (!isSupportedFormat) {
+            os() << formatR(_("Warning: the format of the mesh file \"{0}\" is not supported."),
+                            description.meshUri);
+        } else {
+            // The format is recognized but the loader rejected the file (e.g. Assimp may
+            // refuse a Collada file with malformed texture references). The underlying
+            // loader has already emitted its own diagnostic, so we just supply the mesh
+            // file context here.
+            os() << formatR(_("Warning: failed to load the mesh file \"{0}\"."),
+                            description.meshUri);
+        }
+        return nullptr;
+    }
+    setUriInformationToMeshScene(scene, description.meshUri, filePath);
+    meshMap[filePath] = scene;
+
+    return scene;
+}
+
+
+// SDF <submesh>: extracts the named part of the mesh scene. The shared, cached scene is kept
+// intact (the matched nodes are referenced rather than detached) so that other links
+// referencing the same mesh URI can still use their own submeshes.
+//
+// The submesh semantics follow Gazebo, where a submesh name refers to a geometry in the mesh
+// file and only that geometry is used. Named nodes may be nested in the mesh file (e.g. a
+// wheel node placed inside a brake node), so extracting a whole node subtree would drag such
+// nested sibling parts in. The shapes are therefore matched by name and extracted
+// individually, each with the transform accumulated over its ancestor nodes (including a
+// unit-system scale on the scene root) so that the submesh keeps its placement in the mesh
+// file's coordinate system. With <center>false the SDF link is meant to inherit that
+// placement; with <center>true the submesh is translated so that the center of its bounding
+// box comes to the origin. The bounding box is computed from the transformed vertices,
+// matching what Gazebo does with its baked submesh vertices.
+SgNodePtr SDFBodyLoader::Impl::extractSubmesh(SgNode* scene, const ShapeDescription& description)
+{
+    std::vector<std::pair<SgShapePtr, Affine3>> shapes;
+    collectNamedShapes(scene, description.submeshName, Affine3::Identity(), shapes);
+
+    if (!shapes.empty()) {
+        Vector3 shift = Vector3::Zero();
+        if (description.submeshCenter) {
+            BoundingBox bbox;
+            for (auto& [shape, T] : shapes) {
+                if (auto mesh = shape->mesh()) {
+                    if (auto vertices = mesh->vertices()) {
+                        // The vertex array may be shared among all the shapes extracted
+                        // from a single mesh file (e.g. by the OBJ loader), so only the
+                        // vertices actually used by the faces of this mesh are taken
+                        // into account.
+                        if (mesh->hasFaceVertexIndices()) {
+                            for (const int index : mesh->faceVertexIndices()) {
+                                bbox.expandBy(T * (*vertices)[index].cast<double>());
+                            }
+                        } else {
+                            for (const Vector3f& v : *vertices) {
+                                bbox.expandBy(T * v.cast<double>());
+                            }
+                        }
+                    }
                 }
             }
-            const bool hasLinear = !accumT.linear().isApprox(Matrix3::Identity());
-            const bool hasTranslation = !accumT.translation().isZero();
-            if (hasLinear || hasTranslation) {
-                if (accumT.linear().determinant() < 0.0) {
-                    // A transform containing a reflection cannot be kept in the scene
-                    // graph, so it is baked into a copy of the extracted subtree
-                    scene = createTransformBakedScene(extracted, accumT.cast<float>());
-                } else {
-                    // The accumulated transform may contain rotation, scaling, or any
-                    // mix, which is decomposed into the corresponding transform nodes
-                    SgGroupPtr top;
-                    SgGroupPtr bottom;
-                    std::tie(top, bottom) = createTransformNodeSet(accumT);
-                    bottom->addChild(extracted);
-                    scene = top;
-                }
-            } else {
-                scene = extracted;
+            if (!bbox.empty()) {
+                shift = -bbox.center();
             }
-        } else {
-            os() << formatR(_("Warning: the submesh \"{0}\" is not found in the mesh file "
-                              "\"{1}\"; the whole mesh is used instead."),
-                            description.submeshName, description.meshUri) << endl;
         }
+        SgGroupPtr extractedGroup = new SgGroup;
+        for (auto& [shape, T] : shapes) {
+            Affine3 T2 = T;
+            T2.translation() += shift;
+            extractedGroup->addChild(applyAccumulatedTransform(shape, T2));
+        }
+        if (extractedGroup->numChildren() == 1) {
+            return extractedGroup->child(0);
+        }
+        return extractedGroup;
     }
 
-    if (description.meshScale != Vector3::Ones()) {
-        if (description.meshScale.minCoeff() < 0.0) {
-            // A negative scale (mirroring) is baked into a copy of the mesh scene
-            // in the same way as in URDFBodyLoader. See the comment there.
-            Affine3f S = Affine3f::Identity();
-            S.linear() = description.meshScale.cast<float>().asDiagonal();
-            scene = createTransformBakedScene(scene, S);
-        } else {
-            auto scaler = new SgScaleTransform;
-            scaler->setScale(description.meshScale);
-            scaler->addChild(scene);
-            scene = scaler;
+    // Fallback for mesh formats whose shape nodes are unnamed: extract the subtree of the
+    // node with the matching name, as a named node usually corresponds to a part. Note that
+    // nested named nodes, if any, are dragged in by this method.
+    SgNode* sub = nullptr;
+    Affine3 accumT;
+    if (findNamedSubNode(scene, description.submeshName, Affine3::Identity(), sub, accumT)) {
+        if (description.submeshCenter) {
+            // Recenter the extracted submesh's bounding box at the origin. The bbox is in
+            // the extracted node's parent frame; the full accumulated transform (including
+            // its translation) maps it to the mesh file frame.
+            BoundingBox bbox = sub->boundingBox();
+            if (!bbox.empty()) {
+                const Vector3 center = accumT * bbox.center();
+                accumT.translation() -= center;
+            }
         }
+        return applyAccumulatedTransform(sub, accumT);
     }
 
-    return scene.retn();
+    os() << formatR(_("Warning: the submesh \"{0}\" is not found in the mesh file "
+                      "\"{1}\"; the whole mesh is used instead."),
+                    description.submeshName, description.meshUri) << endl;
+    return scene;
+}
+
+
+// Returns a scene node that places 'node' under the given accumulated transform. An identity
+// transform returns the node as it is. A transform containing a reflection cannot be kept in
+// the scene graph, so it is baked into a copy of the node; any other transform is decomposed
+// into the corresponding transform nodes.
+SgNodePtr SDFBodyLoader::Impl::applyAccumulatedTransform(SgNode* node, const Affine3& T)
+{
+    const bool hasLinear = !T.linear().isApprox(Matrix3::Identity());
+    const bool hasTranslation = !T.translation().isZero();
+    if (!hasLinear && !hasTranslation) {
+        return node;
+    }
+    if (T.linear().determinant() < 0.0) {
+        return createTransformBakedScene(node, T.cast<float>());
+    }
+    SgGroupPtr top;
+    SgGroupPtr bottom;
+    std::tie(top, bottom) = createTransformNodeSet(T);
+    bottom->addChild(node);
+    return top;
+}
+
+
+// Applies the SDF <scale> of a mesh element to the mesh scene.
+SgNodePtr SDFBodyLoader::Impl::applyMeshScale(SgNode* scene, const Vector3& scale)
+{
+    if (scale.minCoeff() < 0.0) {
+        // A negative scale (mirroring) is baked into a copy of the mesh scene
+        // in the same way as in URDFBodyLoader. See the comment there.
+        Affine3f S = Affine3f::Identity();
+        S.linear() = scale.cast<float>().asDiagonal();
+        return createTransformBakedScene(scene, S);
+    }
+    auto scaler = new SgScaleTransform;
+    scaler->setScale(scale);
+    scaler->addChild(scene);
+    return scaler;
+}
+
+
+void SDFBodyLoader::Impl::collectNamedShapes(
+    SgNode* node, const string& targetName, const Affine3& parentTransform,
+    std::vector<std::pair<SgShapePtr, Affine3>>& out_shapes)
+{
+    if (!node) {
+        return;
+    }
+    if (auto shape = dynamic_cast<SgShape*>(node)) {
+        if (shape->name() == targetName) {
+            out_shapes.emplace_back(shape, parentTransform);
+        }
+        return;
+    }
+    Affine3 here = parentTransform;
+    if (auto transform = dynamic_cast<SgTransform*>(node)) {
+        Affine3 local;
+        transform->getTransform(local);
+        here = parentTransform * local;
+    }
+    if (auto group = dynamic_cast<SgGroup*>(node)) {
+        for (SgNode* child : *group) {
+            collectNamedShapes(child, targetName, here, out_shapes);
+        }
+    }
 }
 
 
