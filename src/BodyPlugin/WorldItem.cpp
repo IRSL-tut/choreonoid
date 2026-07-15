@@ -15,6 +15,7 @@
 #include <cnoid/UTF8>
 #include <cnoid/Format>
 #include <filesystem>
+#include <map>
 #include <unordered_map>
 #include "gettext.h"
 
@@ -56,6 +57,15 @@ public:
 
     Selection collisionDetectorType;
     BodyCollisionDetector bodyCollisionDetector;
+
+    /**
+       The parameters of each collision detector type stored with the
+       detector name as the key. The settings of the detectors other than
+       the currently selected one are kept here so that the settings are
+       not lost when the detector type is switched.
+    */
+    map<string, MappingPtr> collisionDetectorSettingMap;
+
     vector<ColdetBodyInfoPtr> coldetBodyInfos;
     unordered_map<BodyPtr, BodyItem*> bodyToBodyItemMap;
     std::shared_ptr<vector<CollisionLinkPairPtr>> collisions;
@@ -80,6 +90,9 @@ public:
     ~Impl();
     void onSubTreeChanged();
     bool selectCollisionDetector(int index, bool doUpdateCollisionDetectionBodies);
+    void storeCollisionDetectorSettings();
+    void restoreCollisionDetectorSettings();
+    void onCollisionDetectorPropertyChanged();
     void enableCollisionDetection(bool on);
     void clearCollisionDetector(bool doNotiyCollisionUpdate);
     void updateCollisionDetectionBodies(bool forceUpdate);
@@ -144,10 +157,22 @@ WorldItem::Impl::Impl(WorldItem* self, const Impl& org)
       defaultMaterialTableFile(org.defaultMaterialTableFile)
 {
     collisionDetectorType = org.collisionDetectorType;
+    collisionDetectorSettingMap = org.collisionDetectorSettingMap;
     isCollisionDetectionEnabled = org.isCollisionDetectionEnabled;
     isCollisionDetectionBetweenMultiplexBodiesEnabled = org.isCollisionDetectionBetweenMultiplexBodiesEnabled;
 
     init();
+
+    // Copy the settings of the org's current collision detector, which may
+    // not be stored in the setting map yet
+    if(auto orgDetector = const_cast<Impl&>(org).bodyCollisionDetector.collisionDetector()){
+        if(auto detector = bodyCollisionDetector.collisionDetector()){
+            MappingPtr settings = new Mapping;
+            if(orgDetector->store(settings)){
+                detector->restore(settings);
+            }
+        }
+    }
 }
 
 
@@ -238,8 +263,13 @@ bool WorldItem::Impl::selectCollisionDetector(int index, bool doUpdateCollisionD
     if(index >= 0 && index < collisionDetectorType.size()){
         CollisionDetector* newCollisionDetector = CollisionDetector::create(index);
         if(newCollisionDetector){
+            // Keep the settings of the previous detector so that they can be
+            // restored when the detector type is selected again
+            storeCollisionDetectorSettings();
+
             bodyCollisionDetector.setCollisionDetector(newCollisionDetector);
             bodyCollisionDetector.setGeometryHandleMapEnabled(true);
+            restoreCollisionDetectorSettings();
 
             collisionDetectorType.select(index);
             if(doUpdateCollisionDetectionBodies && isCollisionDetectionEnabled){
@@ -249,6 +279,40 @@ bool WorldItem::Impl::selectCollisionDetector(int index, bool doUpdateCollisionD
         }
     }
     return false;
+}
+
+
+//! Store the settings of the current collision detector into the setting map
+void WorldItem::Impl::storeCollisionDetectorSettings()
+{
+    if(auto detector = bodyCollisionDetector.collisionDetector()){
+        MappingPtr settings = new Mapping;
+        if(detector->store(settings) && !settings->empty()){
+            collisionDetectorSettingMap[detector->name()] = settings;
+        }
+    }
+}
+
+
+//! Apply the settings in the setting map to the current collision detector
+void WorldItem::Impl::restoreCollisionDetectorSettings()
+{
+    if(auto detector = bodyCollisionDetector.collisionDetector()){
+        auto it = collisionDetectorSettingMap.find(detector->name());
+        if(it != collisionDetectorSettingMap.end()){
+            detector->restore(it->second);
+        }
+    }
+}
+
+
+void WorldItem::Impl::onCollisionDetectorPropertyChanged()
+{
+    // The geometries must be re-registered to the collision detector
+    // because some parameters affect how the geometries are registered
+    if(isCollisionDetectionEnabled){
+        updateCollisionDetectionBodies(true);
+    }
 }
 
 
@@ -456,11 +520,11 @@ void WorldItem::Impl::updateCollisions(bool forceUpdate)
         });
     
     sceneCollision->setDirty();
-    
+
     for(auto& info : coldetBodyInfos){
         info->bodyItem->notifyCollisionUpdate();
     }
-    
+
     sigCollisionsUpdated();
 }
 
@@ -597,6 +661,13 @@ void WorldItem::doPutProperties(PutPropertyFunction& putProperty)
     putProperty(_("Collision detector"), impl->collisionDetectorType,
                 [this](int index){ return impl->selectCollisionDetector(index, true); });
 
+    // The properties of the current collision detector
+    if(auto detector = impl->bodyCollisionDetector.collisionDetector()){
+        putProperty.callOnChange([this](){ impl->onCollisionDetectorPropertyChanged(); });
+        detector->putProperties(putProperty);
+        putProperty.reset();
+    }
+
     putProperty(_("Collision detection between multiplex bodies"), impl->isCollisionDetectionBetweenMultiplexBodiesEnabled,
                 [this](bool on){
                     setCollisionDetectionBetweenMultiplexBodiesEnabled(on);
@@ -614,7 +685,44 @@ void WorldItem::doPutProperties(PutPropertyFunction& putProperty)
 bool WorldItem::store(Archive& archive)
 {
     archive.write("collision_detection", isCollisionDetectionEnabled());
-    archive.write("collision_detector", impl->collisionDetectorType.selectedSymbol());
+
+    const string& selectedName = impl->collisionDetectorType.selectedSymbol();
+
+    /**
+       The selected detector is recorded by the is_current flag in the
+       collision_detectors listing below. The legacy key is also written
+       when the selection is not the default detector so that the older
+       versions of Choreonoid can select the correct detector.
+    */
+    if(selectedName != "AISTCollisionDetector"){
+        archive.write("collision_detector", selectedName);
+    }
+
+    // The parameters of each collision detector type are stored as the
+    // listing of the mappings with the detector names
+    impl->storeCollisionDetectorSettings();
+    ListingPtr detectorList = new Listing;
+    auto addDetectorEntry = [&detectorList](const string& name, Mapping* params, bool isCurrent){
+        MappingPtr entry = new Mapping;
+        entry->write("name", name);
+        if(isCurrent){
+            entry->write("is_current", true);
+        }
+        if(params){
+            entry->insert(params);
+        }
+        detectorList->append(entry);
+    };
+    auto it = impl->collisionDetectorSettingMap.find(selectedName);
+    addDetectorEntry(
+        selectedName, (it != impl->collisionDetectorSettingMap.end()) ? it->second.get() : nullptr, true);
+    for(auto& kv : impl->collisionDetectorSettingMap){
+        if(kv.first != selectedName && kv.second && !kv.second->empty()){
+            addDetectorEntry(kv.first, kv.second, false);
+        }
+    }
+    archive.insert("collision_detectors", detectorList);
+
     if(impl->isCollisionDetectionBetweenMultiplexBodiesEnabled){
         archive.write("collision_detection_between_multiplex_bodies", true);
     }
@@ -626,9 +734,49 @@ bool WorldItem::store(Archive& archive)
 bool WorldItem::restore(const Archive& archive)
 {
     string symbol;
-    if(archive.read({ "collision_detector", "collisionDetector" }, symbol)){
-        selectCollisionDetector(symbol);
+    string selectedName;
+    archive.read({ "collision_detector", "collisionDetector" }, selectedName);
+
+    auto detectorList = archive.findListing("collision_detectors");
+    if(detectorList->isValid()){
+        for(auto& node : *detectorList){
+            if(node->isMapping()){
+                auto entry = node->toMapping();
+                string name;
+                if(entry->read("name", name) && entry->get("is_current", false)){
+                    selectedName = name;
+                }
+            }
+        }
     }
+    if(!selectedName.empty()){
+        selectCollisionDetector(selectedName);
+    }
+
+    // The setting map must be loaded after the above detector selection
+    // because the selection stores the settings of the previous detector
+    // into the map, which must not override the loaded settings
+    impl->collisionDetectorSettingMap.clear();
+    if(detectorList->isValid()){
+        for(auto& node : *detectorList){
+            if(node->isMapping()){
+                auto entry = node->toMapping();
+                string name;
+                if(entry->read("name", name)){
+                    MappingPtr params = new Mapping;
+                    for(auto& kv : *entry){
+                        if(kv.first != "name" && kv.first != "is_current"){
+                            params->insert(kv.first, kv.second);
+                        }
+                    }
+                    if(!params->empty()){
+                        impl->collisionDetectorSettingMap[name] = params;
+                    }
+                }
+            }
+        }
+    }
+    impl->restoreCollisionDetectorSettings();
     if(archive.get({ "collision_detection", "collisionDetection" }, false)){
         archive.addPostProcess([&](){ impl->enableCollisionDetection(true); });
     }

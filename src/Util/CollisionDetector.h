@@ -46,6 +46,9 @@ public:
        The putProperties function shows the parameters in the GUI (the
        properties of the world item), and the store / restore functions
        save and restore the parameters as a project file archive.
+       \note The keys "name" and "is_current" must not be used in the store
+       function because they are reserved for the archive management by the
+       owner of the collision detector such as the world item.
     */
     virtual void putProperties(PutPropertyFunction& putProperty);
     virtual bool store(Mapping* archive);
