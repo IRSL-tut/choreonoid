@@ -341,7 +341,9 @@ const char* AISTCollisionDetector::name() const
 
 CollisionDetector* AISTCollisionDetector::clone() const
 {
-    return new AISTCollisionDetector;
+    // The copy constructor copies the configuration parameters
+    // and does not copy the geometries
+    return new AISTCollisionDetector(*this);
 }
 
 
