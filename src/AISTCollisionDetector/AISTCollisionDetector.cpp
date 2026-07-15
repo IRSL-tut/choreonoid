@@ -1,12 +1,17 @@
 #include "AISTCollisionDetector.h"
 #include "ColdetModelPair.h"
+#include "PrimitiveCollision.h"
 #include <cnoid/IdPair>
 #include <cnoid/SceneDrawables>
 #include <cnoid/MeshExtractor>
 #include <cnoid/ThreadPool>
+#include <cnoid/PutPropertyFunction>
+#include <cnoid/ValueTree>
 #include <algorithm>
+#include <memory>
 #include <set>
 #include <atomic>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -112,11 +117,15 @@ GeometryHandle getHandle(ColdetModelEx* model)
 class ColdetModelPairEx : public ColdetModelPair
 {
     ColdetModelPairEx(){ }
-    
+
 public:
-    ColdetModelPairEx(ColdetModelEx* model1, ColdetModelEx* model2)
+    ColdetModelPairEx(
+        ColdetModelEx* model1, ColdetModelEx* model2,
+        std::shared_ptr<PrimitiveCollisionParameterSet> primitiveCollisionParameterSet)
         : ColdetModelPair(model1, model2)
     {
+        setPrimitiveCollisionParameterSet(primitiveCollisionParameterSet);
+
         // Create the sub pairs for all the combinations of the model
         // components when the models are composite ones
         ColdetModelPairEx* last = this;
@@ -133,6 +142,7 @@ public:
                 }
                 auto subPair = new ColdetModelPairEx;
                 subPair->set(m1, m2);
+                subPair->setPrimitiveCollisionParameterSet(primitiveCollisionParameterSet);
                 last->sibling = subPair;
                 last = subPair;
             }
@@ -242,6 +252,7 @@ public:
     bool isReady;
     bool isDynamicGeometryPairChangeEnabled;
     bool isPrimitiveCollisionDetectionEnabled;
+    std::shared_ptr<PrimitiveCollisionParameterSet> primitiveCollisionParameterSet;
     CollisionPair collisionPair;
 
     Impl();
@@ -290,6 +301,7 @@ AISTCollisionDetector::Impl::Impl()
 {
     isDynamicGeometryPairChangeEnabled = false;
     isPrimitiveCollisionDetectionEnabled = true;
+    primitiveCollisionParameterSet = std::make_shared<PrimitiveCollisionParameterSet>();
     maxNumThreads = 0;
 
     initialize();
@@ -306,6 +318,8 @@ AISTCollisionDetector::Impl::Impl(const AISTCollisionDetector::Impl& org)
 {
     isDynamicGeometryPairChangeEnabled = org.isDynamicGeometryPairChangeEnabled;
     isPrimitiveCollisionDetectionEnabled = org.isPrimitiveCollisionDetectionEnabled;
+    primitiveCollisionParameterSet =
+        std::make_shared<PrimitiveCollisionParameterSet>(*org.primitiveCollisionParameterSet);
     maxNumThreads = org.maxNumThreads;
 
     initialize();
@@ -353,6 +367,12 @@ void AISTCollisionDetector::setNumThreads(int n)
 }
 
 
+int AISTCollisionDetector::numThreads() const
+{
+    return impl->maxNumThreads;
+}
+
+
 /**
    Enable the analytic collision detection based on the primitive shape
    information. This function must be called before adding geometries;
@@ -370,7 +390,89 @@ bool AISTCollisionDetector::isPrimitiveCollisionDetectionEnabled() const
     return impl->isPrimitiveCollisionDetectionEnabled;
 }
 
-        
+
+void AISTCollisionDetector::setContactPersistenceTolerance(double tolerance)
+{
+    impl->primitiveCollisionParameterSet->contactPersistenceTolerance = tolerance;
+}
+
+
+double AISTCollisionDetector::contactPersistenceTolerance() const
+{
+    return impl->primitiveCollisionParameterSet->contactPersistenceTolerance;
+}
+
+
+void AISTCollisionDetector::setNumCapCircleVertices(int n)
+{
+    impl->primitiveCollisionParameterSet->numCapCircleVertices =
+        std::max(PrimitiveCollisionParameterSet::MinNumCapCircleVertices,
+                 std::min(PrimitiveCollisionParameterSet::MaxNumCapCircleVertices, n));
+}
+
+
+int AISTCollisionDetector::numCapCircleVertices() const
+{
+    return impl->primitiveCollisionParameterSet->numCapCircleVertices;
+}
+
+
+void AISTCollisionDetector::putProperties(PutPropertyFunction& putProperty)
+{
+    putProperty(_("Primitive shape collision detection"), impl->isPrimitiveCollisionDetectionEnabled,
+                [this](bool on){ setPrimitiveCollisionDetectionEnabled(on); return true; });
+    putProperty.reset().min(0.0).decimals(5);
+    putProperty(_("Contact persistence tolerance"),
+                impl->primitiveCollisionParameterSet->contactPersistenceTolerance,
+                [this](double value){ setContactPersistenceTolerance(value); return true; });
+    putProperty.reset().range(
+        PrimitiveCollisionParameterSet::MinNumCapCircleVertices,
+        PrimitiveCollisionParameterSet::MaxNumCapCircleVertices);
+    putProperty(_("Cap circle divisions"),
+                impl->primitiveCollisionParameterSet->numCapCircleVertices,
+                [this](int n){ setNumCapCircleVertices(n); return true; });
+    putProperty.reset().min(0);
+    putProperty(_("Collision detection threads"), impl->maxNumThreads,
+                [this](int n){ setNumThreads(n); return true; });
+}
+
+
+bool AISTCollisionDetector::store(Mapping* archive)
+{
+    archive->write("primitive_shape_collision_detection", impl->isPrimitiveCollisionDetectionEnabled);
+    archive->write("contact_persistence_tolerance",
+                   impl->primitiveCollisionParameterSet->contactPersistenceTolerance);
+    archive->write("num_cap_circle_vertices",
+                   impl->primitiveCollisionParameterSet->numCapCircleVertices);
+
+    // The number of threads is a performance parameter which does not
+    // affect the simulation results, so the default value is not stored
+    // to keep the project file concise
+    if(impl->maxNumThreads > 0){
+        archive->write("num_threads", impl->maxNumThreads);
+    }
+    return true;
+}
+
+
+bool AISTCollisionDetector::restore(const Mapping* archive)
+{
+    archive->read("primitive_shape_collision_detection", impl->isPrimitiveCollisionDetectionEnabled);
+
+    auto& params = *impl->primitiveCollisionParameterSet;
+    archive->read("contact_persistence_tolerance", params.contactPersistenceTolerance);
+    int n;
+    if(archive->read("num_cap_circle_vertices", n)){
+        setNumCapCircleVertices(n);
+    }
+    if(archive->read("num_threads", n)){
+        setNumThreads(n);
+    }
+    return true;
+}
+
+
+
 void AISTCollisionDetector::clearGeometries()
 {
     impl->models.clear();
@@ -798,7 +900,8 @@ void AISTCollisionDetector::Impl::makeReady()
                     }
                 }
                 if(doRegisterPair){
-                    modelPairs.push_back(new ColdetModelPairEx(model0, model1));
+                    modelPairs.push_back(
+                        new ColdetModelPairEx(model0, model1, primitiveCollisionParameterSet));
                 }
             }
         }

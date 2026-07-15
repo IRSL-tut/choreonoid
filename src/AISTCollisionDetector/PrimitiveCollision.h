@@ -70,6 +70,38 @@ struct PrimitiveContactPoint
     double depth;   //!< Penetration depth (positive when penetrating)
 };
 
+//! Configurable parameters of the primitive shape collision detection
+class PrimitiveCollisionParameterSet
+{
+public:
+    static constexpr int MinNumCapCircleVertices = 8;
+    static constexpr int MaxNumCapCircleVertices = 64;
+
+    /**
+       A clipped manifold point whose depth is slightly negative (the surfaces
+       are separating at that point) is kept as a zero-depth contact point
+       within this tolerance. This keeps the manifold point set stable while
+       an object is resting (the corner depths fluctuate around zero), which
+       is important because the constraint solver discards the warm-start
+       solution whenever the total number of the constraints changes.
+    */
+    double contactPersistenceTolerance;
+
+    /**
+       Number of the vertices used to approximate the cap circle of a
+       cylinder or cone in the contact manifold generation. The value must
+       be within the range from MinNumCapCircleVertices to
+       MaxNumCapCircleVertices because the fixed-size buffers used in the
+       detection are sized with the maximum value.
+    */
+    int numCapCircleVertices;
+
+    PrimitiveCollisionParameterSet()
+        : contactPersistenceTolerance(5.0e-4),
+          numCapCircleVertices(16)
+    { }
+};
+
 /**
    Detect the collision between two convex primitive shapes and generate
    the contact points. The detected points are appended to out_points
@@ -80,7 +112,8 @@ struct PrimitiveContactPoint
 */
 CNOID_EXPORT bool detectPrimitiveShapeCollision(
     const PrimitiveCollisionShape& shape0, const PrimitiveCollisionShape& shape1,
-    std::vector<PrimitiveContactPoint>& out_points, bool findFirstContactOnly = false);
+    std::vector<PrimitiveContactPoint>& out_points, bool findFirstContactOnly = false,
+    const PrimitiveCollisionParameterSet& parameters = PrimitiveCollisionParameterSet());
 
 }
 

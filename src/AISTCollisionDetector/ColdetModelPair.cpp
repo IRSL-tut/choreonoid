@@ -84,6 +84,7 @@ ColdetModelPair::ColdetModelPair(const ColdetModelPair& org)
     collisionPairInserter = new Opcode::StdCollisionPairInserter;
     set(org.models[0], org.models[1]);
     tolerance_ = org.tolerance_;
+    primitiveCollisionParameterSet_ = org.primitiveCollisionParameterSet_;
 }
 
 
@@ -126,6 +127,13 @@ std::vector<collision_data>& ColdetModelPair::detectCollisionsSub(bool detectAll
     }
 
     return collisionPairInserter->collisions();
+}
+
+
+const PrimitiveCollisionParameterSet& ColdetModelPair::primitiveCollisionParameterSet() const
+{
+    static const PrimitiveCollisionParameterSet defaultParameterSet;
+    return primitiveCollisionParameterSet_ ? *primitiveCollisionParameterSet_ : defaultParameterSet;
 }
 
 
@@ -187,7 +195,8 @@ bool ColdetModelPair::detectPrimitivePairCollisions(bool detectAllContacts)
         return detectMeshMeshCollisions(detectAllContacts);
     }
     vector<PrimitiveContactPoint> points;
-    if(!detectPrimitiveShapeCollision(shape0, shape1, points, !detectAllContacts)){
+    if(!detectPrimitiveShapeCollision(
+           shape0, shape1, points, !detectAllContacts, primitiveCollisionParameterSet())){
         return false;
     }
     setPrimitiveContactData(collisionPairInserter->collisions(), points, false);
@@ -272,7 +281,8 @@ bool ColdetModelPair::detectPrimitiveMeshCollisions(bool detectAllContacts)
         PrimitiveCollisionShape triShape;
         triShape.setTriangle(v[0], v[1], v[2]);
         const size_t pointIndexTop = points.size();
-        if(detectPrimitiveShapeCollision(primShape, triShape, points, !detectAllContacts)){
+        if(detectPrimitiveShapeCollision(
+               primShape, triShape, points, !detectAllContacts, primitiveCollisionParameterSet())){
             detected = true;
             Vector3 faceNormal = (v[1] - v[0]).cross(v[2] - v[0]);
             const double l = faceNormal.norm();

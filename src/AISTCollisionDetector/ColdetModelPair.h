@@ -8,11 +8,13 @@
 #include "CollisionData.h"
 #include "ColdetModel.h"
 #include "CollisionPairInserter.h"
+#include <memory>
 #include "exportdecl.h"
 
 namespace cnoid {
 
 class PrimitiveCollisionShape;
+class PrimitiveCollisionParameterSet;
 
 class CNOID_EXPORT ColdetModelPair : public Referenced
 {
@@ -60,11 +62,23 @@ public:
         tolerance_ = tolerance;
     }
 
-    void setCollisionPairInserter(Opcode::CollisionPairInserter *inserter); 
+    void setCollisionPairInserter(Opcode::CollisionPairInserter *inserter);
+
+    /**
+       Set the parameters used in the primitive shape collision detection.
+       The parameter object is usually shared with the collision detector
+       which owns this pair so that the parameter changes are applied to
+       all the pairs. The default parameters are used when this function
+       is not called.
+    */
+    void setPrimitiveCollisionParameterSet(std::shared_ptr<PrimitiveCollisionParameterSet> params){
+        primitiveCollisionParameterSet_ = params;
+    }
 
 private:
 
     std::vector<collision_data>& detectCollisionsSub(bool detectAllContacts);
+    const PrimitiveCollisionParameterSet& primitiveCollisionParameterSet() const;
     bool detectMeshMeshCollisions(bool detectAllContacts);
     static bool makePrimitiveShape(ColdetModel* model, PrimitiveCollisionShape& out_shape);
     bool detectPrimitivePairCollisions(bool detectAllContacts);
@@ -72,6 +86,7 @@ private:
 
     ColdetModelPtr models[2];
     double tolerance_;
+    std::shared_ptr<PrimitiveCollisionParameterSet> primitiveCollisionParameterSet_;
     Opcode::CollisionPairInserter* collisionPairInserter;
     int boxTestsCount;
     int triTestsCount;

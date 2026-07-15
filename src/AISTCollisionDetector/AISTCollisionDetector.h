@@ -35,11 +35,16 @@ public:
     virtual bool detectCollisions(
         GeometryHandle geometry, std::function<bool(const CollisionPair& collisionPair)> callback) override;
 
+    virtual void putProperties(PutPropertyFunction& putProperty) override;
+    virtual bool store(Mapping* archive) override;
+    virtual bool restore(const Mapping* archive) override;
+
     // CollisionDetectorDistanceAPI
     virtual double detectDistance(GeometryHandle geometry1, GeometryHandle geometry2, Vector3& out_point1, Vector3& out_point2) override;
 
     // experimental
     void setNumThreads(int n);
+    int numThreads() const;
     std::optional<double> detectDistanceToRayIntersection(
         GeometryHandle geometry, const Vector3& point, const Vector3& direction);
 
@@ -50,6 +55,14 @@ public:
     */
     void setPrimitiveCollisionDetectionEnabled(bool on);
     bool isPrimitiveCollisionDetectionEnabled() const;
+
+    //! \sa PrimitiveCollisionParameterSet::contactPersistenceTolerance
+    void setContactPersistenceTolerance(double tolerance);
+    double contactPersistenceTolerance() const;
+
+    //! \sa PrimitiveCollisionParameterSet::numCapCircleVertices
+    void setNumCapCircleVertices(int n);
+    int numCapCircleVertices() const;
 
 private:
     class Impl;

@@ -31,26 +31,16 @@ constexpr int EPA_MAX_ITERATIONS = 128;
 constexpr int EPA_MAX_FACES = 512;
 constexpr double EPA_TOLERANCE = 1.0e-10;
 
-// Number of the vertices used to approximate the cap circle of a cylinder or cone
-constexpr int NUM_CAP_CIRCLE_VERTICES = 16;
-
-constexpr int MAX_FEATURE_POINTS = NUM_CAP_CIRCLE_VERTICES;
+// The buffer sizes must cover the maximum configurable number of the cap
+// circle vertices because the number is now a runtime parameter of
+// PrimitiveCollisionParameterSet
+constexpr int MAX_FEATURE_POINTS = PrimitiveCollisionParameterSet::MaxNumCapCircleVertices;
 constexpr int MAX_CLIPPED_POINTS = MAX_FEATURE_POINTS * 2 + 8;
 
 // If the angle between the contact normal and a shape axis (or face normal)
 // is within the tolerance corresponding to this cosine-like threshold,
 // an extended feature (face or edge) is selected instead of a single vertex.
 constexpr double FEATURE_ANGLE_TOLERANCE = 0.1;
-
-/**
-   A clipped manifold point whose depth is slightly negative (the surfaces
-   are separating at that point) is kept as a zero-depth contact point
-   within this tolerance. This keeps the manifold point set stable while
-   an object is resting (the corner depths fluctuate around zero), which
-   is important because the constraint solver discards the warm-start
-   solution whenever the total number of the constraints changes.
-*/
-constexpr double CONTACT_PERSISTENCE_TOLERANCE = 5.0e-4;
 
 inline double margin(const PrimitiveCollisionShape& shape)
 {
@@ -702,7 +692,7 @@ struct SupportFeature
    surface along the direction d. The polygon vertices are stored in an
    order which forms a convex loop.
 */
-void getSupportFeature(const PrimitiveCollisionShape& shape, const Vector3& d, SupportFeature& out)
+void getSupportFeature(const PrimitiveCollisionShape& shape, const Vector3& d, int numCapCircleVertices, SupportFeature& out)
 {
     out.n = 0;
 
@@ -780,8 +770,8 @@ void getSupportFeature(const PrimitiveCollisionShape& shape, const Vector3& d, S
         const Vector3 capCenter = c + sign * shape.halfLength * axis;
         const Vector3 u = shape.T.linear().col(0);
         const Vector3 w = shape.T.linear().col(2);
-        for(int i=0; i < NUM_CAP_CIRCLE_VERTICES; ++i){
-            const double theta = 2.0 * M_PI * i / NUM_CAP_CIRCLE_VERTICES;
+        for(int i=0; i < numCapCircleVertices; ++i){
+            const double theta = 2.0 * M_PI * i / numCapCircleVertices;
             out.points[out.n++] = capCenter + shape.radius * (cos(theta) * u + sin(theta) * w);
         }
         break;
@@ -811,8 +801,8 @@ void getSupportFeature(const PrimitiveCollisionShape& shape, const Vector3& d, S
                 // Base circle polygon
                 const Vector3 u = shape.T.linear().col(0);
                 const Vector3 w = shape.T.linear().col(2);
-                for(int i=0; i < NUM_CAP_CIRCLE_VERTICES; ++i){
-                    const double theta = 2.0 * M_PI * i / NUM_CAP_CIRCLE_VERTICES;
+                for(int i=0; i < numCapCircleVertices; ++i){
+                    const double theta = 2.0 * M_PI * i / numCapCircleVertices;
                     out.points[out.n++] = baseCenter + shape.radius * (cos(theta) * u + sin(theta) * w);
                 }
             } else {
@@ -1001,11 +991,12 @@ Vector3 polygonPlaneNormal(const SupportFeature& polygon)
 void generateContactManifold(
     const PrimitiveCollisionShape& shape0, const PrimitiveCollisionShape& shape1,
     const Vector3& n, const Vector3& witnessPoint, double depth0,
+    const PrimitiveCollisionParameterSet& params,
     std::vector<PrimitiveContactPoint>& out_points)
 {
     SupportFeature f0, f1;
-    getSupportFeature(shape0, n, f0);
-    getSupportFeature(shape1, -n, f1);
+    getSupportFeature(shape0, n, params.numCapCircleVertices, f0);
+    getSupportFeature(shape1, -n, params.numCapCircleVertices, f1);
 
     // A face - vertex pair must proceed to the face clipping below. The
     // witness point is based on arbitrary support vertices and can be far
@@ -1129,7 +1120,7 @@ void generateContactManifold(
         // The incident points are on shape1 when the reference face belongs
         // to shape0, and vice versa
         double depth = referenceIs0 ? s : -s;
-        if(depth > -CONTACT_PERSISTENCE_TOLERANCE){
+        if(depth > -params.contactPersistenceTolerance){
             if(depth < 0.0){
                 depth = 0.0; // Keep a slightly separating point as a zero-depth contact
             }
@@ -1150,6 +1141,7 @@ void generateContactManifold(
 void generateContactManifold(
     const PrimitiveCollisionShape& shape0, const PrimitiveCollisionShape& shape1,
     const Vector3& n, const Vector3& witnessPoint, double depth0,
+    const PrimitiveCollisionParameterSet& params,
     std::vector<PrimitiveContactPoint>& out_points);
 
 /**
@@ -1162,7 +1154,8 @@ void generateContactManifold(
 */
 bool detectBoxBox(
     const PrimitiveCollisionShape& s0, const PrimitiveCollisionShape& s1,
-    std::vector<PrimitiveContactPoint>& out_points, bool findFirstContactOnly)
+    std::vector<PrimitiveContactPoint>& out_points, bool findFirstContactOnly,
+    const PrimitiveCollisionParameterSet& params)
 {
     const Matrix3& R0 = s0.T.linear();
     const Matrix3& R1 = s1.T.linear();
@@ -1235,7 +1228,7 @@ bool detectBoxBox(
     if(findFirstContactOnly){
         addContactPoint(out_points, witnessPoint, n, minDepth);
     } else {
-        generateContactManifold(s0, s1, n, witnessPoint, minDepth, out_points);
+        generateContactManifold(s0, s1, n, witnessPoint, minDepth, params, out_points);
     }
     return true;
 }
@@ -1252,7 +1245,7 @@ bool detectBoxBox(
 bool detectParallelCylinderCylinder(
     const PrimitiveCollisionShape& s0, const PrimitiveCollisionShape& s1,
     std::vector<PrimitiveContactPoint>& out_points, bool findFirstContactOnly,
-    bool& out_contactDetected)
+    const PrimitiveCollisionParameterSet& params, bool& out_contactDetected)
 {
     out_contactDetected = false;
 
@@ -1295,7 +1288,7 @@ bool detectParallelCylinderCylinder(
     if(findFirstContactOnly){
         addContactPoint(out_points, witnessPoint, n, depth);
     } else {
-        generateContactManifold(s0, s1, n, witnessPoint, depth, out_points);
+        generateContactManifold(s0, s1, n, witnessPoint, depth, params, out_points);
     }
     out_contactDetected = true;
     return true;
@@ -1508,7 +1501,8 @@ bool detectCapsuleCapsule(
 
 bool cnoid::detectPrimitiveShapeCollision
 (const PrimitiveCollisionShape& shape0, const PrimitiveCollisionShape& shape1,
- std::vector<PrimitiveContactPoint>& out_points, bool findFirstContactOnly)
+ std::vector<PrimitiveContactPoint>& out_points, bool findFirstContactOnly,
+ const PrimitiveCollisionParameterSet& parameters)
 {
     typedef PrimitiveCollisionShape PCS;
 
@@ -1538,11 +1532,11 @@ bool cnoid::detectPrimitiveShapeCollision
     } else if(shape0.type == PCS::Capsule && shape1.type == PCS::Capsule){
         return detectCapsuleCapsule(shape0, shape1, out_points);
     } else if(shape0.type == PCS::Box && shape1.type == PCS::Box){
-        return detectBoxBox(shape0, shape1, out_points, findFirstContactOnly);
+        return detectBoxBox(shape0, shape1, out_points, findFirstContactOnly, parameters);
     } else if(shape0.type == PCS::Cylinder && shape1.type == PCS::Cylinder){
         bool contactDetected;
         if(detectParallelCylinderCylinder(
-               shape0, shape1, out_points, findFirstContactOnly, contactDetected)){
+               shape0, shape1, out_points, findFirstContactOnly, parameters, contactDetected)){
             return contactDetected;
         }
         // Fall through to the generic path for the non-parallel cylinders
@@ -1647,6 +1641,6 @@ bool cnoid::detectPrimitiveShapeCollision
         return true;
     }
 
-    generateContactManifold(shape0, shape1, n, witnessPoint, depth, out_points);
+    generateContactManifold(shape0, shape1, n, witnessPoint, depth, parameters, out_points);
     return true;
 }

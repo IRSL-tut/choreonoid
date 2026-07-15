@@ -32,6 +32,7 @@ set(sources
   Opcode/OPC_RayCollider.cpp
   Opcode/OPC_SphereCollider.cpp
   Opcode/OPC_Picking.cpp
+  CnoidAISTCollisionDetector.cpp # This file must be placed at the last position
   )
 
 set(headers
@@ -60,5 +61,6 @@ elseif(UNIX)
  endif()
 
 set(target CnoidAISTCollisionDetector)
-choreonoid_add_library(${target} SHARED ${sources} HEADERS ${headers})
+choreonoid_make_gettext_mo_files(${target} mofiles)
+choreonoid_add_library(${target} SHARED ${sources} ${mofiles} HEADERS ${headers})
 target_link_libraries(${target} PUBLIC CnoidUtil)
