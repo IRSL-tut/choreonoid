@@ -1,6 +1,6 @@
 #include "PhysXSimulatorItemImpl.h"
 #include "PhysXPlugin.h"
-#include "PxContinuousTrackSimulator.h"
+#include "PhysXContinuousTrackSimulator.h"
 #include <cnoid/ItemManager>
 #include <cnoid/WorldItem>
 #include <cnoid/BodyItem>
@@ -109,9 +109,8 @@ PxFilterFlags CustomFilterCallback::pairFound(
     PhysxLink* physxLink0 = static_cast<PhysxLink*>(a0->userData);
     PhysxLink* physxLink1 = static_cast<PhysxLink*>(a1->userData);
 
-    // If either actor has no userData, it is a linear segment (PxContinuousTrack).
-    // Kill all same-body collisions involving linear segments to prevent
-    // segment-wheel and segment-segment interference within the same articulation.
+    // An actor without userData is an internal simulator object. Kill its
+    // same-body collisions because it has no BodyCollisionLinkFilter entry.
     if(!physxLink0 || !physxLink1){
         return PxFilterFlag::eKILL;
     }
@@ -447,6 +446,7 @@ bool PhysXSimulatorItem::Impl::initializeSimulation(const std::vector<Simulation
     }
 
     clear();
+    trackSimulator = createPhysXContinuousTrackSimulator();
 
     PxSceneDesc sceneDesc(physics->getTolerancesScale());
     sceneDesc.gravity = getPxVec3(gravity);
@@ -530,6 +530,9 @@ bool PhysXSimulatorItem::Impl::initializeSimulation(const std::vector<Simulation
                 }
             }
         }
+    }
+    if(trackSimulator && trackSimulator->empty()){
+        trackSimulator.reset();
     }
     setExtraJoints(simBodies);
     if(hasNonRootFreeJoints && !self->isAllLinkPositionOutputMode()){
@@ -862,12 +865,9 @@ void PhysxBody::createPhysxObjects()
         }
     }
 
-    // Create continuous track handlers (linear segment links must be added
-    // to the articulation BEFORE adding the articulation to the scene)
-    if(!body_->devices<PxContinuousTrack>().empty()){
-        if(!simImpl->trackSimulator){
-            simImpl->trackSimulator = make_unique<PxContinuousTrackSimulator>();
-        }
+    // Linear segment links must be added before the articulation is added to
+    // the scene.
+    if(simImpl->trackSimulator){
         simImpl->trackSimulator->setupTrackHandlers(this);
     }
 

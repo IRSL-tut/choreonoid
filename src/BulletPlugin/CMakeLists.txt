@@ -51,9 +51,13 @@ set(target CnoidBulletPlugin)
 set(sources
   BulletPlugin.cpp
   BulletSimulatorItem.cpp
-  BtContinuousTrack.cpp
-  BtContinuousTrackSimulator.cpp
   )
+
+if(BUILD_PIECEWISE_RIGID_CONTINUOUS_TRACK)
+  list(APPEND sources BulletContinuousTrackSimulatorImpl.cpp)
+else()
+  list(APPEND sources BulletContinuousTrackSimulatorDisabled.cpp)
+endif()
 
 set(headers
   BulletPlugin.h
@@ -63,7 +67,12 @@ set(headers
 
 make_gettext_mofiles(${target} mofiles)
 choreonoid_add_plugin(${target} ${sources} ${mofiles} HEADERS ${headers})
-target_link_libraries(${target} PUBLIC CnoidBodyPlugin PRIVATE ${BULLET_LIBRARIES})
+target_link_libraries(${target}
+  PUBLIC CnoidBodyPlugin
+  PRIVATE ${BULLET_LIBRARIES})
+if(BUILD_PIECEWISE_RIGID_CONTINUOUS_TRACK)
+  target_link_libraries(${target} PRIVATE CnoidPiecewiseRigidContinuousTrack)
+endif()
 if(BULLET_CFLAGS_OTHER)
   target_compile_options(${target} PRIVATE ${BULLET_CFLAGS_OTHER})
 endif()

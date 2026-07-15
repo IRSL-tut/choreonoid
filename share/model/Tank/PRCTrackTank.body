@@ -1,7 +1,7 @@
 format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
-name: Tank
+name: PRCTrackTank
 rootLink: CHASSIS
 
 links:
@@ -23,7 +23,7 @@ links:
       0,    0,    0.02 ]
     elements:
       -
-        type: PxContinuousTrack
+        type: PiecewiseRigidContinuousTrack
         name: TRACK_L
         sprocket: WHEEL_L0
         sprocket_radius: 0.075
@@ -191,7 +191,7 @@ links:
       0,    0,    0.02 ]
     elements:
       -
-        type: PxContinuousTrack
+        type: PiecewiseRigidContinuousTrack
         name: TRACK_R
         sprocket: WHEEL_R0
         sprocket_radius: 0.075

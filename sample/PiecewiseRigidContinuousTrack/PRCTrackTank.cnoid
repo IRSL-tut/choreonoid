@@ -1,3 +1,5 @@
+optional_plugins: [ PhysX, Bullet ]
+
 items:
   id: 0
   name: "RootItem"
@@ -10,6 +12,7 @@ items:
       name: "World"
       plugin: Body
       class: WorldItem
+      is_checked: true
       data:
         collision_detection: false
         collision_detector: AISTCollisionDetector
@@ -17,20 +20,22 @@ items:
       children:
         -
           id: 2
-          name: "BtCrawler"
+          name: "PRCTrackTank"
           plugin: Body
           class: BodyItem
+          is_selected: true
           is_checked: true
           data:
-            file: "${SHARE}/model/misc/BtCrawler.body"
+            file: "${SHARE}/model/Tank/PRCTrackTank.body"
             format: CHOREONOID-BODY
-            rootPosition: [ 0, 0, 0.792652945 ]
+            currentBaseLink: "CHASSIS"
+            rootPosition: [ -2, -0.5, 0.123 ]
             rootAttitude: [
               1, 0, 0,
               0, 1, 0,
               0, 0, 1 ]
             jointDisplacements: [ 0, 0, 0, 0, 0, 0 ]
-            initialRootPosition: [ 0, 0, 0.792652945 ]
+            initialRootPosition: [ -2, -0.5, 0.123 ]
             initialRootAttitude: [
               1, 0, 0,
               0, 1, 0,
@@ -48,68 +53,27 @@ items:
               class: SimpleControllerItem
               data:
                 isNoDelayMode: false
-                controllerOptions: "wheels"
-                controller: "SampleCrawlerJoystickController"
+                controllerOptions: "velocity wheels"
+                controller: "TankJoystickController"
                 base_directory: "Controller directory"
-                reloading: false
+                reloading: true
                 export_symbols: false
-            -
-              id: 4
-              name: "BodySyncCamera"
-              plugin: Body
-              class: BodySyncCameraItem
-              is_checked: true
-              data:
-                camera_type: Perspective
-                translation: [ 1.89088, 2.07305, 2.13679 ]
-                rotation: [ 0.164895, 0.491697, 0.855011, 148.001 ]
-                field_of_view: 0.785398
-                near_clip_distance: 0.04
-                far_clip_distance: 200
-                interactive_viewpoint_change: true
-                target_link: ""
-                parallel_tracking: true
-                local_translation: [ 1.89088, 2.07305, 1.34414 ]
-                local_rotation: [ 0.164895, 0.491697, 0.855011, 148.001 ]
         -
-          id: 5
-          name: "Floor"
+          id: 4
+          name: "Labo1"
           plugin: Body
           class: BodyItem
           is_checked: true
           data:
-            file: "${SHARE}/model/misc/floor2.body"
+            file: "${SHARE}/model/Labo1/Labo1.body"
             format: CHOREONOID-BODY
             rootPosition: [ 0, 0, 0 ]
             rootAttitude: [
               1, 0, 0,
               0, 1, 0,
               0, 0, 1 ]
+            jointDisplacements: [ 0 ]
             initialRootPosition: [ 0, 0, 0 ]
-            initialRootAttitude: [
-              1, 0, 0,
-              0, 1, 0,
-              0, 0, 1 ]
-            fix_root: true
-            collisionDetection: true
-            selfCollisionDetection: false
-            lock_location: false
-            scene_sensitive: true
-        -
-          id: 6
-          name: "TerrainC"
-          plugin: Body
-          class: BodyItem
-          is_checked: true
-          data:
-            file: "../WRS2018/model/TerrainC.body"
-            format: CHOREONOID-BODY
-            rootPosition: [ -4.6, -3.4, 0 ]
-            rootAttitude: [
-              1, 0, 0,
-              0, 1, 0,
-              0, 0, 1 ]
-            initialRootPosition: [ -4.6, -3.4, 0 ]
             initialRootAttitude: [
               1, 0, 0,
               0, 1, 0,
@@ -120,7 +84,69 @@ items:
             lock_location: true
             scene_sensitive: true
         -
+          id: 5
+          name: "Lighting"
+          plugin: Base
+          class: LightingItem
+          is_checked: true
+          data:
+            light_type: "Spot light"
+            translation: [ 0, 0, 2.5 ]
+            direction: [ 0, 0, -1 ]
+            on: true
+            color: [ 1, 1, 1 ]
+            intensity: 0.8
+            ambient_intensity: 0
+            constant_attenuation: 1
+            linear_attenuation: 0
+            quadratic_attenuation: 0
+            beam_width: 60
+            cutoff_angle: 70
+            cutoff_exponent: 1
+            show_marker: false
+        -
+          id: 6
+          name: "fog"
+          plugin: Base
+          class: SceneItem
+          data:
+            file: "${SHARE}/model/misc/fog.wrl"
+            format: GENERAL-3D-MODEL
+            translation: [ 0, 0, 0 ]
+            rotation: [ 1, 0, 0, 0 ]
+            angle_unit: degree
+            lightweight_rendering: false
+        -
           id: 7
+          name: "PhysXSimulator"
+          plugin: PhysX
+          class: PhysXSimulatorItem
+          is_selected: true
+          data:
+            time_step: 0.001
+            realtime_sync_mode: compensatory
+            recording: tail
+            time_range_mode: unlimited
+            time_length: 300
+            is_active_control_time_range_mode: false
+            output_all_link_positions: true
+            output_device_states: true
+            use_controller_threads: true
+            record_collision_data: false
+            controller_options: ""
+            block_scene_view_edit_mode: false
+            gravity: [ 0, 0, -9.80665 ]
+            num_threads: 0
+            sdf_spacing: 0.01
+            sdf_subgrid_size: 6
+            sdf_bits_per_pixel: 16
+            sdf_construction_threads: 4
+            position_iterations: 8
+            velocity_iterations: 2
+            enable_velocity_output: true
+            error_output: false
+        -
+          id: 8
           name: "BulletSimulator"
           plugin: Bullet
           class: BulletSimulatorItem
@@ -150,7 +176,7 @@ views:
     class: ItemTreeView
     mounted: true
     state:
-      expanded: [ 1, 2, 3, 7 ]
+      expanded: [ 1, 2 ]
   -
     id: 2
     plugin: Base
@@ -175,7 +201,7 @@ views:
     state:
       operation_mode: view
       viewpoint_operation_mode: third_person
-      focus_position: [ 0.245541, 0.249778, 1.02582 ]
+      focus_position: [ -2.18005, -0.760669, 0.155861 ]
       visible_polygon_elements: [ face ]
       highlighting: false
       collision_highlighting: false
@@ -183,33 +209,31 @@ views:
       cameras:
         -
           camera: Perspective
-          eye: [ 3.55507, 4.39303, 3.66889 ]
-          direction: [ -0.47601, -0.715338, -0.511572 ]
-          up: [ -0.283406, -0.425896, 0.85924 ]
+          is_current: true
+          eye: [ -5.41386, -2.82861, 2.58989 ]
+          direction: [ 0.814625, 0.445874, -0.37092 ]
+          up: [ 0.325372, 0.178088, 0.928665 ]
         -
           camera: Orthographic
-          ortho_height: 20
-        -
-          camera: BodySyncCamera
-          is_current: true
+          ortho_height: 0.837436
       lighting_mode: normal
       culling_mode: enabled
       shading_mode: smooth
-      world_light: true
-      world_light_intensity: 0.5
+      world_light: false
+      world_light_intensity: 0.1
       ambient_light: true
-      ambient_light_intensity: 0.5
+      ambient_light_intensity: 0
       head_light: true
       head_light_intensity: 0.5
-      world_light_shadow: true
+      world_light_shadow: false
       shadow_lights:
-        - { index: 0, enabled: false }
-        - { index: 1, enabled: false }
+        - { index: 0, enabled: true }
+        - { index: 1, enabled: true }
       background_color: [ 0.1, 0.1, 0.3 ]
       line_width: 1
       point_size: 1
-      field_of_view: 35
-      clip_distances: [ 0.04, 200 ]
+      field_of_view: 39.981
+      clip_distances: [ 0.01, 10000 ]
       infinite_far_clip: true
       floorGrid: false
       floorGridSpan: 10
@@ -225,11 +249,68 @@ views:
       yz_grid_color: [ 0.9, 0.9, 0.9 ]
   -
     id: 5
+    name: "Scene 2"
+    plugin: Base
+    class: SceneView
+    mounted: true
+    state:
+      operation_mode: view
+      viewpoint_operation_mode: third_person
+      focus_position: [ 0, 0, 0 ]
+      visible_polygon_elements: [ face ]
+      highlighting: false
+      collision_highlighting: false
+      collision_lines: false
+      cameras:
+        -
+          camera: Perspective
+          eye: [ -5.29126, -5.01169, 3.84184 ]
+          direction: [ 0.756596, 0.48715, -0.436173 ]
+          up: [ 0.36673, 0.236127, 0.899863 ]
+        -
+          camera: Orthographic
+          ortho_height: 20
+        -
+          camera: [ PRCTrackTank, Kinect ]
+          is_current: true
+      lighting_mode: normal
+      culling_mode: enabled
+      shading_mode: smooth
+      world_light: false
+      world_light_intensity: 0.5
+      ambient_light: true
+      ambient_light_intensity: 0.3
+      head_light: true
+      head_light_intensity: 0.5
+      world_light_shadow: false
+      shadow_lights:
+        - { index: 0, enabled: true }
+        - { index: 1, enabled: true }
+      background_color: [ 0.1, 0.1, 0.3 ]
+      line_width: 1
+      point_size: 1
+      field_of_view: 39.981
+      clip_distances: [ 0.01, 100 ]
+      infinite_far_clip: true
+      floorGrid: false
+      floorGridSpan: 10
+      floorGridInterval: 0.5
+      xzGrid: false
+      xzGridSpan: 10
+      xzGridInterval: 0.5
+      yzGrid: false
+      yzGridSpan: 10
+      yzGridInterval: 0.5
+      xy_grid_color: [ 0.9, 0.9, 0.9 ]
+      xz_grid_color: [ 0.9, 0.9, 0.9 ]
+      yz_grid_color: [ 0.9, 0.9, 0.9 ]
+  -
+    id: 6
     plugin: Base
     class: VirtualJoystickView
     mounted: true
   -
-    id: 6
+    id: 7
     plugin: Body
     class: JointDisplacementView
     mounted: true
@@ -243,18 +324,17 @@ views:
       limit_ranges: false
       show_selected_joints: false
   -
-    id: 7
+    id: 8
     plugin: Body
     class: LinkDeviceListView
     mounted: true
     state:
-      element_type: all
+      element_type: link
       listing_mode: list
   -
-    id: 8
+    id: 9
     plugin: Body
     class: LinkPositionView
-    mounted: true
     state:
       coordinate_mode: world
       preferred_coordinate_mode: base
@@ -264,12 +344,11 @@ views:
       show_rotation_matrix: false
       target_link_type: ik_link
   -
-    id: 9
+    id: 10
     plugin: Body
     class: LinkPropertyView
-    mounted: true
   -
-    id: 10
+    id: 11
     plugin: Python
     class: PythonConsoleView
     mounted: true
@@ -277,7 +356,7 @@ toolbars:
   "TimeBar":
     current_time: 0
     min_time: 0
-    max_time: 60
+    max_time: 30
     frame_rate: 1000
     playback_frame_rate: 60
     idle_loop_driven_mode: false
@@ -299,6 +378,15 @@ Body:
   "BodySelectionManager":
     current_body_item: 2
     current_link: "CHASSIS"
+  "KinematicFaultChecker":
+    checkJointPositions: true
+    angleMargin: 0
+    translationMargin: 0
+    checkJointVelocities: true
+    velocityLimitRatio: 100
+    targetJoints: all
+    checkSelfCollisions: true
+    onlyTimeBarRange: false
   "OperableSceneBody":
     scene_bodies:
       -
@@ -307,15 +395,15 @@ Body:
         show_cm_projection: false
         show_zmp: false
       -
-        body_item: 5
+        body_item: 4
         show_cm: false
         show_cm_projection: false
         show_zmp: false
-      -
-        body_item: 6
-        show_cm: false
-        show_cm_projection: false
-        show_zmp: false
+  "SplineFilterDialog":
+    isInputFrameRateSpecified: false
+    inputFrameRate: 200
+    isOutputFrameRateSpecified: false
+    outputFrameRate: 200
 viewAreas:
   -
     type: embedded
@@ -323,65 +411,49 @@ viewAreas:
     contents:
       type: splitter
       orientation: horizontal
-      sizes: [ 1389, 393 ]
+      sizes: [ 548, 2520 ]
       children:
         -
           type: splitter
-          orientation: horizontal
-          sizes: [ 303, 1082 ]
-          children:
-            -
-              type: splitter
-              orientation: vertical
-              sizes: [ 476, 475 ]
-              children:
-                -
-                  type: pane
-                  views: [ 1 ]
-                -
-                  type: pane
-                  views: [ 0, 9 ]
-                  current: 0
-            -
-              type: splitter
-              orientation: vertical
-              sizes: [ 749, 202 ]
-              children:
-                -
-                  type: pane
-                  views: [ 4 ]
-                -
-                  type: splitter
-                  orientation: horizontal
-                  sizes: [ 539, 539 ]
-                  children:
-                    -
-                      type: pane
-                      views: [ 3, 10 ]
-                      current: 3
-                    -
-                      type: pane
-                      views: [ 5 ]
-        -
-          type: splitter
           orientation: vertical
-          sizes: [ 278, 673 ]
+          sizes: [ 764, 763 ]
           children:
             -
               type: pane
-              views: [ 2 ]
+              views: [ 1 ]
+            -
+              type: pane
+              views: [ 0, 8 ]
+              current: 0
+        -
+          type: splitter
+          orientation: vertical
+          sizes: [ 1092, 435 ]
+          children:
             -
               type: splitter
-              orientation: vertical
-              sizes: [ 404, 265 ]
+              orientation: horizontal
+              sizes: [ 1197, 1319 ]
               children:
                 -
                   type: pane
-                  views: [ 8 ]
+                  views: [ 5 ]
                 -
                   type: pane
-                  views: [ 7, 6 ]
-                  current: 6
+                  views: [ 4 ]
+            -
+              type: splitter
+              orientation: horizontal
+              sizes: [ 1514, 1002 ]
+              children:
+                -
+                  type: pane
+                  views: [ 3, 11 ]
+                  current: 3
+                -
+                  type: pane
+                  views: [ 6, 2, 7 ]
+                  current: 2
 layoutOfToolBars:
   rows:
     -

@@ -1,4 +1,4 @@
-#include "PxContinuousTrack.h"
+#include "PiecewiseRigidContinuousTrack.h"
 #include <cnoid/StdBodyLoader>
 #include <cnoid/StdBodyWriter>
 #include <cnoid/StdSceneReader>
@@ -17,9 +17,9 @@ using namespace cnoid;
 
 namespace cnoid {
 
-class ScenePxContinuousTrack : public SceneDevice
+class ScenePiecewiseRigidContinuousTrack : public SceneDevice
 {
-    PxContinuousTrack* trackDevice;
+    PiecewiseRigidContinuousTrack* trackDevice;
     SgSwitchableGroupPtr trackSwitch;
     SgUpdate sgUpdate;
 
@@ -38,7 +38,7 @@ class ScenePxContinuousTrack : public SceneDevice
     bool beltsCreated;
 
 public:
-    ScenePxContinuousTrack(PxContinuousTrack* device)
+    ScenePiecewiseRigidContinuousTrack(PiecewiseRigidContinuousTrack* device)
         : SceneDevice(device),
           trackDevice(device),
           shoesCreated(false),
@@ -266,9 +266,9 @@ public:
 };
 
 
-bool readPxContinuousTrack(StdBodyLoader* loader, const Mapping* info)
+bool readPiecewiseRigidContinuousTrack(StdBodyLoader* loader, const Mapping* info)
 {
-    PxContinuousTrackPtr device = new PxContinuousTrack;
+    PiecewiseRigidContinuousTrackPtr device = new PiecewiseRigidContinuousTrack;
 
     string name;
     if(info->read("name", name)){
@@ -341,8 +341,17 @@ bool readPxContinuousTrack(StdBodyLoader* loader, const Mapping* info)
 }
 
 
-bool writePxContinuousTrack(
-    StdBodyWriter* writer, Mapping* info, const PxContinuousTrack* device)
+bool readPxContinuousTrack(StdBodyLoader* loader, const Mapping* info)
+{
+    MessageOut::master()->putWarningln(
+        _("The \"PxContinuousTrack\" device type is deprecated. "
+          "Use \"PiecewiseRigidContinuousTrack\" instead."));
+    return readPiecewiseRigidContinuousTrack(loader, info);
+}
+
+
+bool writePiecewiseRigidContinuousTrack(
+    StdBodyWriter* writer, Mapping* info, const PiecewiseRigidContinuousTrack* device)
 {
     if(!device->sprocketName().empty()){
         info->write("sprocket", device->sprocketName());
@@ -380,9 +389,9 @@ bool writePxContinuousTrack(
 }
 
 
-SceneDevice* createScenePxContinuousTrack(Device* device)
+SceneDevice* createScenePiecewiseRigidContinuousTrack(Device* device)
 {
-    return new ScenePxContinuousTrack(static_cast<PxContinuousTrack*>(device));
+    return new ScenePiecewiseRigidContinuousTrack(static_cast<PiecewiseRigidContinuousTrack*>(device));
 }
 
 
@@ -390,16 +399,18 @@ struct TypeRegistration
 {
     TypeRegistration() {
         StdBodyLoader::registerNodeType(
+            "PiecewiseRigidContinuousTrack", readPiecewiseRigidContinuousTrack);
+        StdBodyLoader::registerNodeType(
             "PxContinuousTrack", readPxContinuousTrack);
-        StdBodyWriter::registerDeviceWriter<PxContinuousTrack>(
-            "PxContinuousTrack", writePxContinuousTrack);
-        SceneDevice::registerSceneDeviceFactory<PxContinuousTrack>(
-            createScenePxContinuousTrack);
+        StdBodyWriter::registerDeviceWriter<PiecewiseRigidContinuousTrack>(
+            "PiecewiseRigidContinuousTrack", writePiecewiseRigidContinuousTrack);
+        SceneDevice::registerSceneDeviceFactory<PiecewiseRigidContinuousTrack>(
+            createScenePiecewiseRigidContinuousTrack);
     }
 } registration;
 
 
-PxContinuousTrack::Spec::Spec()
+PiecewiseRigidContinuousTrack::Spec::Spec()
     : sprocketRadius(0.0),
       idlerRadius(0.0),
       numShoes(20),
@@ -434,13 +445,13 @@ PxContinuousTrack::Spec::Spec()
 }
 
 
-PxContinuousTrack::PxContinuousTrack()
+PiecewiseRigidContinuousTrack::PiecewiseRigidContinuousTrack()
     : spec_(new Spec)
 {
 }
 
 
-PxContinuousTrack::PxContinuousTrack(const PxContinuousTrack& org, bool copyStateOnly)
+PiecewiseRigidContinuousTrack::PiecewiseRigidContinuousTrack(const PiecewiseRigidContinuousTrack& org, bool copyStateOnly)
     : Device(org, copyStateOnly)
 {
     copyStateFrom(org);
@@ -454,48 +465,48 @@ PxContinuousTrack::PxContinuousTrack(const PxContinuousTrack& org, bool copyStat
 }
 
 
-const char* PxContinuousTrack::typeName() const
+const char* PiecewiseRigidContinuousTrack::typeName() const
 {
-    return "PxContinuousTrack";
+    return "PiecewiseRigidContinuousTrack";
 }
 
 
-void PxContinuousTrack::copyStateFrom(const PxContinuousTrack& other)
+void PiecewiseRigidContinuousTrack::copyStateFrom(const PiecewiseRigidContinuousTrack& other)
 {
     shoePositions_ = other.shoePositions_;
 }
 
 
-void PxContinuousTrack::copyStateFrom(const DeviceState& other)
+void PiecewiseRigidContinuousTrack::copyStateFrom(const DeviceState& other)
 {
-    if(typeid(other) != typeid(PxContinuousTrack)){
-        throw std::invalid_argument("Type mismatch in PxContinuousTrack::copyStateFrom");
+    if(typeid(other) != typeid(PiecewiseRigidContinuousTrack)){
+        throw std::invalid_argument("Type mismatch in PiecewiseRigidContinuousTrack::copyStateFrom");
     }
-    copyStateFrom(static_cast<const PxContinuousTrack&>(other));
+    copyStateFrom(static_cast<const PiecewiseRigidContinuousTrack&>(other));
 }
 
 
-DeviceState* PxContinuousTrack::cloneState(DeviceState* /* existingClone */) const
+DeviceState* PiecewiseRigidContinuousTrack::cloneState(DeviceState* /* existingClone */) const
 {
-    return new PxContinuousTrack(*this, true);
+    return new PiecewiseRigidContinuousTrack(*this, true);
 }
 
 
-Referenced* PxContinuousTrack::doClone(CloneMap*) const
+Referenced* PiecewiseRigidContinuousTrack::doClone(CloneMap*) const
 {
-    return new PxContinuousTrack(*this);
+    return new PiecewiseRigidContinuousTrack(*this);
 }
 
 
-void PxContinuousTrack::forEachActualType(std::function<bool(const std::type_info& type)> func)
+void PiecewiseRigidContinuousTrack::forEachActualType(std::function<bool(const std::type_info& type)> func)
 {
-    if(!func(typeid(PxContinuousTrack))){
+    if(!func(typeid(PiecewiseRigidContinuousTrack))){
         Device::forEachActualType(func);
     }
 }
 
 
-void PxContinuousTrack::clearState()
+void PiecewiseRigidContinuousTrack::clearState()
 {
     shoePositions_.clear();
 
@@ -587,7 +598,7 @@ void PxContinuousTrack::clearState()
                     }
                 }
                 MessageOut::master()->putWarningln(
-                    formatR(_("PxContinuousTrack \"{0}\" (link \"{1}\"): "
+                    formatR(_("PiecewiseRigidContinuousTrack \"{0}\" (link \"{1}\"): "
                               "Adjusted num_shoes from {2} to {3} "
                               "for phase alignment between wheels and linear segments.{4}"),
                             name(), trackLink->name(),
@@ -649,7 +660,7 @@ void PxContinuousTrack::clearState()
                     }
                 }
                 MessageOut::master()->putErrorln(
-                    formatR(_("PxContinuousTrack \"{0}\" (link \"{1}\"): "
+                    formatR(_("PiecewiseRigidContinuousTrack \"{0}\" (link \"{1}\"): "
                               "num_shoes={2} is not phase-aligned "
                               "with wheel distance {3:.4f}. "
                               "Suggested wheel distance: {4}.{5}"),
@@ -802,7 +813,112 @@ void PxContinuousTrack::clearState()
 }
 
 
-int PxContinuousTrack::stateSize() const
+int PiecewiseRigidContinuousTrack::numGrousersOnLinearSegment(double segmentLength) const
+{
+    int numGrousers = 0;
+    double spacing = spec_->grouserSpacing;
+    double x = segmentLength / 2.0 - spacing;
+    while(x >= -segmentLength / 2.0 - spacing * 0.01){
+        ++numGrousers;
+        x -= spacing;
+    }
+    return numGrousers;
+}
+
+
+Vector3 PiecewiseRigidContinuousTrack::linearGrouserPosition(
+    double segmentLength, const Vector3& segmentAxis,
+    double direction, int index, int numGrousers) const
+{
+    double x = segmentLength / 2.0
+        - spec_->grouserSpacing * (index + 1);
+    if(direction > 0.0 && index == numGrousers - 1){
+        x = segmentLength / 2.0;
+    }
+    Vector3 position = segmentAxis * x;
+    double grouserDirection = (direction > 0.0) ? 1.0 : -1.0;
+    position.z() += grouserDirection
+        * (spec_->thickness + spec_->grouserHeight / 2.0);
+    return position;
+}
+
+
+Isometry3 PiecewiseRigidContinuousTrack::wheelGrouserPose(
+    double wheelRadius, int index, double angleStep) const
+{
+    double angle = M_PI / 2.0 + index * angleStep;
+    double radius = wheelRadius + spec_->thickness + spec_->grouserHeight / 2.0;
+    Isometry3 pose;
+    pose.setIdentity();
+    pose.linear() = Eigen::AngleAxisd(
+        M_PI / 2.0 - angle, Vector3::UnitY()).toRotationMatrix();
+    pose.translation() = Vector3(
+        radius * cos(angle), 0.0, radius * sin(angle));
+    return pose;
+}
+
+
+double PiecewiseRigidContinuousTrack::wheelBeltChordLength(
+    double wheelRadius, int numBeltSegments) const
+{
+    double angleStep = 2.0 * M_PI / numBeltSegments;
+    return 2.0 * (wheelRadius + spec_->thickness) * sin(angleStep / 2.0);
+}
+
+
+Isometry3 PiecewiseRigidContinuousTrack::wheelBeltPose(
+    double wheelRadius, int index, int numBeltSegments) const
+{
+    double angleStep = 2.0 * M_PI / numBeltSegments;
+    double angle = M_PI / 2.0 + index * angleStep;
+    double radius = wheelRadius + spec_->thickness / 2.0;
+    Isometry3 pose;
+    pose.setIdentity();
+    pose.linear() = Eigen::AngleAxisd(
+        M_PI / 2.0 - angle, Vector3::UnitY()).toRotationMatrix();
+    pose.translation() = Vector3(
+        radius * cos(angle), 0.0, radius * sin(angle));
+    return pose;
+}
+
+
+bool PiecewiseRigidContinuousTrack::isWheelGrouserVisible(
+    int index, double angleStep, double wheelPosition, bool isOuterPositive)
+{
+    double theta = M_PI / 2.0 + index * angleStep - wheelPosition;
+    double c = cos(theta);
+    return isOuterPositive ? (c >= -0.01) : (c <= 0.01);
+}
+
+
+double PiecewiseRigidContinuousTrack::wrapPosition(double position, double period)
+{
+    if(period <= 0.0){
+        return position;
+    }
+    double wrapped = fmod(position, period);
+    if(wrapped < 0.0){
+        wrapped += period;
+    }
+    return wrapped;
+}
+
+
+double PiecewiseRigidContinuousTrack::resetCoupledPosition(
+    double masterPosition, double newMasterPosition,
+    double followerPosition, double gearRatio, double followerPeriod)
+{
+    double wrappedFollower = wrapPosition(followerPosition, followerPeriod);
+    if(std::abs(gearRatio) < 1.0e-12){
+        return wrappedFollower;
+    }
+    double errorBefore = masterPosition + gearRatio * followerPosition;
+    double errorAfterWrap = newMasterPosition + gearRatio * wrappedFollower;
+    return wrappedFollower + (errorBefore - errorAfterWrap) / gearRatio;
+}
+
+
+int PiecewiseRigidContinuousTrack::stateSize() const
 {
     // The actual number of visible shoes varies per frame due to wheel rotation
     // shifting the half-arc boundary, but the state buffer size must be fixed.
@@ -813,7 +929,7 @@ int PxContinuousTrack::stateSize() const
 }
 
 
-const double* PxContinuousTrack::readState(const double* buf, int size)
+const double* PiecewiseRigidContinuousTrack::readState(const double* buf, int size)
 {
     // Read only the actual shoe count (not the padded buffer size)
     int actualCount = static_cast<int>(buf[0]);
@@ -835,7 +951,7 @@ const double* PxContinuousTrack::readState(const double* buf, int size)
 }
 
 
-double* PxContinuousTrack::writeState(double* out_buf) const
+double* PiecewiseRigidContinuousTrack::writeState(double* out_buf) const
 {
     int totalSize = spec_ ? (1 + spec_->maxNumVisibleShoes * 7) : 0;
     if(totalSize == 0){
@@ -862,13 +978,13 @@ double* PxContinuousTrack::writeState(double* out_buf) const
 }
 
 
-void PxContinuousTrack::addShoePosition(const SE3& pos)
+void PiecewiseRigidContinuousTrack::addShoePosition(const SE3& pos)
 {
     shoePositions_.push_back(pos);
 }
 
 
-void PxContinuousTrack::clearShoePositions()
+void PiecewiseRigidContinuousTrack::clearShoePositions()
 {
     shoePositions_.clear();
 }

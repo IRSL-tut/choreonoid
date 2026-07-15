@@ -26,7 +26,7 @@ class PhysxLink;
 class PhysxArticulationLink;
 class PhysxBody;
 class PhysxBodyArticulation;
-class PxContinuousTrackSimulator;
+class PhysXContinuousTrackSimulator;
 
 typedef ref_ptr<PhysxLink> PhysxLinkPtr;
 typedef ref_ptr<PhysxBodyArticulation> PhysxBodyArticulationPtr;
@@ -308,7 +308,7 @@ public:
     MeshExtractor meshExtractor;
     MessageOut* mout;
 
-    std::unique_ptr<PxContinuousTrackSimulator> trackSimulator;
+    std::unique_ptr<PhysXContinuousTrackSimulator> trackSimulator;
 
     Impl(PhysXSimulatorItem* self);
     Impl(PhysXSimulatorItem* self, const Impl& org);

@@ -1,3 +1,5 @@
+optional_plugins: [ PhysX, Bullet ]
+
 items:
   id: 0
   name: "RootItem"
@@ -17,12 +19,12 @@ items:
       children:
         -
           id: 2
-          name: "PxCrawler"
+          name: "PRCTrackVehicle"
           plugin: Body
           class: BodyItem
           is_checked: true
           data:
-            file: "${SHARE}/model/misc/PxCrawler.body"
+            file: "${SHARE}/model/misc/PRCTrackVehicle.body"
             format: CHOREONOID-BODY
             rootPosition: [ 0, 0, 0.792652945 ]
             rootAttitude: [
@@ -124,6 +126,7 @@ items:
           name: "PhysXSimulator"
           plugin: PhysX
           class: PhysXSimulatorItem
+          is_selected: true
           data:
             time_step: 0.001
             realtime_sync_mode: compensatory
@@ -145,6 +148,25 @@ items:
             sdf_construction_threads: 4
             position_iterations: 8
             velocity_iterations: 2
+        -
+          id: 8
+          name: "BulletSimulator"
+          plugin: Bullet
+          class: BulletSimulatorItem
+          data:
+            time_step: 0.001
+            realtime_sync_mode: compensatory
+            recording: tail
+            time_range_mode: unlimited
+            time_length: 300
+            is_active_control_time_range_mode: false
+            output_all_link_positions: true
+            output_device_states: true
+            use_controller_threads: true
+            record_collision_data: false
+            controller_options: ""
+            block_scene_view_edit_mode: false
+            gravity: [ 0, 0, -9.80665 ]
 views:
   -
     id: 0
@@ -157,7 +179,7 @@ views:
     class: ItemTreeView
     mounted: true
     state:
-      expanded: [ 1, 2, 3, 7 ]
+      expanded: [ 1, 2, 3 ]
   -
     id: 2
     plugin: Base

@@ -1,7 +1,8 @@
-#ifndef CNOID_PHYSX_PLUGIN_PX_CONTINUOUS_TRACK_SIMULATOR_H
-#define CNOID_PHYSX_PLUGIN_PX_CONTINUOUS_TRACK_SIMULATOR_H
+#ifndef CNOID_PHYSX_PLUGIN_PHYSX_CONTINUOUS_TRACK_SIMULATOR_IMPL_H
+#define CNOID_PHYSX_PLUGIN_PHYSX_CONTINUOUS_TRACK_SIMULATOR_IMPL_H
 
-#include "PxContinuousTrack.h"
+#include "PhysXContinuousTrackSimulator.h"
+#include <cnoid/PiecewiseRigidContinuousTrack>
 #include <PxPhysicsAPI.h>
 #include <cnoid/EigenTypes>
 #include <vector>
@@ -16,7 +17,7 @@ class PhysxBody;
 class PxContinuousTrackHandler
 {
 public:
-    PxContinuousTrackHandler(PxContinuousTrack* device);
+    PxContinuousTrackHandler(PiecewiseRigidContinuousTrack* device);
     ~PxContinuousTrackHandler();
 
     bool initialize(
@@ -52,7 +53,7 @@ private:
         physx::PxShape* plateShape;
     };
 
-    PxContinuousTrack* device_;
+    PiecewiseRigidContinuousTrack* device_;
     Link* trackLink_;
     Link* sprocketLink_;
 
@@ -117,26 +118,25 @@ private:
 };
 
 
-class PxContinuousTrackSimulator
+class PhysXContinuousTrackSimulatorImpl : public PhysXContinuousTrackSimulator
 {
 public:
-    PxContinuousTrackSimulator();
-    ~PxContinuousTrackSimulator();
+    PhysXContinuousTrackSimulatorImpl();
+    ~PhysXContinuousTrackSimulatorImpl() override;
 
-    // Scan PxContinuousTrack devices on a body and create handlers.
+    // Scan PiecewiseRigidContinuousTrack devices on a body and create handlers.
     // Called from PhysxBody::createPhysxObjects().
-    int setupTrackHandlers(PhysxBody* physxBody);
+    void setupTrackHandlers(PhysxBody* physxBody) override;
+    bool empty() const override;
 
     // Generate initial track states for all handlers
-    void initializeTrackStates();
+    void initializeTrackStates() override;
 
     // Update simulation for all handlers
-    void updateSimulation();
+    void updateSimulation() override;
 
     // Update track states for all handlers
-    void updateTrackStates();
-
-    bool empty() const;
+    void updateTrackStates() override;
 
 private:
     struct TrackHandlerEntry {

@@ -1,7 +1,8 @@
-#ifndef CNOID_BULLET_PLUGIN_BT_CONTINUOUS_TRACK_SIMULATOR_H
-#define CNOID_BULLET_PLUGIN_BT_CONTINUOUS_TRACK_SIMULATOR_H
+#ifndef CNOID_BULLET_PLUGIN_BULLET_CONTINUOUS_TRACK_SIMULATOR_IMPL_H
+#define CNOID_BULLET_PLUGIN_BULLET_CONTINUOUS_TRACK_SIMULATOR_IMPL_H
 
-#include "BtContinuousTrack.h"
+#include "BulletContinuousTrackSimulator.h"
+#include <cnoid/PiecewiseRigidContinuousTrack>
 #include <cnoid/EigenTypes>
 #include <LinearMath/btAlignedObjectArray.h>
 #include <LinearMath/btQuaternion.h>
@@ -22,7 +23,7 @@ class BulletUnit;
 class BulletBody;
 
 /*
-   Simulates one BtContinuousTrack device. The track is approximated by
+   Simulates one PiecewiseRigidContinuousTrack device. The track is approximated by
    grouser and belt shapes fixed to the sprocket and idler wheels plus two
    sliding linear segments (upper and lower) that carry plate and grouser
    shapes. The lower segment is velocity-driven from the sprocket joint
@@ -33,10 +34,10 @@ class BulletBody;
 class BtContinuousTrackHandler
 {
 public:
-    BtContinuousTrackHandler(BtContinuousTrack* device);
+    BtContinuousTrackHandler(PiecewiseRigidContinuousTrack* device);
     ~BtContinuousTrackHandler();
 
-    BtContinuousTrack* device() const { return device_; }
+    PiecewiseRigidContinuousTrack* device() const { return device_; }
     Link* trackLink() const { return trackLink_; }
     Link* sprocketLink() const { return sprocketLink_; }
     Link* idlerLink() const { return idlerLink_; }
@@ -86,7 +87,7 @@ private:
         double angleStep;           // 2*PI/numPhysicsGrousers
     };
 
-    BtContinuousTrack* device_;
+    PiecewiseRigidContinuousTrack* device_;
     Link* trackLink_;
     Link* sprocketLink_;
     Link* idlerLink_;
@@ -125,33 +126,32 @@ private:
 };
 
 
-class BtContinuousTrackSimulator
+class BulletContinuousTrackSimulatorImpl : public BulletContinuousTrackSimulator
 {
 public:
-    BtContinuousTrackSimulator();
-    ~BtContinuousTrackSimulator();
+    BulletContinuousTrackSimulatorImpl();
+    ~BulletContinuousTrackSimulatorImpl() override;
 
-    // Create the handlers for the BtContinuousTrack devices whose links are
+    // Create the handlers for the PiecewiseRigidContinuousTrack devices whose links are
     // all contained in the given unit. Called from BulletBody::createUnit
     // before the multibody is created. The returned pointers are owned by
     // this simulator.
-    std::vector<BtContinuousTrackHandler*> prepareHandlersForUnit(
-        BulletBody* bulletBody, const std::vector<Link*>& unitLinks);
+    std::unique_ptr<BulletContinuousTrackUnitSetup> prepareUnit(
+        BulletBody* bulletBody, const std::vector<Link*>& unitLinks) override;
+    bool empty() const override;
 
     // True if the joint of the link is driven by a track handler (the wheel
     // joints). The regular joint motor must not be created for such joints.
-    bool isTrackDrivenJoint(Link* link) const;
+    bool isTrackDrivenJoint(Link* link) const override;
 
     // Generate the initial track states for all the handlers
-    void initializeTrackStates();
+    void initializeTrackStates() override;
 
     // Update the drives and the periodic joint resets for all the handlers
-    void updateSimulation();
+    void updateSimulation() override;
 
     // Update the track device states for all the handlers
-    void updateTrackStates();
-
-    bool empty() const { return handlers_.empty(); }
+    void updateTrackStates() override;
 
 private:
     std::vector<std::unique_ptr<BtContinuousTrackHandler>> handlers_;

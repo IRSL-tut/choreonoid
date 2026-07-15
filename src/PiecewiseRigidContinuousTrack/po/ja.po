@@ -1,0 +1,39 @@
+# Japanese translations for Choreonoid package.
+# Copyright (C) 2026 THE Choreonoid'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the Choreonoid package.
+# nakaoka <s.nakaoka@gmail.com>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Choreonoid\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-15 00:00+0900\n"
+"PO-Revision-Date: 2026-07-15 00:00+0900\n"
+"Last-Translator: nakaoka <s.nakaoka@gmail.com>\n"
+"Language-Team: Japanese <translation-team-ja@lists.sourceforge.net>\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid ""
+"PiecewiseRigidContinuousTrack \"{0}\" (link \"{1}\"): Adjusted num_shoes from {2} to {3} for "
+"phase alignment between wheels and linear segments.{4}"
+msgstr ""
+"PiecewiseRigidContinuousTrack \"{0}\" (リンク \"{1}\"): 車輪と直線区間の位相整合のため、"
+"num_shoesを{2}から{3}に調整しました。{4}"
+
+msgid ""
+"PiecewiseRigidContinuousTrack \"{0}\" (link \"{1}\"): num_shoes={2} is not phase-aligned with "
+"wheel distance {3:.4f}. Suggested wheel distance: {4}.{5}"
+msgstr ""
+"PiecewiseRigidContinuousTrack \"{0}\" (リンク \"{1}\"): num_shoes={2}は車輪間距離{3:.4f}と"
+"位相が合っていません。推奨車輪間距離: {4}。{5}"
+
+msgid ""
+"The \"PxContinuousTrack\" device type is deprecated. Use "
+"\"PiecewiseRigidContinuousTrack\" instead."
+msgstr ""
+"\"PxContinuousTrack\"デバイス型は非推奨です。代わりに"
+"\"PiecewiseRigidContinuousTrack\"を使用してください。"

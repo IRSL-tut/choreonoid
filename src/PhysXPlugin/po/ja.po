@@ -170,17 +170,3 @@ msgstr "{0}には凸メッシュを作成するための有効な頂点があり
 
 msgid "{0} cannot be converted to a convex mesh."
 msgstr "{0}を凸メッシュに変換できません。"
-
-msgid ""
-"PxContinuousTrack \"{0}\" (link \"{1}\"): Adjusted num_shoes from {2} to {3} for phase alignment "
-"between wheels and linear segments.{4}"
-msgstr ""
-"PxContinuousTrack \"{0}\" (リンク \"{1}\"): 車輪とリニアセグメント間の位相整合のため、num_shoes"
-"を{2}から{3}に調整しました。{4}"
-
-msgid ""
-"PxContinuousTrack \"{0}\" (link \"{1}\"): num_shoes={2} is not phase-aligned with wheel distance "
-"{3:.4f}. Suggested wheel distance: {4}.{5}"
-msgstr ""
-"PxContinuousTrack \"{0}\" (リンク \"{1}\"): num_shoes={2}は車輪間距離{3:.4f}と位相が合っていま"
-"せん。推奨車輪間距離: {4}。{5}"

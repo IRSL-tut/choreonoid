@@ -30,7 +30,7 @@ namespace cnoid {
 class BulletLink;
 class BulletUnit;
 class BulletBody;
-class BtContinuousTrackSimulator;
+class BulletContinuousTrackSimulator;
 class MessageOut;
 class SgMesh;
 class MaterialTable;
@@ -307,7 +307,7 @@ public:
     std::vector<btVector3> omegaBuf;
     std::vector<btVector3> velBuf;
 
-    std::unique_ptr<BtContinuousTrackSimulator> trackSimulator;
+    std::unique_ptr<BulletContinuousTrackSimulator> trackSimulator;
 
     Impl(BulletSimulatorItem* self);
     Impl(BulletSimulatorItem* self, const Impl& org);

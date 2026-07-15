@@ -1,4 +1,4 @@
-#include "BtContinuousTrackSimulator.h"
+#include "BulletContinuousTrackSimulatorImpl.h"
 #include "BulletSimulatorItemImpl.h"
 #include <cnoid/Body>
 #include <cnoid/Link>
@@ -24,7 +24,7 @@ constexpr double GearConstraintMaxImpulse = 1.0e8;
 }
 
 
-BtContinuousTrackHandler::BtContinuousTrackHandler(BtContinuousTrack* device)
+BtContinuousTrackHandler::BtContinuousTrackHandler(PiecewiseRigidContinuousTrack* device)
     : device_(device),
       trackLink_(nullptr),
       sprocketLink_(nullptr),
@@ -295,19 +295,12 @@ void BtContinuousTrackHandler::addWheelShapes(
     simImpl->ownedShapes.emplace_back(grouserShape);
 
     for(int i = 0; i < numGrousers; ++i){
-        double angle = M_PI / 2.0 + i * angleStep;
-        double r = wheelRadius + thickness + shoeHeight / 2.0;
-        Isometry3 localPose;
-        localPose.linear() = AngleAxis(M_PI / 2.0 - angle, Vector3::UnitY()).toRotationMatrix();
-        localPose.translation() = Vector3(r * cos(angle), 0.0, r * sin(angle));
+        Isometry3 localPose = device_->wheelGrouserPose(wheelRadius, i, angleStep);
         compound->addChildShape(toBtTransform(T_inv * localPose), grouserShape);
     }
 
     // Belt shapes approximating the circular band between the grousers
-    double beltAngleStep = 2.0 * M_PI / numBeltSegments;
-    double r_belt = wheelRadius + thickness / 2.0;
-    double r_outer = wheelRadius + thickness;
-    double chordLength = 2.0 * r_outer * sin(beltAngleStep / 2.0);
+    double chordLength = device_->wheelBeltChordLength(wheelRadius, numBeltSegments);
     auto beltShape = new btBoxShape(
         btVector3(
             static_cast<btScalar>(chordLength / 2.0),
@@ -316,10 +309,7 @@ void BtContinuousTrackHandler::addWheelShapes(
     simImpl->ownedShapes.emplace_back(beltShape);
 
     for(int i = 0; i < numBeltSegments; ++i){
-        double angle = M_PI / 2.0 + i * beltAngleStep;
-        Isometry3 localPose;
-        localPose.linear() = AngleAxis(M_PI / 2.0 - angle, Vector3::UnitY()).toRotationMatrix();
-        localPose.translation() = Vector3(r_belt * cos(angle), 0.0, r_belt * sin(angle));
+        Isometry3 localPose = device_->wheelBeltPose(wheelRadius, i, numBeltSegments);
         compound->addChildShape(toBtTransform(T_inv * localPose), beltShape);
     }
 
@@ -376,18 +366,10 @@ void BtContinuousTrackHandler::createSegmentShapesAndCollider(LinearSegment& seg
         plateShape);
 
     // Count grousers on this segment (same logic as the device clearState)
-    int totalGrousers = 0;
-    {
-        double x = segment.length / 2.0 - spec.grouserSpacing;
-        while(x >= -segment.length / 2.0 - spec.grouserSpacing * 0.01){
-            totalGrousers++;
-            x -= spec.grouserSpacing;
-        }
-    }
+    int totalGrousers = device_->numGrousersOnLinearSegment(segment.length);
     segment.numGrousers = totalGrousers;
 
     // Grouser shapes
-    double grouserDir = (segment.direction > 0) ? 1.0 : -1.0;
     double shoeThickness = device_->effectiveGrouserThickness();
     auto grouserShape = new btBoxShape(
         btVector3(
@@ -397,14 +379,8 @@ void BtContinuousTrackHandler::createSegmentShapesAndCollider(LinearSegment& seg
     simImpl->ownedShapes.emplace_back(grouserShape);
 
     for(int i = 0; i < totalGrousers; ++i){
-        double x = segment.length / 2.0 - spec.grouserSpacing - i * spec.grouserSpacing;
-        // For the upper segment, move the last grouser (idler end) to the
-        // front (sprocket end)
-        if(segment.direction > 0 && i == totalGrousers - 1){
-            x = segment.length / 2.0;
-        }
-        Vector3 p = segment.slideAxis * x;
-        p.z() += grouserDir * (thickness + shoeHeight / 2.0);
+        Vector3 p = device_->linearGrouserPosition(
+            segment.length, segment.slideAxis, segment.direction, i, totalGrousers);
         compound->addChildShape(
             btTransform(btQuaternion::getIdentity(), toBtVector3(p)), grouserShape);
     }
@@ -435,14 +411,8 @@ bool BtContinuousTrackHandler::resetAllJointPositions()
         return false;
     }
 
-    auto resetToRange = [](double val, double period) -> double {
-        double r = fmod(val, period);
-        if(r < 0.0) r += period;
-        return r;
-    };
-
     // Reset the lower segment (master)
-    double lowerNew = resetToRange(pos, spacing);
+    double lowerNew = PiecewiseRigidContinuousTrack::wrapPosition(pos, spacing);
     multiBody_->setJointPos(lowerSegment_.mbIndex, static_cast<btScalar>(lowerNew));
 
     /*
@@ -454,10 +424,8 @@ bool BtContinuousTrackHandler::resetAllJointPositions()
     // Upper segment (gear ratio 1)
     {
         double upperPos = multiBody_->getJointPos(upperSegment_.mbIndex);
-        double errBefore = pos + upperPos;
-        double upperFmod = resetToRange(upperPos, spacing);
-        double errAfterFmod = lowerNew + upperFmod;
-        double upperNew = upperFmod + (errBefore - errAfterFmod);
+        double upperNew = PiecewiseRigidContinuousTrack::resetCoupledPosition(
+            pos, lowerNew, upperPos, 1.0, spacing);
         multiBody_->setJointPos(upperSegment_.mbIndex, static_cast<btScalar>(upperNew));
     }
 
@@ -465,10 +433,8 @@ bool BtContinuousTrackHandler::resetAllJointPositions()
     auto resetWheel = [&](BulletLink* wheelBulletLink, double gearRatio){
         double wheelPos = multiBody_->getJointPos(wheelBulletLink->mbIndex);
         double anglePeriod = spacing / gearRatio;
-        double errBefore = pos + gearRatio * wheelPos;
-        double wheelFmod = resetToRange(wheelPos, anglePeriod);
-        double errAfterFmod = lowerNew + gearRatio * wheelFmod;
-        double wheelNew = wheelFmod + (errBefore - errAfterFmod) / gearRatio;
+        double wheelNew = PiecewiseRigidContinuousTrack::resetCoupledPosition(
+            pos, lowerNew, wheelPos, gearRatio, anglePeriod);
         multiBody_->setJointPos(wheelBulletLink->mbIndex, static_cast<btScalar>(wheelNew));
     };
     resetWheel(sprocketBulletLink_, device_->spec().effectiveSprocketRadius);
@@ -541,9 +507,8 @@ void BtContinuousTrackHandler::addWheelShoePositions(
     double phi = multiBody_->getJointPos(wheelBulletLink->mbIndex);
 
     for(int i = 0; i < wheelGrousers.numPhysicsGrousers; ++i){
-        double theta = M_PI / 2.0 + i * wheelGrousers.angleStep - phi;
-        double c = cos(theta);
-        if(isOuterPositive ? (c >= -0.01) : (c <= 0.01)){
+        if(PiecewiseRigidContinuousTrack::isWheelGrouserVisible(
+               i, wheelGrousers.angleStep, phi, isOuterPositive)){
             Isometry3 localPose = toIsometry3(
                 compound->getChildTransform(wheelGrousers.firstGrouserChildIndex + i));
             device_->addShoePosition(SE3(trackT_inv * wheelT * localPose));
@@ -576,27 +541,70 @@ void BtContinuousTrackHandler::updateTrackStates()
 }
 
 
-BtContinuousTrackSimulator::BtContinuousTrackSimulator()
+namespace {
+
+class BulletContinuousTrackUnitSetupImpl : public BulletContinuousTrackUnitSetup
+{
+public:
+    BulletContinuousTrackUnitSetupImpl(
+        std::vector<BtContinuousTrackHandler*>&& handlers, MessageOut* mout)
+        : handlers_(std::move(handlers)), mout_(mout)
+    {
+    }
+
+    int numInternalLinks() const override
+    {
+        return 2 * static_cast<int>(handlers_.size());
+    }
+
+    void setupInternalLinks(BulletUnit* unit, int firstLinkIndex) override
+    {
+        int linkIndex = firstLinkIndex;
+        for(auto handler : handlers_){
+            if(!handler->setupSegmentLinks(unit, linkIndex)){
+                mout_->putWarningln(
+                    formatR(_("The continuous track \"{0}\" could not be set up."),
+                            handler->device()->name()));
+            }
+        }
+    }
+
+    void completeSetup() override
+    {
+        for(auto handler : handlers_){
+            handler->completeSetup();
+        }
+    }
+
+private:
+    std::vector<BtContinuousTrackHandler*> handlers_;
+    MessageOut* mout_;
+};
+
+}
+
+
+BulletContinuousTrackSimulatorImpl::BulletContinuousTrackSimulatorImpl()
 {
 
 }
 
 
-BtContinuousTrackSimulator::~BtContinuousTrackSimulator()
+BulletContinuousTrackSimulatorImpl::~BulletContinuousTrackSimulatorImpl()
 {
 
 }
 
 
-std::vector<BtContinuousTrackHandler*> BtContinuousTrackSimulator::prepareHandlersForUnit(
+std::unique_ptr<BulletContinuousTrackUnitSetup> BulletContinuousTrackSimulatorImpl::prepareUnit(
     BulletBody* bulletBody, const std::vector<Link*>& unitLinks)
 {
     std::vector<BtContinuousTrackHandler*> unitHandlers;
 
     Body* body = bulletBody->body();
-    auto devices = body->devices<BtContinuousTrack>();
+    auto devices = body->devices<PiecewiseRigidContinuousTrack>();
     if(devices.empty()){
-        return unitHandlers;
+        return nullptr;
     }
 
     std::unordered_set<Link*> unitLinkSet(unitLinks.begin(), unitLinks.end());
@@ -611,7 +619,7 @@ std::vector<BtContinuousTrackHandler*> BtContinuousTrackSimulator::prepareHandle
            !unitLinkSet.count(handler->sprocketLink()) ||
            !unitLinkSet.count(handler->idlerLink())){
             MessageOut::master()->putWarningln(
-                formatR(_("BtContinuousTrack \"{0}\" of {1} is ignored because its "
+                formatR(_("PiecewiseRigidContinuousTrack \"{0}\" of {1} is ignored because its "
                           "links are invalid or not simulated as a single multibody."),
                         device->name(), body->name()));
             continue;
@@ -622,17 +630,27 @@ std::vector<BtContinuousTrackHandler*> BtContinuousTrackSimulator::prepareHandle
         handlers_.push_back(std::move(handler));
     }
 
-    return unitHandlers;
+    if(unitHandlers.empty()){
+        return nullptr;
+    }
+    return std::make_unique<BulletContinuousTrackUnitSetupImpl>(
+        std::move(unitHandlers), bulletBody->simImpl->mout);
 }
 
 
-bool BtContinuousTrackSimulator::isTrackDrivenJoint(Link* link) const
+bool BulletContinuousTrackSimulatorImpl::empty() const
+{
+    return handlers_.empty();
+}
+
+
+bool BulletContinuousTrackSimulatorImpl::isTrackDrivenJoint(Link* link) const
 {
     return trackDrivenJoints_.count(link) > 0;
 }
 
 
-void BtContinuousTrackSimulator::initializeTrackStates()
+void BulletContinuousTrackSimulatorImpl::initializeTrackStates()
 {
     for(auto& handler : handlers_){
         handler->updateTrackStates();
@@ -640,7 +658,7 @@ void BtContinuousTrackSimulator::initializeTrackStates()
 }
 
 
-void BtContinuousTrackSimulator::updateSimulation()
+void BulletContinuousTrackSimulatorImpl::updateSimulation()
 {
     for(auto& handler : handlers_){
         handler->updateSimulation();
@@ -648,9 +666,15 @@ void BtContinuousTrackSimulator::updateSimulation()
 }
 
 
-void BtContinuousTrackSimulator::updateTrackStates()
+void BulletContinuousTrackSimulatorImpl::updateTrackStates()
 {
     for(auto& handler : handlers_){
         handler->updateTrackStates();
     }
+}
+
+
+std::unique_ptr<BulletContinuousTrackSimulator> cnoid::createBulletContinuousTrackSimulator()
+{
+    return std::make_unique<BulletContinuousTrackSimulatorImpl>();
 }

@@ -1,7 +1,7 @@
 format: ChoreonoidBody
 formatVersion: 1.0
 angleUnit: degree
-name: BtCrawler
+name: PRCTrackVehicle
 
 links:
   -
@@ -68,7 +68,7 @@ links:
               material:
                 diffuseColor: [ 0.1, 0.1, 0.1 ]
       -
-        type: BtContinuousTrack
+        type: PiecewiseRigidContinuousTrack
         name: TRACK_L
         sprocket: SPROCKET_L
         sprocket_radius: 0.18
@@ -140,7 +140,7 @@ links:
         elements:
           Shape: *CRAWLER_BASE_SHAPE
       -
-        type: BtContinuousTrack
+        type: PiecewiseRigidContinuousTrack
         name: TRACK_R
         sprocket: SPROCKET_R
         sprocket_radius: 0.18

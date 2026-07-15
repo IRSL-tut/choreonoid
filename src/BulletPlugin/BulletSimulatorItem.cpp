@@ -1,7 +1,6 @@
 #include "BulletSimulatorItem.h"
 #include "BulletSimulatorItemImpl.h"
-#include "BtContinuousTrack.h"
-#include "BtContinuousTrackSimulator.h"
+#include "BulletContinuousTrackSimulator.h"
 #include <cnoid/ItemManager>
 #include <cnoid/WorldItem>
 #include <cnoid/BodyItem>
@@ -476,6 +475,7 @@ bool BulletSimulatorItem::initializeSimulation(const std::vector<SimulationBody*
 bool BulletSimulatorItem::Impl::initializeSimulation(const std::vector<SimulationBody*>& simBodies)
 {
     clear();
+    trackSimulator = createBulletContinuousTrackSimulator();
 
     timeStep = self->worldTimeStep();
 
@@ -547,6 +547,9 @@ bool BulletSimulatorItem::Impl::initializeSimulation(const std::vector<Simulatio
         }
     }
 
+    if(trackSimulator && trackSimulator->empty()){
+        trackSimulator.reset();
+    }
     addExtraJoints(simBodies);
 
     if(trackSimulator){
@@ -706,8 +709,7 @@ bool BulletSimulatorItem::Impl::stepSimulation(const std::vector<SimulationBody*
         }
     }
 
-    // The track device states are updated after getState so that the track
-    // link positions used for the shoe poses are up to date
+    // Update the track device states after the track link positions.
     if(trackSimulator){
         trackSimulator->updateTrackStates();
     }
@@ -829,12 +831,6 @@ void BulletBody::createBulletObjects()
     controlLinks.clear();
     rotorDefaultGearRatioJointNames.clear();
 
-    if(!body_->devices<BtContinuousTrack>().empty()){
-        if(!simImpl->trackSimulator){
-            simImpl->trackSimulator = make_unique<BtContinuousTrackSimulator>();
-        }
-    }
-
     createLinkTree(body_->rootLink());
 
     auto joinNames = [](const std::vector<string>& names){
@@ -946,11 +942,11 @@ void BulletBody::createUnit(Link* unitRoot)
     // Each track adds two internal linear segment links to the multibody.
     // They are appended after the Choreonoid links so that the multibody
     // link indices of the Choreonoid links are not affected.
-    std::vector<BtContinuousTrackHandler*> trackHandlers;
+    std::unique_ptr<BulletContinuousTrackUnitSetup> trackSetup;
     if(simImpl->trackSimulator){
-        trackHandlers = simImpl->trackSimulator->prepareHandlersForUnit(this, unitLinks);
+        trackSetup = simImpl->trackSimulator->prepareUnit(this, unitLinks);
     }
-    const int numSegmentLinks = 2 * static_cast<int>(trackHandlers.size());
+    const int numSegmentLinks = trackSetup ? trackSetup->numInternalLinks() : 0;
 
     Link* parent = unitRoot->parent();
     bool needsDummyBase =
@@ -1113,15 +1109,8 @@ void BulletBody::createUnit(Link* unitRoot)
     }
 
     // Set up the internal prismatic segment links of the continuous tracks
-    if(!trackHandlers.empty()){
-        int segmentMbIndex = numMbLinks;
-        for(auto handler : trackHandlers){
-            if(!handler->setupSegmentLinks(unit.get(), segmentMbIndex)){
-                simImpl->mout->putWarningln(
-                    formatR(_("The continuous track \"{0}\" could not be set up."),
-                            handler->device()->name()));
-            }
-        }
+    if(trackSetup){
+        trackSetup->setupInternalLinks(unit.get(), numMbLinks);
     }
 
     multiBody->finalizeMultiDof();
@@ -1241,8 +1230,8 @@ void BulletBody::createUnit(Link* unitRoot)
 
     // Complete the continuous track setup: the grouser and belt shapes on
     // the wheels, the segment colliders, the gear constraints, and the drives
-    for(auto handler : trackHandlers){
-        handler->completeSetup();
+    if(trackSetup){
+        trackSetup->completeSetup();
     }
 
     // Sub units connected by free joints

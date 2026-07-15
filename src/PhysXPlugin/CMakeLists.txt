@@ -55,14 +55,23 @@ set(target CnoidPhysXPlugin)
 set(sources
   PhysXPlugin.cpp
   PhysXSimulatorItem.cpp
-  PxContinuousTrack.cpp
-  PxContinuousTrackSimulator.cpp
   )
+
+if(BUILD_PIECEWISE_RIGID_CONTINUOUS_TRACK)
+  list(APPEND sources PhysXContinuousTrackSimulatorImpl.cpp)
+else()
+  list(APPEND sources PhysXContinuousTrackSimulatorDisabled.cpp)
+endif()
 
 make_gettext_mofiles(${target} mofiles)
 choreonoid_add_plugin(${target} ${sources} ${mofiles} HEADERS ${headers})
 set_target_properties(${target} PROPERTIES COMPILE_DEFINITIONS "PX_PHYSX_STATIC_LIB")
-target_link_libraries(${target} PUBLIC CnoidBodyPlugin PRIVATE ${PHYSX_LIBRARIES})
+target_link_libraries(${target}
+  PUBLIC CnoidBodyPlugin
+  PRIVATE ${PHYSX_LIBRARIES})
+if(BUILD_PIECEWISE_RIGID_CONTINUOUS_TRACK)
+  target_link_libraries(${target} PRIVATE CnoidPiecewiseRigidContinuousTrack)
+endif()
 
 # Suppress LTO-time warnings originating from the bundled PhysX sources.
 #

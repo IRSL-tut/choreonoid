@@ -201,8 +201,9 @@ OBJECT libraries (`LowLevel`, `LowLevelAABB`, `LowLevelDynamics`,
    normally regenerates it via `CONFIGURE_FILE`; the bundled copy
    is intentionally empty).
 9. Re-build with `ENABLE_PHYSX=ON` (default) on both Linux and Windows
-   and exercise `sample/PhysX/PxCrawlerJoystick.cnoid` and
-   `sample/PhysX/PxTank.cnoid`.
+   and exercise `sample/PiecewiseRigidContinuousTrack/PRCTrackVehicle.cnoid`
+   and `sample/PiecewiseRigidContinuousTrack/PRCTrackTank.cnoid` with the
+   PhysX simulator item selected.
 10. On Linux/GCC, also re-build with `ENABLE_LTO=ON` and watch the
     link of `CnoidPhysXPlugin` for new link-time warnings (`-Wodr`,
     `-Wstringop-overread`, etc.). If new symbols trigger `-Wodr` or a

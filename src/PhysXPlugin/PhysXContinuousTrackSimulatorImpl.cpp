@@ -1,4 +1,4 @@
-#include "PxContinuousTrackSimulator.h"
+#include "PhysXContinuousTrackSimulatorImpl.h"
 #include "PhysXSimulatorItemImpl.h"
 #include <cnoid/Body>
 #include <cnoid/Link>
@@ -42,7 +42,7 @@ Isometry3 getIsometryFromPxTransform(const PxTransform& t)
 
 namespace cnoid {
 
-PxContinuousTrackHandler::PxContinuousTrackHandler(PxContinuousTrack* device)
+PxContinuousTrackHandler::PxContinuousTrackHandler(PiecewiseRigidContinuousTrack* device)
     : device_(device),
       trackLink_(nullptr),
       sprocketLink_(nullptr),
@@ -228,13 +228,8 @@ void PxContinuousTrackHandler::addGrouserShapesToWheel(
         static_cast<PxReal>(shoeHeight / 2.0));
 
     for(int i = 0; i < numGrousers; ++i){
-        double angle = M_PI / 2.0 + i * angleStep;
-        double r = wheelRadius + thickness + shoeHeight / 2.0;
-        double x = r * cos(angle);
-        double z = r * sin(angle);
-
-        PxQuat rot(static_cast<PxReal>(M_PI / 2.0 - angle), PxVec3(0.0f, 1.0f, 0.0f));
-        PxTransform localPose(PxVec3(static_cast<PxReal>(x), 0.0f, static_cast<PxReal>(z)), rot);
+        PxTransform localPose = getPxTransformFromIsometry(
+            device_->wheelGrouserPose(wheelRadius, i, angleStep));
 
         PxShape* shape = physics->createShape(grouserGeom, *material, true);
         if(shape){
@@ -260,10 +255,7 @@ void PxContinuousTrackHandler::addBeltShapesToWheel(
     double thickness = spec.thickness;
     double width = spec.width;
 
-    double angleStep = 2.0 * M_PI / numBeltSegments;
-    double r_belt = wheelRadius + thickness / 2.0;
-    double r_outer = wheelRadius + thickness;
-    double chordLength = 2.0 * r_outer * sin(angleStep / 2.0);
+    double chordLength = device_->wheelBeltChordLength(wheelRadius, numBeltSegments);
 
     PxBoxGeometry beltGeom(
         static_cast<PxReal>(chordLength / 2.0),
@@ -271,14 +263,8 @@ void PxContinuousTrackHandler::addBeltShapesToWheel(
         static_cast<PxReal>(thickness / 2.0));
 
     for(int i = 0; i < numBeltSegments; ++i){
-        double angle = M_PI / 2.0 + i * angleStep;
-        double x = r_belt * cos(angle);
-        double z = r_belt * sin(angle);
-
-        PxQuat rot(static_cast<PxReal>(M_PI / 2.0 - angle),
-                   PxVec3(0.0f, 1.0f, 0.0f));
-        PxTransform localPose(
-            PxVec3(static_cast<PxReal>(x), 0.0f, static_cast<PxReal>(z)), rot);
+        PxTransform localPose = getPxTransformFromIsometry(
+            device_->wheelBeltPose(wheelRadius, i, numBeltSegments));
 
         PxShape* shape = physics->createShape(beltGeom, *material, true);
         if(shape){
@@ -390,18 +376,10 @@ bool PxContinuousTrackHandler::createLinearSegment(
     }
 
     // Count grousers on this segment (same logic as clearState)
-    int totalGrousers = 0;
-    {
-        double x = segmentLength / 2.0 - spec.grouserSpacing;
-        while(x >= -segmentLength / 2.0 - spec.grouserSpacing * 0.01){
-            totalGrousers++;
-            x -= spec.grouserSpacing;
-        }
-    }
+    int totalGrousers = device_->numGrousersOnLinearSegment(segmentLength);
     segment.numGrousers = totalGrousers;
 
     // Add grouser shapes
-    double grouserDir = (direction > 0) ? 1.0 : -1.0;
     double shoeThickness = device_->effectiveGrouserThickness();
     PxBoxGeometry grouserGeom(
         static_cast<PxReal>(shoeThickness / 2.0),
@@ -409,14 +387,12 @@ bool PxContinuousTrackHandler::createLinearSegment(
         static_cast<PxReal>(shoeHeight / 2.0));
 
     for(int i = 0; i < totalGrousers; ++i){
-        double x = segmentLength / 2.0 - spec.grouserSpacing - i * spec.grouserSpacing;
-        // For the upper segment, move the last grouser (idler end) to the front (sprocket end)
-        if(direction > 0 && i == totalGrousers - 1){
-            x = segmentLength / 2.0;
-        }
-        PxTransform localPose(
-            PxVec3(static_cast<PxReal>(x), 0.0f,
-                   static_cast<PxReal>(grouserDir * (thickness + shoeHeight / 2.0))));
+        Vector3 position = device_->linearGrouserPosition(
+            segmentLength, Vector3::UnitX(), direction, i, totalGrousers);
+        PxTransform localPose(PxVec3(
+            static_cast<PxReal>(position.x()),
+            static_cast<PxReal>(position.y()),
+            static_cast<PxReal>(position.z())));
 
         PxShape* shape = physics->createShape(grouserGeom, *material, true);
         if(shape){
@@ -441,32 +417,26 @@ bool PxContinuousTrackHandler::resetAllJointPositions()
     float pos = lowerSegment_.joint->getJointPosition(PxArticulationAxis::eX);
     float spacing = static_cast<float>(device_->spec().grouserSpacing);
 
-    // Reset all joints to [0, spacing) range
-    auto resetToRange = [](float val, float period) -> float {
-        float r = fmod(val, period);
-        if(r < 0.0f) r += period;
-        return r;
-    };
-
     if(pos >= 0.0f && pos < spacing) return false;
 
     // Reset lower segment (master)
-    float lowerNew = resetToRange(pos, spacing);
+    float lowerNew = static_cast<float>(
+        PiecewiseRigidContinuousTrack::wrapPosition(pos, spacing));
     lowerSegment_.joint->setJointPosition(PxArticulationAxis::eX, lowerNew);
 
     // Reset upper segment, preserving mimic constraint error
     if(upperSegment_.joint && upperSegmentMimicJoint_){
         float upperPos = upperSegment_.joint->getJointPosition(PxArticulationAxis::eX);
         float gearRatio = upperSegmentMimicJoint_->getGearRatio();
-        float errBefore = pos + gearRatio * upperPos;
-        float upperFmod = resetToRange(upperPos, spacing);
-        float errAfterFmod = lowerNew + gearRatio * upperFmod;
-        float upperNew = upperFmod + (errBefore - errAfterFmod) / gearRatio;
+        float upperNew = static_cast<float>(
+            PiecewiseRigidContinuousTrack::resetCoupledPosition(
+                pos, lowerNew, upperPos, gearRatio, spacing));
         upperSegment_.joint->setJointPosition(PxArticulationAxis::eX, upperNew);
     } else if(upperSegment_.joint){
         float upperPos = upperSegment_.joint->getJointPosition(PxArticulationAxis::eX);
         upperSegment_.joint->setJointPosition(
-            PxArticulationAxis::eX, resetToRange(upperPos, spacing));
+            PxArticulationAxis::eX,
+            static_cast<float>(PiecewiseRigidContinuousTrack::wrapPosition(upperPos, spacing)));
     }
 
     // Reset sprocket, preserving mimic constraint error
@@ -475,12 +445,11 @@ bool PxContinuousTrackHandler::resetAllJointPositions()
         if(joint && sprocketMimicJoint_){
             float wheelPos = joint->getJointPosition(PxArticulationAxis::eTWIST);
             float gearRatio = sprocketMimicJoint_->getGearRatio();
-            float errBefore = pos + gearRatio * wheelPos;
             float anglePeriod = spacing
                 / static_cast<float>(device_->spec().effectiveSprocketRadius);
-            float wheelFmod = resetToRange(wheelPos, anglePeriod);
-            float errAfterFmod = lowerNew + gearRatio * wheelFmod;
-            float wheelNew = wheelFmod + (errBefore - errAfterFmod) / gearRatio;
+            float wheelNew = static_cast<float>(
+                PiecewiseRigidContinuousTrack::resetCoupledPosition(
+                    pos, lowerNew, wheelPos, gearRatio, anglePeriod));
             joint->setJointPosition(PxArticulationAxis::eTWIST, wheelNew);
         }
     }
@@ -491,12 +460,11 @@ bool PxContinuousTrackHandler::resetAllJointPositions()
         if(joint && idlerMimicJoint_){
             float wheelPos = joint->getJointPosition(PxArticulationAxis::eTWIST);
             float gearRatio = idlerMimicJoint_->getGearRatio();
-            float errBefore = pos + gearRatio * wheelPos;
             float anglePeriod = spacing
                 / static_cast<float>(device_->spec().effectiveIdlerRadius);
-            float wheelFmod = resetToRange(wheelPos, anglePeriod);
-            float errAfterFmod = lowerNew + gearRatio * wheelFmod;
-            float wheelNew = wheelFmod + (errBefore - errAfterFmod) / gearRatio;
+            float wheelNew = static_cast<float>(
+                PiecewiseRigidContinuousTrack::resetCoupledPosition(
+                    pos, lowerNew, wheelPos, gearRatio, anglePeriod));
             joint->setJointPosition(PxArticulationAxis::eTWIST, wheelNew);
         }
     }
@@ -575,9 +543,8 @@ void PxContinuousTrackHandler::addWheelShoePositions(
     float phi = joint ? joint->getJointPosition(PxArticulationAxis::eTWIST) : 0.0f;
 
     for(int i = 0; i < wheelGrousers.numPhysicsGrousers; ++i){
-        double theta = M_PI / 2.0 + i * wheelGrousers.angleStep - static_cast<double>(phi);
-        double c = cos(theta);
-        if(isOuterPositive ? (c >= -0.01) : (c <= 0.01)){
+        if(PiecewiseRigidContinuousTrack::isWheelGrouserVisible(
+               i, wheelGrousers.angleStep, static_cast<double>(phi), isOuterPositive)){
             Isometry3 worldPose = wheelT * getIsometryFromPxTransform(shapes[i + 1]->getLocalPose());
             Isometry3 localPose = trackT_inv * worldPose;
             device_->addShoePosition(SE3(localPose));
@@ -610,23 +577,22 @@ void PxContinuousTrackHandler::updateTrackStates()
 }
 
 
-PxContinuousTrackSimulator::PxContinuousTrackSimulator()
+PhysXContinuousTrackSimulatorImpl::PhysXContinuousTrackSimulatorImpl()
 {
 }
 
 
-PxContinuousTrackSimulator::~PxContinuousTrackSimulator()
+PhysXContinuousTrackSimulatorImpl::~PhysXContinuousTrackSimulatorImpl()
 {
 }
 
 
-int PxContinuousTrackSimulator::setupTrackHandlers(PhysxBody* physxBody)
+void PhysXContinuousTrackSimulatorImpl::setupTrackHandlers(PhysxBody* physxBody)
 {
     Body* body = physxBody->body();
     auto simImpl = physxBody->simImpl;
-    int count = 0;
 
-    for(auto& device : body->devices<PxContinuousTrack>()){
+    for(auto& device : body->devices<PiecewiseRigidContinuousTrack>()){
         Link* trackLink = device->link();
         Link* sprocketLink = body->link(device->sprocketName());
         Link* idlerLink = body->link(device->idlerName());
@@ -674,14 +640,18 @@ int PxContinuousTrackSimulator::setupTrackHandlers(PhysxBody* physxBody)
                idlerPhysxLink->articulationLink,
                material, physxBody->bodyIndex)){
             handlers_.push_back({std::move(handler)});
-            ++count;
         }
     }
-    return count;
 }
 
 
-void PxContinuousTrackSimulator::initializeTrackStates()
+bool PhysXContinuousTrackSimulatorImpl::empty() const
+{
+    return handlers_.empty();
+}
+
+
+void PhysXContinuousTrackSimulatorImpl::initializeTrackStates()
 {
     for(auto& entry : handlers_){
         entry.handler->updateTrackStates();
@@ -689,7 +659,7 @@ void PxContinuousTrackSimulator::initializeTrackStates()
 }
 
 
-void PxContinuousTrackSimulator::updateSimulation()
+void PhysXContinuousTrackSimulatorImpl::updateSimulation()
 {
     for(auto& entry : handlers_){
         entry.handler->updateSimulation();
@@ -697,7 +667,7 @@ void PxContinuousTrackSimulator::updateSimulation()
 }
 
 
-void PxContinuousTrackSimulator::updateTrackStates()
+void PhysXContinuousTrackSimulatorImpl::updateTrackStates()
 {
     for(auto& entry : handlers_){
         entry.handler->updateTrackStates();
@@ -705,9 +675,9 @@ void PxContinuousTrackSimulator::updateTrackStates()
 }
 
 
-bool PxContinuousTrackSimulator::empty() const
+std::unique_ptr<PhysXContinuousTrackSimulator> createPhysXContinuousTrackSimulator()
 {
-    return handlers_.empty();
+    return std::make_unique<PhysXContinuousTrackSimulatorImpl>();
 }
 
 }
