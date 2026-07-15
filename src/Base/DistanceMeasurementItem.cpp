@@ -4,7 +4,7 @@
 #include "GeometryMeasurementTracker.h"
 #include "ItemTreeView.h"
 #include "DistanceMeasurementDialog.h"
-#include "PutPropertyFunction.h"
+#include <cnoid/PutPropertyFunction>
 #include "Archive.h"
 #include "LazyCaller.h"
 #include <cnoid/DisplayValueFormat>

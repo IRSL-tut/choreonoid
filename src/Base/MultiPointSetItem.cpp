@@ -5,7 +5,7 @@
 #include "SceneWidget.h"
 #include "SceneWidgetEventHandler.h"
 #include "RectRegionMarker.h"
-#include "PutPropertyFunction.h"
+#include <cnoid/PutPropertyFunction>
 #include "Archive.h"
 #include <cnoid/PointSetUtil>
 #include <cnoid/EigenArchive>

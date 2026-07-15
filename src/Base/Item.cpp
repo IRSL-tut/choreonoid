@@ -5,7 +5,7 @@
 #include "ItemManager.h"
 #include "ItemClassRegistry.h"
 #include "ItemFileIO.h"
-#include "PutPropertyFunction.h"
+#include <cnoid/PutPropertyFunction>
 #include "LazyCaller.h"
 #include "MessageView.h"
 #include "EditRecord.h"

@@ -3,7 +3,7 @@
 #include "ItemManager.h"
 #include "ItemFileIO.h"
 #include "MenuManager.h"
-#include "PutPropertyFunction.h"
+#include <cnoid/PutPropertyFunction>
 #include "Archive.h"
 #include <cnoid/EigenArchive>
 #include <cnoid/SceneWidget>

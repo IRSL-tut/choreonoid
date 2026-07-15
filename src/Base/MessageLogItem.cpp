@@ -2,7 +2,7 @@
 #include "ExtensionManager.h"
 #include "ItemManager.h"
 #include "MessageView.h"
-#include "PutPropertyFunction.h"
+#include <cnoid/PutPropertyFunction>
 #include "Archive.h"
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>

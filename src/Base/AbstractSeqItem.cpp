@@ -6,7 +6,7 @@
 #include "AbstractSeqItem.h"
 #include "ItemManager.h"
 #include "Archive.h"
-#include "PutPropertyFunction.h"
+#include <cnoid/PutPropertyFunction>
 #include "gettext.h"
 
 using namespace cnoid;

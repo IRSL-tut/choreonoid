@@ -9,7 +9,7 @@
 #include "CheckBox.h"
 #include "LazyCaller.h"
 #include "Archive.h"
-#include "PutPropertyFunction.h"
+#include <cnoid/PutPropertyFunction>
 #include "MenuManager.h"
 #include "UnifiedEditHistory.h"
 #include "EditRecord.h"

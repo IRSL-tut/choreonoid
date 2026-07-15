@@ -1,6 +1,6 @@
 #include "LightingItem.h"
 #include "ItemManager.h"
-#include "PutPropertyFunction.h"
+#include <cnoid/PutPropertyFunction>
 #include "Archive.h"
 #include <cnoid/SceneGraph>
 #include <cnoid/SceneLights>

@@ -28,6 +28,7 @@ set(sources
   Uuid.cpp
   GeneralId.cpp
   Selection.cpp
+  PutPropertyFunction.cpp
   AbstractSeq.cpp
   MultiValueSeq.cpp
   MultiSE3Seq.cpp
@@ -144,6 +145,7 @@ set(headers
   Uuid.h
   GeneralId.h
   Selection.h
+  PutPropertyFunction.h
   IdPair.h
   Array2D.h
   Deque2D.h

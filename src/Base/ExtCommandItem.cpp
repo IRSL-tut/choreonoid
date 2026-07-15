@@ -3,7 +3,7 @@
 #include "ItemTreeView.h"
 #include "MenuManager.h"
 #include "MessageView.h"
-#include "PutPropertyFunction.h"
+#include <cnoid/PutPropertyFunction>
 #include "Archive.h"
 #include <cnoid/Sleep>
 #include <cnoid/UTF8>

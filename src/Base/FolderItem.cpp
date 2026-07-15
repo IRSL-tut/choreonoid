@@ -4,7 +4,7 @@
 
 #include "FolderItem.h"
 #include "ItemManager.h"
-#include "PutPropertyFunction.h"
+#include <cnoid/PutPropertyFunction>
 #include "Archive.h"
 #include "gettext.h"
 

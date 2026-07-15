@@ -3,7 +3,7 @@
 #include "GeneralSceneFileImporterBase.h"
 #include "RenderableItemUtil.h"
 #include "Archive.h"
-#include "PutPropertyFunction.h"
+#include <cnoid/PutPropertyFunction>
 #include <cnoid/CloneMap>
 #include <cnoid/SceneLoader>
 #include <cnoid/EigenArchive>

@@ -3,7 +3,7 @@
 #include "ProjectManager.h"
 #include "MessageView.h"
 #include "ItemTreeView.h"
-#include "PutPropertyFunction.h"
+#include <cnoid/PutPropertyFunction>
 #include "Archive.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/Format>

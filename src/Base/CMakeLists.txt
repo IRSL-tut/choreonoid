@@ -28,7 +28,6 @@ set(sources
   RenderableItemSceneStatistics.cpp
   RenderableItemSceneExporter.cpp
   PolymorphicItemFunctionSet.cpp
-  PutPropertyFunction.cpp
   RootItem.cpp
   ItemList.cpp
   ItemPath.cpp
@@ -246,7 +245,6 @@ set(headers
   StringListComboBox.h
   PositionWidget.h
   LocationView.h
-  PutPropertyFunction.h
   RootItem.h
   FolderItem.h
   SubProjectItem.h

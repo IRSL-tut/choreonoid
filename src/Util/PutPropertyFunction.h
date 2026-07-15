@@ -2,10 +2,10 @@
    @author Shin'ichiro Nakaoka
 */
 
-#ifndef CNOID_BASE_PUT_PROPERTY_FUNCTION_H
-#define CNOID_BASE_PUT_PROPERTY_FUNCTION_H
+#ifndef CNOID_UTIL_PUT_PROPERTY_FUNCTION_H
+#define CNOID_UTIL_PUT_PROPERTY_FUNCTION_H
 
-#include <cnoid/Selection>
+#include "Selection.h"
 #include <functional>
 #include "exportdecl.h"
 

@@ -1,6 +1,6 @@
 #include "ItemPropertyWidget.h"
 #include "PolymorphicItemFunctionSet.h"
-#include "PutPropertyFunction.h"
+#include <cnoid/PutPropertyFunction>
 #include "LazyCaller.h"
 #include "Buttons.h"
 #include "StringListComboBox.h"

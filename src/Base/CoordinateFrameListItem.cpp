@@ -2,7 +2,7 @@
 #include "CoordinateFrameItem.h"
 #include "CoordinateFrameMarker.h"
 #include "ItemManager.h"
-#include "PutPropertyFunction.h"
+#include <cnoid/PutPropertyFunction>
 #include "Archive.h"
 #include "MessageView.h"
 #include <cnoid/CoordinateFrameList>
