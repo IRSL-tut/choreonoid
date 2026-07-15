@@ -32,24 +32,6 @@ Selection::Selection(std::initializer_list<std::string> symbols, const char* dom
 }
 
 
-Selection::Selection(const Selection& org)
-    : symbols_(org.symbols_),
-      selectedIndex_(org.selectedIndex_),
-      domainname_(org.domainname_)
-{
-
-}
-
-
-Selection& Selection::operator=(const Selection& rhs)
-{
-    symbols_ = rhs.symbols_;
-    selectedIndex_ = rhs.selectedIndex_;
-    domainname_ = rhs.domainname_;
-    return *this;
-}
-
-
 void Selection::setDomain(const char* domainname)
 {
     domainname_ = domainname;
