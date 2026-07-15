@@ -41,7 +41,6 @@ if(ENABLE_GUI)
 
   add_subdirectory(PythonPlugin)
   add_subdirectory(PythonSimScriptPlugin)
-  add_subdirectory(LuaPlugin)
 
   add_subdirectory(FCLPlugin)
 

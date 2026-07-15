@@ -113,9 +113,6 @@ copyrighted by other developers.
  * robin-map (https://github.com/Tessil/robin-map)
    see thirdparty/robin-map-1.4.1/LICENSE
 
- * Sol (https://github.com/ThePhD/sol2)
-   see thirdparty/sol2/LICENSE
-
  * stb_image and stb_image_write (https://github.com/nothings/stb)
    MIT license or public domain (see the license notice at the end of
    each header file in thirdparty/stb)

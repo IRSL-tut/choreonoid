@@ -287,12 +287,9 @@ class SlotCallIterator
        A smart pointer must be used to store the current slot holder object to
        guarantee the existence of the slot function and the next slot during
        the slot is being called.
-       There is a case where the slot is disconnected when it is being called.
-       Or when the corresponding cnoid::Connection object is holded in a Lua
-       script, the connection may be deleted by the garbage collection in the
-       Lua interperter when a slot function defined in the Lua script is called.
-       In this case, the function does not exist when it is actually called
-       unless the reference to currentSlotHolder is kept here.
+       A slot may be disconnected while it is being called. In this case, the
+       function does not exist when it is actually called unless the reference
+       to currentSlotHolder is kept here.
     */
     ref_ptr<SlotHolderType> currentSlotHolder;
     

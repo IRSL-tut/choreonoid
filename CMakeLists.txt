@@ -576,33 +576,6 @@ endif()
 # This variable is kept for backward compatibility
 set(USE_PYBIND11 ${ENABLE_PYTHON})
 
-# Lua
-if(UNIX)
-  option(ENABLE_LUA "Enable Lua" OFF)
-  mark_as_advanced(ENABLE_LUA)
-endif()
-
-if(ENABLE_LUA)
-  if(CMAKE_CXX_STANDARD LESS 14)
-    message(FATAL_ERROR "Lua wrapper requires C++14 or later C++ versions")
-  endif()
-  set(LUA_SOL2_DIR ${PROJECT_SOURCE_DIR}/thirdparty/sol2 CACHE PATH "set the directory of the Sol2 library")
-
-  # The required packages can be installed by the following command in Ubuntu.
-  # sudo apt install lua5.3 iblua5.3-dev lua-posix
-  pkg_check_modules(LUA lua5.3)
-  if(NOT LUA_FOUND)
-    pkg_check_modules(LUA lua5.2)
-  endif()
-  if(NOT LUA_FOUND)
-    message(FATAL_ERROR "lua library is not found")
-  else()
-    include_directories(${LUA_INCLUDE_DIRS})
-    include_directories(${LUA_SOL2_DIR})
-  endif()
-  set(CHOREONOID_LUA_SUBDIR ${CHOREONOID_PLUGIN_SUBDIR}/lua)
-endif()
-
 # C++17 std::filesystem
 if(UNIX)
   set(FILESYSTEM_LIBRARY stdc++fs)
@@ -907,9 +880,6 @@ include(cmake/ChoreonoidBasicBuildFunctions.cmake)
 
 if(ENABLE_PYTHON)
   include(cmake/ChoreonoidPythonBuildFunctions.cmake)
-endif()
-if(ENABLE_LUA)
-  include(cmake/ChoreonoidLuaBuildFunctions.cmake)
 endif()
 if(ENABLE_CORBA)
   include(cmake/ChoreonoidCorbaBuildFunctions.cmake)

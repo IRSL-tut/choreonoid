@@ -204,5 +204,3 @@ endif()
 if(ENABLE_PYTHON)
   choreonoid_add_python_binding_subdirectory()
 endif()
-
-add_subdirectory(lua)
