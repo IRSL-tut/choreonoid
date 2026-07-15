@@ -1248,7 +1248,7 @@ void SimpleControllerItem::Impl::doPutProperties(PutPropertyFunction& putPropert
     moduleProperty.setExtensionRemovalModeForFileDialogSelection(true);
 
     putProperty(_("Controller module"), moduleProperty,
-                [&](const FilePathProperty& property){ setController(property.filename()); return true; });
+                [&](const string& filename){ setController(filename); return true; });
 
     putProperty(_("Base directory"), baseDirectoryType, changeProperty(baseDirectoryType));
 

@@ -153,7 +153,7 @@ public:
     void setCurrentItem(Item* item);
     void clear();
     void updateProperties(bool isItemChanged = false);
-    void addProperty(const std::string& name, PropertyItem* propertyItem);
+    void addProperty(std::string_view name, PropertyItem* propertyItem);
     void onTargetItemSpecified(Item* item);
     void setEditable(bool on);
     void zoomFontSize(int pointSizeDiff);
@@ -167,32 +167,32 @@ public:
     virtual PutPropertyFunction& reset() override;
 
     virtual void operator()(
-        const std::string& name, bool value) override;
+        std::string_view name, bool value) override;
     virtual void operator()(
-        const std::string& name, bool value, const std::function<bool(bool)>& func) override;
+        std::string_view name, bool value, std::function<bool(bool)> func) override;
     virtual void operator()(
-        const std::string& name, int value) override;
+        std::string_view name, int value) override;
     virtual void operator()(
-        const std::string& name, int value, const std::function<bool(int)>& func) override;
+        std::string_view name, int value, std::function<bool(int)> func) override;
     virtual void operator()(
-        const std::string& name, double value) override;
+        std::string_view name, double value) override;
     virtual void operator()(
-        const std::string& name, double value, const std::function<bool(double)>& func) override;
+        std::string_view name, double value, std::function<bool(double)> func) override;
     virtual void operator()(
-        const std::string& name, const std::string& value) override;
+        std::string_view name, std::string_view value) override;
     virtual void operator()(
-        const std::string& name, const std::string& value,
-        const std::function<bool(const std::string&)>& func) override;
+        std::string_view name, std::string_view value,
+        std::function<bool(const std::string&)> func) override;
     virtual void operator()(
-        const std::string& name, const Selection& selection) override;
+        std::string_view name, const Selection& selection) override;
     virtual void operator()(
-        const std::string& name, const Selection& selection,
-        const std::function<bool(int which)>& func) override;
+        std::string_view name, const Selection& selection,
+        std::function<bool(int which)> func) override;
     virtual void operator()(
-        const std::string& name, const FilePathProperty& filepath) override;
+        std::string_view name, const FilePathProperty& filepath) override;
     virtual void operator()(
-        const std::string& name, const FilePathProperty& filepath,
-        const std::function<bool(const std::string&)>& func) override;
+        std::string_view name, const FilePathProperty& filepath,
+        std::function<bool(const std::string&)> func) override;
 };
 
 }
@@ -202,7 +202,7 @@ namespace {
 
 PropertyItem::PropertyItem(ItemPropertyWidget::Impl* view, ValueVariant value)
     : view(view),
-      value(value)
+      value(std::move(value))
 {
     setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
     hasValidFunction = false;
@@ -211,8 +211,8 @@ PropertyItem::PropertyItem(ItemPropertyWidget::Impl* view, ValueVariant value)
 
 PropertyItem::PropertyItem(ItemPropertyWidget::Impl* view, ValueVariant value, FunctionVariant func)
     : view(view),
-      value(value),
-      func(func),
+      value(std::move(value)),
+      func(std::move(func)),
       changeNotifier(view->changeNotifier)
 {
     int flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
@@ -834,12 +834,13 @@ void ItemPropertyWidget::setOperationMenu(MenuManager& menuManager)
 }
 
 
-void ItemPropertyWidget::Impl::addProperty(const std::string& name, PropertyItem* propertyItem)
+void ItemPropertyWidget::Impl::addProperty(std::string_view name, PropertyItem* propertyItem)
 {
     int row = tableWidget->rowCount();
     tableWidget->setRowCount(row + 1);
 
-    QTableWidgetItem* nameItem = new QTableWidgetItem(name.c_str());
+    QTableWidgetItem* nameItem = new QTableWidgetItem(
+        QString::fromUtf8(name.data(), static_cast<int>(name.size())));
     nameItem->setFlags(Qt::ItemIsEnabled);
     tableWidget->setItem(row, 0, nameItem);
     
@@ -878,7 +879,7 @@ PutPropertyFunction& ItemPropertyWidget::Impl::range(double min, double max)
 
 PutPropertyFunction& ItemPropertyWidget::Impl::callOnChange(std::function<void()> callback)
 {
-    changeNotifier = callback;
+    changeNotifier = std::move(callback);
     return *this;
 }
 
@@ -892,81 +893,81 @@ PutPropertyFunction& ItemPropertyWidget::Impl::reset()
     return *this;
 }
         
-void ItemPropertyWidget::Impl::operator()(const std::string& name, bool value)
+void ItemPropertyWidget::Impl::operator()(std::string_view name, bool value)
 {
     addProperty(name, new PropertyItem(this, value));
 }
 
 
 void ItemPropertyWidget::Impl::operator()
-(const std::string& name, bool value, const std::function<bool(bool)>& func)
+(std::string_view name, bool value, std::function<bool(bool)> func)
 {
-    addProperty(name, new PropertyItem(this, value, func));
+    addProperty(name, new PropertyItem(this, value, std::move(func)));
 }
 
 
-void ItemPropertyWidget::Impl::operator()(const std::string& name, int value)
+void ItemPropertyWidget::Impl::operator()(std::string_view name, int value)
 {
     addProperty(name, new PropertyItem(this, Int(value)));
 }
 
 
 void ItemPropertyWidget::Impl::operator()
-(const std::string& name, int value, const std::function<bool(int)>& func)
+(std::string_view name, int value, std::function<bool(int)> func)
 {
-    addProperty(name, new PropertyItem(this, Int(value, minValue, maxValue), func));
+    addProperty(name, new PropertyItem(this, Int(value, minValue, maxValue), std::move(func)));
 }
 
 
-void ItemPropertyWidget::Impl::operator()(const std::string& name, double value)
+void ItemPropertyWidget::Impl::operator()(std::string_view name, double value)
 {
     addProperty(name, new PropertyItem(this, Double(value, decimals_)));
 }
 
 
 void ItemPropertyWidget::Impl::operator()
-(const std::string& name, double value, const std::function<bool(double)>& func)
+(std::string_view name, double value, std::function<bool(double)> func)
 {
-    addProperty(name, new PropertyItem(this, Double(value, decimals_, minValue, maxValue), func));
+    addProperty(name, new PropertyItem(this, Double(value, decimals_, minValue, maxValue), std::move(func)));
 }
 
 
-void ItemPropertyWidget::Impl::operator()(const std::string& name, const std::string& value)
+void ItemPropertyWidget::Impl::operator()(std::string_view name, std::string_view value)
 {
-    addProperty(name, new PropertyItem(this, value));
+    addProperty(name, new PropertyItem(this, std::string(value)));
 }
 
 
 void ItemPropertyWidget::Impl::operator()
-(const std::string& name, const std::string& value, const std::function<bool(const std::string&)>& func)
+(std::string_view name, std::string_view value, std::function<bool(const std::string&)> func)
 {
-    addProperty(name, new PropertyItem(this, value, func));
+    addProperty(name, new PropertyItem(this, std::string(value), std::move(func)));
 }
 
 
-void ItemPropertyWidget::Impl::operator()(const std::string& name, const Selection& selection)
+void ItemPropertyWidget::Impl::operator()(std::string_view name, const Selection& selection)
 {
     addProperty(name, new PropertyItem(this, selection));
 }
 
 
 void ItemPropertyWidget::Impl::operator()
-(const std::string& name, const Selection& selection, const std::function<bool(int which)>& func)
+(std::string_view name, const Selection& selection, std::function<bool(int which)> func)
 {
-    addProperty(name, new PropertyItem(this, selection, func));
+    addProperty(name, new PropertyItem(this, selection, std::move(func)));
 }
 
 
-void ItemPropertyWidget::Impl::operator()(const std::string& name, const FilePathProperty& filepath)
+void ItemPropertyWidget::Impl::operator()(std::string_view name, const FilePathProperty& filepath)
 {
     addProperty(name, new PropertyItem(this, filepath) );
 }
 
 
 void ItemPropertyWidget::Impl::operator()
-(const std::string& name, const FilePathProperty& filepath, const std::function<bool(const std::string&)>& func)
+(std::string_view name, const FilePathProperty& filepath, std::function<bool(const std::string&)> func)
 {
-    addProperty(name, new PropertyItem(this, filepath, func) );
+    addProperty(name, new PropertyItem(this, filepath, std::move(func)) );
 }
 
 

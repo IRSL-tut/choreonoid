@@ -3,10 +3,12 @@
 
 #include "Selection.h"
 #include <functional>
+#include <string_view>
 #include "exportdecl.h"
 
 namespace cnoid {
 
+//! A file path value with the options on how to display and select the path
 class FilePathProperty
 {
     std::string filename_;
@@ -18,32 +20,60 @@ class FilePathProperty
 
 public:
     FilePathProperty() { }
-    FilePathProperty(const std::string& filename) : filename_(filename) { }
-    FilePathProperty(const std::string& filename, const std::vector<std::string>& filters)
-        : filename_(filename), filters_(filters) { }
+    FilePathProperty(std::string_view filename) : filename_(filename) { }
+
+    //! \param filters The file dialog filters such as "Body files (*.body)"
+    FilePathProperty(std::string_view filename, std::vector<std::string> filters)
+        : filename_(filename), filters_(std::move(filters)) { }
 
     const std::string& filename() const { return filename_; };
-    void setFilename(const std::string& filename) { filename_ = filename; }
+    void setFilename(std::string_view filename) { filename_ = filename; }
 
+    /**
+       When this mode is enabled, the filename extension is removed from the
+       file path selected in the file dialog.
+    */
     void setExtensionRemovalModeForFileDialogSelection(bool on) {
         isExtensionRemovalModeForFileDialogSelection_ = on; }
     bool isExtensionRemovalModeForFileDialogSelection() const {
         return isExtensionRemovalModeForFileDialogSelection_; }
-    
+
+    //! The directory where the file dialog begins when the filename is a relative path
     const std::string& baseDirectory() const { return baseDirectory_; };
-    void setBaseDirectory(const std::string& dir) { baseDirectory_ = dir; }
+    void setBaseDirectory(std::string_view dir) { baseDirectory_ = dir; }
 
     const std::vector<std::string>& filters() const { return filters_; }
-    void setFilters(const std::vector<std::string>& filters){ filters_ = filters; }
+    void setFilters(std::vector<std::string> filters){ filters_ = std::move(filters); }
 
+    /**
+       When this mode is enabled, the whole path is displayed as the property
+       value. Otherwise only the filename part is displayed and the whole
+       path is shown as a tooltip.
+    */
     bool isFullpathDisplayMode() const { return isFullpathDisplayMode_; }
     void setFullpathDisplayMode(bool on) { isFullpathDisplayMode_ = on; }
-    
+
+    /**
+       When this mode is enabled, the file dialog only accepts an existing
+       file. Disable this mode for a property which specifies a new file to
+       be created such as a log file.
+    */
     bool isExistingFileMode() const { return isExistingFileMode_; }
     void setExistingFileMode(bool on) { isExistingFileMode_ = on; }
 };
 
 
+/**
+   The interface for an object to declare its properties to the property
+   editing / viewing interface. Each property is declared by the operator()
+   with the property name, the current value, and optionally the function
+   to change the value. The change function returns true when the given
+   value is accepted.
+
+   The decoration functions (min, max, range, decimals, and callOnChange)
+   affect the properties declared after the decoration call, and all the
+   decorations are cleared by the reset function.
+*/
 class CNOID_EXPORT PutPropertyFunction
 {
 public:
@@ -56,49 +86,51 @@ public:
 
     /**
        Set the callback function called when the value of a property is
-       modified by the property editing interface. Like the other decoration
-       functions such as min and decimals, the callback is applied to the
-       properties declared after this function is called, and it is cleared
-       by the reset function. The callback is called after the change
-       function given with a property returns true. This is mainly used by
-       an object which delegates the property declaration to another object
-       and has to do some processing when a delegated property is modified,
-       which cannot be written in the change functions given by the
-       delegated object.
+       modified by the property editing interface. The callback is called
+       after the change function given with a property returns true. This is
+       mainly used by an object which delegates the property declaration to
+       another object and has to do some processing when a delegated
+       property is modified, which cannot be written in the change functions
+       given by the delegated object.
     */
     virtual PutPropertyFunction& callOnChange(std::function<void()> callback) = 0;
 
     virtual PutPropertyFunction& reset() = 0;
 
     // bool
-    virtual void operator()(const std::string& name, bool value) = 0;
-    virtual void operator()(const std::string& name, bool value,
-                            const std::function<bool(bool)>& changeFunc) = 0;
+    virtual void operator()(std::string_view name, bool value) = 0;
+    virtual void operator()(std::string_view name, bool value,
+                            std::function<bool(bool)> changeFunc) = 0;
     // int
-    virtual void operator()(const std::string& name, int value) = 0;
-    virtual void operator()(const std::string& name, int value,
-                            const std::function<bool(int)>& changeFunc) = 0;
+    virtual void operator()(std::string_view name, int value) = 0;
+    virtual void operator()(std::string_view name, int value,
+                            std::function<bool(int)> changeFunc) = 0;
     // double
-    virtual void operator()(const std::string& name, double value) = 0;
-    virtual void operator()(const std::string& name, double value,
-                            const std::function<bool(double)>& changeFunc) = 0;
+    virtual void operator()(std::string_view name, double value) = 0;
+    virtual void operator()(std::string_view name, double value,
+                            std::function<bool(double)> changeFunc) = 0;
     // string
-    virtual void operator()(const std::string& name, const std::string& value) = 0;
-    virtual void operator()(const std::string& name, const std::string& value,
-                            const std::function<bool(const std::string&)>& changeFunc) = 0;
+    virtual void operator()(std::string_view name, std::string_view value) = 0;
+    virtual void operator()(std::string_view name, std::string_view value,
+                            std::function<bool(const std::string&)> changeFunc) = 0;
 
-    void operator()(const std::string& name, const char* value){
-        operator()(name, std::string(value));
+    /**
+       This overload is necessary to process a string literal value as a
+       string value because the implicit conversion from const char* to bool
+       is preferred to the conversion to string_view in overload resolution.
+    */
+    void operator()(std::string_view name, const char* value){
+        operator()(name, std::string_view(value));
     }
 
     // Selection
-    virtual void operator()(const std::string& name, const Selection& selection) = 0;
-    virtual void operator()(const std::string& name, const Selection& selection,
-                            const std::function<bool(int which)>& changeFunc) = 0;
+    virtual void operator()(std::string_view name, const Selection& selection) = 0;
+    virtual void operator()(std::string_view name, const Selection& selection,
+                            std::function<bool(int which)> changeFunc) = 0;
     // FilePath
-    virtual void operator()(const std::string& name, const FilePathProperty& filepath) = 0;
-    virtual void operator()(const std::string& name, const FilePathProperty& filepath,
-                            const std::function<bool(const std::string&)>& changeFunc) = 0;
+    virtual void operator()(std::string_view name, const FilePathProperty& filepath) = 0;
+    virtual void operator()(std::string_view name, const FilePathProperty& filepath,
+                            std::function<bool(const std::string&)> changeFunc) = 0;
 };
 
 
