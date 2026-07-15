@@ -1838,3 +1838,12 @@ msgstr "{0}と関連付けられた動作はルートリンクが含まれてい
 
 msgid "Root relative"
 msgstr "ルート相対"
+
+msgid "Primitive shape collision detection"
+msgstr "プリミティブ形状干渉検出"
+
+msgid "Follow world item setting"
+msgstr "ワールドアイテムの設定に従う"
+
+msgid "Disabled"
+msgstr "無効"

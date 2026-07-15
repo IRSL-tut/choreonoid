@@ -414,7 +414,7 @@ public:
     int  numGaussSeidelInitialIteration;
     double gaussSeidelErrorCriterion;
     int  numCollisionDetectionThreads;
-    bool isPrimitiveCollisionDetectionEnabled;
+    std::optional<bool> isPrimitiveCollisionDetectionEnabled;
     double contactCorrectionDepth;
     double contactCorrectionVelocityRatio;
 
@@ -544,7 +544,7 @@ ConstraintForceSolver::Impl::Impl(DyWorldBase& world)
     numGaussSeidelInitialIteration = DEFAULT_NUM_GAUSS_SEIDEL_INITIAL_ITERATION;
     gaussSeidelErrorCriterion = DEFAULT_GAUSS_SEIDEL_ERROR_CRITERION;
     numCollisionDetectionThreads = 0;
-    isPrimitiveCollisionDetectionEnabled = true;
+    isPrimitiveCollisionDetectionEnabled = std::nullopt;
     contactCorrectionDepth = DEFAULT_CONTACT_CORRECTION_DEPTH;
     contactCorrectionVelocityRatio = DEFAULT_CONTACT_CORRECTION_VELOCITY_RATIO;
 
@@ -781,9 +781,12 @@ void ConstraintForceSolver::Impl::initialize(void)
     }
 
     // The primitive collision detection mode must be set before the body
-    // geometries are added to the detector
-    if(auto aist = dynamic_cast<AISTCollisionDetector*>(bodyCollisionDetector.collisionDetector())){
-        aist->setPrimitiveCollisionDetectionEnabled(isPrimitiveCollisionDetectionEnabled);
+    // geometries are added to the detector. The collision detector's own
+    // setting is kept as it is when the mode is not explicitly specified.
+    if(isPrimitiveCollisionDetectionEnabled.has_value()){
+        if(auto aist = dynamic_cast<AISTCollisionDetector*>(bodyCollisionDetector.collisionDetector())){
+            aist->setPrimitiveCollisionDetectionEnabled(*isPrimitiveCollisionDetectionEnabled);
+        }
     }
 
     initializeContactMaterials();
@@ -2747,7 +2750,7 @@ int ConstraintForceSolver::numCollisionDetectionThreads() const
 }
 
 
-void ConstraintForceSolver::setPrimitiveCollisionDetectionEnabled(bool on)
+void ConstraintForceSolver::setPrimitiveCollisionDetectionEnabled(std::optional<bool> on)
 {
     impl->isPrimitiveCollisionDetectionEnabled = on;
 }
@@ -2755,7 +2758,9 @@ void ConstraintForceSolver::setPrimitiveCollisionDetectionEnabled(bool on)
 
 bool ConstraintForceSolver::isPrimitiveCollisionDetectionEnabled() const
 {
-    return impl->isPrimitiveCollisionDetectionEnabled;
+    // The AIST collision detector enables the primitive shape collision
+    // detection by default, so the unspecified state means enabled
+    return impl->isPrimitiveCollisionDetectionEnabled.value_or(true);
 }
 
 

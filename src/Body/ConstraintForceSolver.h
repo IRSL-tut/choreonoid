@@ -2,6 +2,7 @@
 #define CNOID_BODY_CONSTRAINT_FORCE_SOLVER_H
 
 #include "CollisionLinkPairList.h"
+#include <optional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -55,10 +56,12 @@ public:
     int numCollisionDetectionThreads() const;
 
     /**
-       Enable the analytic collision detection based on the primitive shape
-       information when the AIST collision detector is used.
+       Enable or disable the analytic collision detection based on the
+       primitive shape information when the AIST collision detector is used.
+       When nullopt is given (the default state), the solver does not touch
+       the flag and the collision detector's own setting is used as it is.
     */
-    void setPrimitiveCollisionDetectionEnabled(bool on);
+    void setPrimitiveCollisionDetectionEnabled(std::optional<bool> on);
     bool isPrimitiveCollisionDetectionEnabled() const;
 
     void setContactDepthCorrection(double depth, double velocityRatio);

@@ -35,6 +35,12 @@ const bool TRACE_FUNCTIONS = false;
 const bool ENABLE_DEBUG_OUTPUT = false;
 const double DEFAULT_GRAVITY_ACCELERATION = 9.80665;
 
+enum PrimitiveCollisionDetectionModeId {
+    FollowWorldItemSetting,
+    PrimitiveCollisionEnabled,
+    PrimitiveCollisionDisabled
+};
+
 class AISTSimBody : public SimulationBody
 {
 public:
@@ -86,7 +92,7 @@ public:
     FloatingNumberString errorCriterion;
     int maxNumIterations;
     int numCollisionDetectionThreads;
-    bool isPrimitiveCollisionDetectionEnabled;
+    Selection primitiveCollisionDetectionMode;
     int maxNumContactPoints;
     FloatingNumberString contactCorrectionDepth;
     FloatingNumberString contactCorrectionVelocityRatio;
@@ -141,7 +147,8 @@ AISTSimulatorItem::AISTSimulatorItem()
 AISTSimulatorItem::Impl::Impl(AISTSimulatorItem* self)
     : self(self),
       dynamicsMode(2, CNOID_GETTEXT_DOMAIN_NAME),
-      integrationMode(2, CNOID_GETTEXT_DOMAIN_NAME)
+      integrationMode(2, CNOID_GETTEXT_DOMAIN_NAME),
+      primitiveCollisionDetectionMode(3, CNOID_GETTEXT_DOMAIN_NAME)
 {
     dynamicsMode.setSymbol(ForwardDynamicsMode, N_("Forward dynamics"));
     dynamicsMode.setSymbol(KinematicsMode,      N_("Kinematics"));
@@ -149,7 +156,12 @@ AISTSimulatorItem::Impl::Impl(AISTSimulatorItem* self)
     integrationMode.setSymbol(SemiImplicitEuler, N_("Semi-implicit Euler"));
     integrationMode.setSymbol(RungeKutta,        N_("Runge-Kutta"));
     integrationMode.select(SemiImplicitEuler);
-    
+
+    primitiveCollisionDetectionMode.setSymbol(FollowWorldItemSetting, N_("Follow world item setting"));
+    primitiveCollisionDetectionMode.setSymbol(PrimitiveCollisionEnabled, N_("Enabled"));
+    primitiveCollisionDetectionMode.setSymbol(PrimitiveCollisionDisabled, N_("Disabled"));
+    primitiveCollisionDetectionMode.select(FollowWorldItemSetting);
+
     gravity << 0.0, 0.0, -DEFAULT_GRAVITY_ACCELERATION;
 
     ConstraintForceSolver& cfs = world.constraintForceSolver;
@@ -162,7 +174,6 @@ AISTSimulatorItem::Impl::Impl(AISTSimulatorItem* self)
     errorCriterion = cfs.gaussSeidelErrorCriterion();
     maxNumIterations = cfs.gaussSeidelMaxNumIterations();
     numCollisionDetectionThreads = cfs.numCollisionDetectionThreads();
-    isPrimitiveCollisionDetectionEnabled = cfs.isPrimitiveCollisionDetectionEnabled();
     maxNumContactPoints = cfs.maxNumContactPoints();
     contactCorrectionDepth = cfs.contactCorrectionDepth();
     contactCorrectionVelocityRatio = cfs.contactCorrectionVelocityRatio();
@@ -188,7 +199,8 @@ AISTSimulatorItem::AISTSimulatorItem(const AISTSimulatorItem& org)
 AISTSimulatorItem::Impl::Impl(AISTSimulatorItem* self, const Impl& org)
     : self(self),
       dynamicsMode(org.dynamicsMode),
-      integrationMode(org.integrationMode)
+      integrationMode(org.integrationMode),
+      primitiveCollisionDetectionMode(org.primitiveCollisionDetectionMode)
 {
     gravity = org.gravity;
     minFrictionCoefficient = org.minFrictionCoefficient;
@@ -198,7 +210,6 @@ AISTSimulatorItem::Impl::Impl(AISTSimulatorItem* self, const Impl& org)
     errorCriterion = org.errorCriterion;
     maxNumIterations = org.maxNumIterations;
     numCollisionDetectionThreads = org.numCollisionDetectionThreads;
-    isPrimitiveCollisionDetectionEnabled = org.isPrimitiveCollisionDetectionEnabled;
     maxNumContactPoints = org.maxNumContactPoints;
     contactCorrectionDepth = org.contactCorrectionDepth;
     contactCorrectionVelocityRatio = org.contactCorrectionVelocityRatio;
@@ -448,7 +459,12 @@ bool AISTSimulatorItem::Impl::initializeSimulation(const std::vector<SimulationB
     cfs.setGaussSeidelErrorCriterion(errorCriterion.value());
     cfs.setGaussSeidelMaxNumIterations(maxNumIterations);
     cfs.setNumCollisionDetectionThreads(numCollisionDetectionThreads);
-    cfs.setPrimitiveCollisionDetectionEnabled(isPrimitiveCollisionDetectionEnabled);
+    if(primitiveCollisionDetectionMode.is(FollowWorldItemSetting)){
+        cfs.setPrimitiveCollisionDetectionEnabled(std::nullopt);
+    } else {
+        cfs.setPrimitiveCollisionDetectionEnabled(
+            primitiveCollisionDetectionMode.is(PrimitiveCollisionEnabled));
+    }
     cfs.setMaxNumContactPoints(maxNumContactPoints);
     cfs.setContactDepthCorrection(contactCorrectionDepth.value(), contactCorrectionVelocityRatio.value());
     
@@ -746,8 +762,8 @@ void AISTSimulatorItem::Impl::doPutProperties(PutPropertyFunction& putProperty)
     putProperty.min(1)(_("Max iterations"), maxNumIterations, changeProperty(maxNumIterations));
     putProperty.min(0)(_("Collision detection threads"), numCollisionDetectionThreads,
                        changeProperty(numCollisionDetectionThreads));
-    putProperty(_("Primitive shape collision detection"), isPrimitiveCollisionDetectionEnabled,
-                changeProperty(isPrimitiveCollisionDetectionEnabled));
+    putProperty(_("Primitive shape collision detection"), primitiveCollisionDetectionMode,
+                [&](int index){ return primitiveCollisionDetectionMode.selectIndex(index); });
     putProperty.min(0)(_("Max contact points"), maxNumContactPoints, changeProperty(maxNumContactPoints));
     putProperty(_("CC depth"), contactCorrectionDepth,
                 [&](const string& v){ return contactCorrectionDepth.setNonNegativeValue(v); });
@@ -780,7 +796,12 @@ bool AISTSimulatorItem::Impl::store(Archive& archive)
     archive.write("error_criterion", errorCriterion);
     archive.write("max_num_iterations", maxNumIterations);
     archive.write("num_collision_detection_threads", numCollisionDetectionThreads);
-    archive.write("primitive_shape_collision_detection", isPrimitiveCollisionDetectionEnabled);
+    // The value is stored only when the mode is forced so that the value
+    // is compatible with the old boolean property
+    if(!primitiveCollisionDetectionMode.is(FollowWorldItemSetting)){
+        archive.write("primitive_shape_collision_detection",
+                      primitiveCollisionDetectionMode.is(PrimitiveCollisionEnabled));
+    }
     archive.write("max_num_contact_points", maxNumContactPoints);
     archive.write("contact_correction_depth", contactCorrectionDepth);
     archive.write("contact_correction_velocity_ratio", contactCorrectionVelocityRatio);
@@ -828,7 +849,13 @@ bool AISTSimulatorItem::Impl::restore(const Archive& archive)
     errorCriterion = archive.get({ "error_criterion", "errorCriterion" }, errorCriterion.string());
     archive.read({ "max_num_iterations", "maxNumIterations" }, maxNumIterations);
     archive.read("num_collision_detection_threads", numCollisionDetectionThreads);
-    archive.read("primitive_shape_collision_detection", isPrimitiveCollisionDetectionEnabled);
+    bool isPrimitiveCollisionDetectionEnabled;
+    if(archive.read("primitive_shape_collision_detection", isPrimitiveCollisionDetectionEnabled)){
+        primitiveCollisionDetectionMode.select(
+            isPrimitiveCollisionDetectionEnabled ? PrimitiveCollisionEnabled : PrimitiveCollisionDisabled);
+    } else {
+        primitiveCollisionDetectionMode.select(FollowWorldItemSetting);
+    }
     archive.read("max_num_contact_points", maxNumContactPoints);
     contactCorrectionDepth = archive.get({ "contact_correction_depth", "contactCorrectionDepth" }, contactCorrectionDepth.string());
     contactCorrectionVelocityRatio = archive.get({ "contact_correction_velocity_ratio", "contactCorrectionVelocityRatio" }, contactCorrectionVelocityRatio.string());
