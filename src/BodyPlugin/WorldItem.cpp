@@ -370,7 +370,7 @@ bool WorldItem::isCollisionDetectionBetweenMultiplexBodiesEnabled() const
 void WorldItem::Impl::clearCollisionDetector(bool doNotiyCollisionUpdate)
 {
     collisions->clear();
-    sceneCollision->setDirty();
+    sceneCollision->notifyCollisionUpdate();
     bodyCollisionDetector.clearBodies();
     bodyItemConnections.disconnect();
     updateCollisionsLater.cancel();
@@ -519,7 +519,14 @@ void WorldItem::Impl::updateCollisions(bool forceUpdate)
             return false; // Continue checking all collisions
         });
     
-    sceneCollision->setDirty();
+    /**
+       The scene update notification by the following function is necessary
+       when the collisions are updated without any accompanying scene change
+       such as the case where a parameter of the collision detector is
+       modified on the property view, because the collision line rendering
+       is lazily updated in the rendering function.
+    */
+    sceneCollision->notifyCollisionUpdate();
 
     for(auto& info : coldetBodyInfos){
         info->bodyItem->notifyCollisionUpdate();
@@ -556,6 +563,12 @@ void WorldItem::Impl::extractCollisions(const CollisionPair& collisionPair)
 SignalProxy<void()> WorldItem::sigCollisionsUpdated()
 {
     return impl->sigCollisionsUpdated;
+}
+
+
+SceneCollision* WorldItem::sceneCollision()
+{
+    return impl->sceneCollision;
 }
 
 

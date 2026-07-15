@@ -97,8 +97,7 @@ bool CollisionSeqEngine::Impl::onTimeChanged(double time)
                 }
             }
         }
-        dynamic_cast<SceneCollision*>(worldItem->getScene())->setDirty();
-        dynamic_cast<SceneCollision*>(worldItem->getScene())->notifyUpdate(SgUpdate::MODIFIED);
+        worldItem->sceneCollision()->notifyCollisionUpdate();
     }
 
     return isValid;

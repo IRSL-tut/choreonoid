@@ -17,6 +17,16 @@ public:
     
     SceneCollision(std::shared_ptr<std::vector<CollisionLinkPairPtr>> collisionPairs);
     void setDirty() { isDirty = true; }
+
+    /**
+       Mark the collision data changed and notify the scene of the update
+       so that the collision lines are updated in the next rendering.
+    */
+    void notifyCollisionUpdate(){
+        isDirty = true;
+        notifyUpdate(sgUpdate);
+    }
+
     void render(SceneRenderer* renderer);
 
 private:
@@ -24,6 +34,7 @@ private:
 
     std::shared_ptr<std::vector<CollisionLinkPairPtr>> collisionPairs;
     SgVertexArrayPtr vertices_;
+    SgUpdate sgUpdate{ SgUpdate::GeometryModified };
     bool isDirty;
 };
     

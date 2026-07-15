@@ -11,6 +11,7 @@
 namespace cnoid {
 
 class CollisionDetector;
+class SceneCollision;
 class MaterialTable;
 class MaterialTableItem;
 
@@ -41,6 +42,9 @@ public:
     typedef std::shared_ptr<CollisionLinkPair> CollisionLinkPairPtr;
     std::vector<CollisionLinkPairPtr>& collisions() const;
     SignalProxy<void()> sigCollisionsUpdated();
+
+    //! The scene node which visualizes the collisions as the collision lines
+    SceneCollision* sceneCollision();
 
     void setDefaultMaterialTableFile(const std::string& filename);
     MaterialTable* defaultMaterialTable(bool checkFileUpdate = true);

@@ -74,7 +74,7 @@ void SceneCollision::render(SceneRenderer* renderer)
                 vertices_->push_back((c.point + direction * collisionLineRatio * c.depth * c.normal).cast<float>());
             }
         }
-        vertices_->notifyUpdate();
+        vertices_->notifyUpdate(sgUpdate);
         isDirty = false;
     }
 
