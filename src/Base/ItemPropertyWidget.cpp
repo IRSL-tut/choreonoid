@@ -66,6 +66,7 @@ public:
     ItemPropertyWidget::Impl* view;
     ValueVariant value;
     FunctionVariant func;
+    std::function<void()> changeNotifier;
     bool hasValidFunction;
 
     PropertyItem(ItemPropertyWidget::Impl* view, ValueVariant value);
@@ -139,6 +140,7 @@ public:
     double minValue;
     double maxValue;
     int decimals_;
+    std::function<void()> changeNotifier;
 
     CustomizedTableWidget* tableWidget;
     int fontPointSizeDiff;
@@ -161,6 +163,7 @@ public:
     virtual PutPropertyFunction& min(double min) override;
     virtual PutPropertyFunction& max(double max) override;
     virtual PutPropertyFunction& range(double min, double max) override;
+    virtual PutPropertyFunction& callOnChange(std::function<void()> callback) override;
     virtual PutPropertyFunction& reset() override;
 
     virtual void operator()(
@@ -209,7 +212,8 @@ PropertyItem::PropertyItem(ItemPropertyWidget::Impl* view, ValueVariant value)
 PropertyItem::PropertyItem(ItemPropertyWidget::Impl* view, ValueVariant value, FunctionVariant func)
     : view(view),
       value(value),
-      func(func)
+      func(func),
+      changeNotifier(view->changeNotifier)
 {
     int flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
     if(view->isEditable){
@@ -335,6 +339,9 @@ void PropertyItem::setData(int role, const QVariant& qvalue)
         }
             
         if(accepted){
+            if(changeNotifier){
+                changeNotifier();
+            }
             if(!view->updateRequestedDuringPropertyEditing){
                 view->currentItem->notifyUpdate();
             }
@@ -869,11 +876,19 @@ PutPropertyFunction& ItemPropertyWidget::Impl::range(double min, double max)
 }
 
 
+PutPropertyFunction& ItemPropertyWidget::Impl::callOnChange(std::function<void()> callback)
+{
+    changeNotifier = callback;
+    return *this;
+}
+
+
 PutPropertyFunction& ItemPropertyWidget::Impl::reset()
 {
     minValue = -999999999;
     maxValue =  999999999;
     decimals_ = 2;
+    changeNotifier = nullptr;
     return *this;
 }
         

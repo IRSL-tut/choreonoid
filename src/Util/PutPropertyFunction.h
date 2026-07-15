@@ -1,7 +1,3 @@
-/**
-   @author Shin'ichiro Nakaoka
-*/
-
 #ifndef CNOID_UTIL_PUT_PROPERTY_FUNCTION_H
 #define CNOID_UTIL_PUT_PROPERTY_FUNCTION_H
 
@@ -57,6 +53,21 @@ public:
     virtual PutPropertyFunction& max(double max) = 0;
     virtual PutPropertyFunction& range(double min, double max) = 0;
     virtual PutPropertyFunction& decimals(int d) = 0;
+
+    /**
+       Set the callback function called when the value of a property is
+       modified by the property editing interface. Like the other decoration
+       functions such as min and decimals, the callback is applied to the
+       properties declared after this function is called, and it is cleared
+       by the reset function. The callback is called after the change
+       function given with a property returns true. This is mainly used by
+       an object which delegates the property declaration to another object
+       and has to do some processing when a delegated property is modified,
+       which cannot be written in the change functions given by the
+       delegated object.
+    */
+    virtual PutPropertyFunction& callOnChange(std::function<void()> callback) = 0;
+
     virtual PutPropertyFunction& reset() = 0;
 
     // bool
