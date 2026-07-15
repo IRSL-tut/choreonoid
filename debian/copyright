@@ -83,7 +83,7 @@ Files: thirdparty/pybind11-2.12.0/*
 Copyright: 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>
 License: BSD-3-clause
 
-Files: thirdparty/xacro-1.14.10/*
+Files: thirdparty/xacro-1.14.20/*
 Copyright: Open Source Robotics Foundation, Inc.
 License: BSD-3-clause
 
