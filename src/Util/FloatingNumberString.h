@@ -2,6 +2,7 @@
 #define CNOID_UTIL_FLOATING_NUMBER_STRING_H
 
 #include "Format.h"
+#include <string_view>
 
 #ifdef _MSC_VER
 #if !defined(INFINITY)
@@ -93,6 +94,16 @@ public:
     }
         
     operator std::string() const {
+        return s;
+    }
+
+    /**
+       This conversion enables an object of this class to be directly passed
+       to a string_view parameter such as the property value of
+       PutPropertyFunction, which is not covered by the conversion to
+       std::string because that requires two user-defined conversions.
+    */
+    operator std::string_view() const {
         return s;
     }
 
