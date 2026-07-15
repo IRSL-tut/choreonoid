@@ -156,6 +156,24 @@ CollisionDetector::~CollisionDetector()
 }
 
 
+void CollisionDetector::putProperties(PutPropertyFunction& /* putProperty */)
+{
+
+}
+
+
+bool CollisionDetector::store(Mapping* /* archive */)
+{
+    return true;
+}
+
+
+bool CollisionDetector::restore(const Mapping* /* archive */)
+{
+    return true;
+}
+
+
 void CollisionDetector::setGroup(GeometryHandle /* geometry */, int /* groupId */)
 {
 

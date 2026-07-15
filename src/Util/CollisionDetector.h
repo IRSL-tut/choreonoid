@@ -12,6 +12,8 @@ namespace cnoid {
 
 class SgNode;
 class CollisionPair;
+class Mapping;
+class PutPropertyFunction;
 
 class CNOID_EXPORT CollisionDetector : public Referenced
 {
@@ -31,9 +33,24 @@ public:
        \note The geometries and the non interfarence pairs of them
        are not copied to the clone object. That is same as the state
        after calling clearGeometries();
+       \note The configuration parameters of the collision detector must
+       be copied to the clone object in every implementation of this
+       function so that the parameters set to the original object are
+       also used in the clone.
     */
     virtual CollisionDetector* clone() const = 0;
-        
+
+    /**
+       A collision detector implementation which has configurable parameters
+       can override the following three functions to publish the parameters.
+       The putProperties function shows the parameters in the GUI (the
+       properties of the world item), and the store / restore functions
+       save and restore the parameters as a project file archive.
+    */
+    virtual void putProperties(PutPropertyFunction& putProperty);
+    virtual bool store(Mapping* archive);
+    virtual bool restore(const Mapping* archive);
+
     virtual void clearGeometries() = 0;
     virtual int numGeometries() const = 0;
 
