@@ -1211,6 +1211,8 @@ bool detectBoxBox(
     // Edge - edge axes. A face axis is preferred when the depths are almost
     // the same so that a stable face contact manifold is generated.
     constexpr double edgePreferenceFactor = 0.95;
+    double minEdgeDepth = DBL_MAX;
+    Vector3 bestEdgeAxis;
     for(int i=0; i < 3; ++i){
         for(int j=0; j < 3; ++j){
             Vector3 axis = R0.col(i).cross(R1.col(j));
@@ -1228,11 +1230,15 @@ bool detectBoxBox(
             if(depth <= 0.0){
                 return false;
             }
-            if(depth < minDepth * edgePreferenceFactor){
-                minDepth = depth;
-                bestAxis = (axis.dot(p) >= 0.0) ? axis : Vector3(-axis);
+            if(depth < minEdgeDepth){
+                minEdgeDepth = depth;
+                bestEdgeAxis = (axis.dot(p) >= 0.0) ? axis : Vector3(-axis);
             }
         }
+    }
+    if(minEdgeDepth < minDepth * edgePreferenceFactor){
+        minDepth = minEdgeDepth;
+        bestAxis = bestEdgeAxis;
     }
 
     const Vector3& n = bestAxis;
