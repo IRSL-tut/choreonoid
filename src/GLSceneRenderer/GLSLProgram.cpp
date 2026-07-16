@@ -46,7 +46,9 @@ void GLSLProgram::loadShader(const char* filename, int shaderType)
         throw std::runtime_error(formatR(_("Shader \"{}\" is not found."), filename));
     }
     
-    file.open(QIODevice::ReadOnly);
+    if(!file.open(QIODevice::ReadOnly)){
+        throw std::runtime_error(formatR(_("Unable to open shader \"{}\"."), filename));
+    }
     const QByteArray data = file.readAll();
     const GLchar* codes[] = { data.data() };
     const GLint codeSizes[] = { static_cast<int>(data.size()) };

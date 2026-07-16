@@ -21,8 +21,13 @@ SignalProxy<void(int)> CheckBox::sigStateChanged()
 {
     if(!sigStateChanged_){
         sigStateChanged_.emplace();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+        connect(this, &QCheckBox::checkStateChanged,
+                [this](Qt::CheckState state){ (*sigStateChanged_)(static_cast<int>(state)); });
+#else
         connect(this, (void(QCheckBox::*)(int)) &QCheckBox::stateChanged,
                 [this](int state){ (*sigStateChanged_)(state); });
+#endif
     }
     return *sigStateChanged_;
 }
