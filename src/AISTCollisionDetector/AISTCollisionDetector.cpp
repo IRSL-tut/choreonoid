@@ -44,6 +44,9 @@ public:
     bool isStatic;
     ColdetModelExPtr sibling;
 
+    //! Main model whose pointer is exposed as the handle of this geometry
+    ColdetModelEx* geometryMainModel;
+
     /**
        Bounding sphere of the whole geometry including all the sibling
        models, which is set on the main (top) model of the chain and used
@@ -71,7 +74,13 @@ public:
     */
     bool isQueryOnlyModel;
 
-    ColdetModelEx() : groupId(0), isEnabled(true), isStatic(false), isQueryOnlyModel(false) {
+    ColdetModelEx()
+        : groupId(0),
+          isEnabled(true),
+          isStatic(false),
+          geometryMainModel(nullptr),
+          isQueryOnlyModel(false)
+    {
         boundingSphereLocalCenter.setZero();
         boundingSphereCenter.setZero();
         boundingSphereRadius = -1.0;
@@ -112,6 +121,11 @@ ColdetModelEx* getColdetModel(GeometryHandle handle)
 GeometryHandle getHandle(ColdetModelEx* model)
 {
     return reinterpret_cast<GeometryHandle>(model);
+}
+
+GeometryHandle getGeometryHandle(ColdetModelEx* model)
+{
+    return getHandle(model->geometryMainModel ? model->geometryMainModel : model);
 }
 
 class ColdetModelPairEx : public ColdetModelPair
@@ -208,7 +222,7 @@ bool copyCollisionPairCollisions(ColdetModelPairEx* srcPair, CollisionPair& dest
         for(int i=0; i < 2; ++i){
             auto model = srcPair->model(i);
             destPair.object(i) = model->object;
-            destPair.geometry(i) = getHandle(model);
+            destPair.geometry(i) = getGeometryHandle(model);
         }
     }
 
@@ -506,6 +520,7 @@ std::optional<GeometryHandle> AISTCollisionDetector::Impl::addGeometry(SgNode* g
             model->setName(geometry->name());
             model->build();
             if(model->isValid()){
+                model->geometryMainModel = model;
                 computeGeometryBoundingSphere(model);
                 models.push_back(model);
                 isReady = false;
@@ -573,6 +588,9 @@ std::optional<GeometryHandle> AISTCollisionDetector::Impl::addGeometryWithPrimit
     }
 
     if(mainModel){
+        for(ColdetModelEx* model = mainModel; model; model = model->sibling){
+            model->geometryMainModel = mainModel;
+        }
         computeGeometryBoundingSphere(mainModel);
         models.push_back(mainModel);
         isReady = false;
@@ -937,7 +955,7 @@ bool AISTCollisionDetector::Impl::checkIfModelPairEnabled(ColdetModelPairEx* mod
     auto model0 = modelPair->model(0);
     auto model1 = modelPair->model(1);
     if(checkIfGroupPairEnabled(model0->groupId, model1->groupId)){
-        IdPair<GeometryHandle> handlePair(getHandle(model0), getHandle(model1));
+        IdPair<GeometryHandle> handlePair(getGeometryHandle(model0), getGeometryHandle(model1));
         if(ignoredPairs.find(handlePair) == ignoredPairs.end()){
             return true;
         }
@@ -998,7 +1016,7 @@ bool AISTCollisionDetector::Impl::detectCollisions
         do {
             auto model0 = modelPair->model(0);
             auto model1 = modelPair->model(1);
-            if(getHandle(modelPair->model(0)) == geometry || getHandle(modelPair->model(1)) == geometry){
+            if(getGeometryHandle(model0) == geometry || getGeometryHandle(model1) == geometry){
                 if(model0->isEnabled && model1->isEnabled){
                     if(testComponentBoundingSphereOverlap(model0, model1)){
                         if(!isDynamicGeometryPairChangeEnabled || checkIfModelPairEnabled(modelPair)){
