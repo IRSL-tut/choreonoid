@@ -142,7 +142,7 @@ PointSetToMeshConversionDialog::Impl::Impl(PointSetToMeshConversionDialog* self)
     normalEstimationSearchRadius = 0.03;
     normalEstimationSearchRadiusSpin.sigValueChanged().connect(
         [this](double value){
-            normalEstimationSearchRadius = DisplayValueFormat::instance()->toMeter(value);
+            normalEstimationSearchRadius = DisplayValueFormat::master()->toMeter(value);
         });
     hbox->addWidget(&normalEstimationSearchRadiusSpin);
     hbox->addWidget(&normalEstimationSearchRadiusUnitLabel);
@@ -160,7 +160,7 @@ PointSetToMeshConversionDialog::Impl::Impl(PointSetToMeshConversionDialog* self)
     mu = 2.5;
     muSpin.sigValueChanged().connect(
         [this](double value){
-            mu = DisplayValueFormat::instance()->toMeter(value);
+            mu = DisplayValueFormat::master()->toMeter(value);
         });
     hbox->addWidget(&muSpin);
     hbox->addWidget(&muUnitLabel);
@@ -172,7 +172,7 @@ PointSetToMeshConversionDialog::Impl::Impl(PointSetToMeshConversionDialog* self)
     searchRadius = 0.05;
     searchRadiusSpin.sigValueChanged().connect(
         [this](double value){
-            searchRadius = DisplayValueFormat::instance()->toMeter(value);
+            searchRadius = DisplayValueFormat::master()->toMeter(value);
         });
     hbox->addWidget(&searchRadiusSpin);
     hbox->addWidget(&searchRadiusUnitLabel);
@@ -251,7 +251,7 @@ void PointSetToMeshConversionDialog::show(PointSetItem* targetItem)
 
 void PointSetToMeshConversionDialog::Impl::updateInterfaces()
 {
-    auto dvf = DisplayValueFormat::instance();
+    auto dvf = DisplayValueFormat::master();
 
     normalEstimationSearchRadiusSpin.blockSignals(true);
     muSpin.blockSignals(true);
