@@ -163,6 +163,11 @@ WorldItem::Impl::Impl(WorldItem* self, const Impl& org)
 
     init();
 
+    sceneCollision->setLineLengthRatio(org.sceneCollision->lineLengthRatio());
+    sceneCollision->setLineWidth(org.sceneCollision->lineWidth());
+    sceneCollision->setPointMarkerEnabled(org.sceneCollision->isPointMarkerEnabled());
+    sceneCollision->setPointSize(org.sceneCollision->pointSize());
+
     // Copy the settings of the org's current collision detector, which may
     // not be stored in the setting map yet
     if(auto orgDetector = const_cast<Impl&>(org).bodyCollisionDetector.collisionDetector()){
@@ -687,7 +692,21 @@ void WorldItem::doPutProperties(PutPropertyFunction& putProperty)
                     impl->updateCollisionDetectionBodies(true);
                     return true;
                 });
-    
+
+    // The properties on the collision visualization.
+    // The changes are reflected in the next rendering by the update
+    // notifications which the setters of SceneCollision do by themselves.
+    putProperty.min(0.0)(_("Collision line length ratio"), impl->sceneCollision->lineLengthRatio(),
+                [this](double ratio){ impl->sceneCollision->setLineLengthRatio(ratio); return true; });
+    putProperty.min(0.1)(_("Collision line width"), static_cast<double>(impl->sceneCollision->lineWidth()),
+                [this](double width){ impl->sceneCollision->setLineWidth(static_cast<float>(width)); return true; });
+    putProperty.reset();
+    putProperty(_("Collision point markers"), impl->sceneCollision->isPointMarkerEnabled(),
+                [this](bool on){ impl->sceneCollision->setPointMarkerEnabled(on); return true; });
+    putProperty.min(1.0)(_("Collision point size"), impl->sceneCollision->pointSize(),
+                [this](double size){ impl->sceneCollision->setPointSize(size); return true; });
+    putProperty.reset();
+
     FilePathProperty materialFileProperty(
         impl->defaultMaterialTableFile, { _("Contact material definition file (*.yaml)") });
     putProperty(_("Default material table"), materialFileProperty,
@@ -739,6 +758,24 @@ bool WorldItem::store(Archive& archive)
     if(impl->isCollisionDetectionBetweenMultiplexBodiesEnabled){
         archive.write("collision_detection_between_multiplex_bodies", true);
     }
+
+    // The collision visualization settings are written only when they are
+    // not the default values because they do not affect the reproducibility
+    // of the simulation or computation results
+    auto sceneCollision = impl->sceneCollision;
+    if(sceneCollision->lineLengthRatio() != SceneCollision::DefaultLineLengthRatio){
+        archive.write("collision_line_length_ratio", sceneCollision->lineLengthRatio());
+    }
+    if(sceneCollision->lineWidth() != SceneCollision::DefaultLineWidth){
+        archive.write("collision_line_width", sceneCollision->lineWidth());
+    }
+    if(!sceneCollision->isPointMarkerEnabled()){
+        archive.write("show_collision_points", false);
+    }
+    if(sceneCollision->pointSize() != SceneCollision::DefaultPointSize){
+        archive.write("collision_point_size", sceneCollision->pointSize());
+    }
+
     archive.writeRelocatablePath("default_material_table_file", impl->defaultMaterialTableFile);
     return true;
 }
@@ -794,7 +831,23 @@ bool WorldItem::restore(const Archive& archive)
         archive.addPostProcess([&](){ impl->enableCollisionDetection(true); });
     }
     archive.read("collision_detection_between_multiplex_bodies", impl->isCollisionDetectionBetweenMultiplexBodiesEnabled);
-    
+
+    auto sceneCollision = impl->sceneCollision;
+    double value;
+    if(archive.read("collision_line_length_ratio", value)){
+        sceneCollision->setLineLengthRatio(value);
+    }
+    if(archive.read("collision_line_width", value)){
+        sceneCollision->setLineWidth(static_cast<float>(value));
+    }
+    bool on;
+    if(archive.read("show_collision_points", on)){
+        sceneCollision->setPointMarkerEnabled(on);
+    }
+    if(archive.read("collision_point_size", value)){
+        sceneCollision->setPointSize(value);
+    }
+
     if(archive.read({ "default_material_table_file", "materialTableFile" }, symbol)){
         symbol = archive.resolveRelocatablePath(symbol);
         if(!symbol.empty()){

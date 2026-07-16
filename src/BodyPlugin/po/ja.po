@@ -1738,6 +1738,18 @@ msgstr "干渉検出器"
 msgid "Collision detection between multiplex bodies"
 msgstr "多重化ボディ間の干渉検出"
 
+msgid "Collision line length ratio"
+msgstr "干渉線の長さ倍率"
+
+msgid "Collision line width"
+msgstr "干渉線の幅"
+
+msgid "Collision point markers"
+msgstr "干渉点マーカー"
+
+msgid "Collision point size"
+msgstr "干渉点のサイズ"
+
 msgid "Contact material definition file (*.yaml)"
 msgstr "接触マテリアル定義ファイル (*.yaml)"
 
