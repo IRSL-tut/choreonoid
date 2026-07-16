@@ -242,6 +242,7 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
         glFormat.setProfile(QSurfaceFormat::CoreProfile);
         GLSceneRenderer::setRendererType(GLSceneRenderer::GLSL_RENDERER);
     }
+    glFormat.setRenderableType(QSurfaceFormat::OpenGL);
 
     char* CNOID_DISABLE_REVERSED_DEPTH_BUFFER = getenv("CNOID_DISABLE_REVERSED_DEPTH_BUFFER");
     if(CNOID_DISABLE_REVERSED_DEPTH_BUFFER && strcmp(CNOID_DISABLE_REVERSED_DEPTH_BUFFER, "1") == 0){
