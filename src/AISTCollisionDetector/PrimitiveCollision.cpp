@@ -994,6 +994,7 @@ void generateContactManifold(
     const PrimitiveCollisionParameterSet& params,
     std::vector<PrimitiveContactPoint>& out_points)
 {
+    const size_t pointIndexTop = out_points.size();
     SupportFeature f0, f1;
     getSupportFeature(shape0, n, params.numCapCircleVertices, f0);
     getSupportFeature(shape1, -n, params.numCapCircleVertices, f1);
@@ -1125,8 +1126,18 @@ void generateContactManifold(
                 depth = 0.0; // Keep a slightly separating point as a zero-depth contact
             }
             const Vector3 point = referenceIs0 ? Vector3(x + 0.5 * depth * n) : Vector3(x - 0.5 * depth * n);
-            addContactPoint(out_points, point, n, depth);
-            ++numAdded;
+            bool duplicated = false;
+            for(size_t j = pointIndexTop; j < out_points.size(); ++j){
+                if((out_points[j].point - point).squaredNorm() < 1.0e-20 &&
+                   out_points[j].normal.dot(n) > 1.0 - 1.0e-12){
+                    duplicated = true;
+                    break;
+                }
+            }
+            if(!duplicated){
+                addContactPoint(out_points, point, n, depth);
+                ++numAdded;
+            }
         }
     }
     if(numAdded == 0){
@@ -1344,14 +1355,26 @@ bool detectSphereCapsule(
     const Vector3 a = cc - capsule.halfLength * axis;
     const Vector3 b = cc + capsule.halfLength * axis;
     Vector3 q;
-    closestPointOnSegment(c, a, b, q);
+    const double t = closestPointOnSegment(c, a, b, q);
     const Vector3 d = q - c;
     const double dist = d.norm();
     const double depth = sphere.radius + capsule.radius - dist;
     if(depth <= 0.0){
         return false;
     }
-    Vector3 n = (dist > 1.0e-12) ? Vector3(d / dist) : Vector3::UnitZ(); // sphere -> capsule
+    Vector3 n; // sphere -> capsule
+    if(dist > 1.0e-12){
+        n = d / dist;
+    } else if(t <= 1.0e-12){
+        n = axis;
+    } else if(t >= 1.0 - 1.0e-12){
+        n = -axis;
+    } else {
+        // The sphere center is on the interior of the capsule axis. Any
+        // radial direction is a valid minimum penetration direction; use a
+        // shape-local axis so the result follows rigid rotations.
+        n = capsule.T.linear().col(0);
+    }
     const Vector3 point = c + n * (sphere.radius - 0.5 * depth);
     addContactPoint(out_points, point, sphereIs0 ? n : Vector3(-n), depth);
     return true;
@@ -1399,7 +1422,7 @@ bool detectSphereBox(
         nLocal[minAxis] = (p[minAxis] >= 0.0) ? 1.0 : -1.0; // box center -> outward
         n = -(box.T.linear() * nLocal);
         depth = sphere.radius + minDist;
-        point = sphere.T.translation();
+        point = sphere.T.translation() - 0.5 * depth * n;
     }
     addContactPoint(out_points, point, sphereIs0 ? n : Vector3(-n), depth);
     return true;
@@ -1428,7 +1451,23 @@ bool detectCapsuleCapsule(
 
     const double rsum = s0.radius + s1.radius;
 
-    const bool isParallel = (denom < 1.0e-9 * a * c);
+    if(a < 1.0e-24){
+        PrimitiveCollisionShape sphere0 = s0;
+        sphere0.type = PrimitiveCollisionShape::Sphere;
+        if(c < 1.0e-24){
+            PrimitiveCollisionShape sphere1 = s1;
+            sphere1.type = PrimitiveCollisionShape::Sphere;
+            return detectSphereSphere(sphere0, sphere1, out_points);
+        }
+        return detectSphereCapsule(sphere0, s1, true, out_points);
+    }
+    if(c < 1.0e-24){
+        PrimitiveCollisionShape sphere1 = s1;
+        sphere1.type = PrimitiveCollisionShape::Sphere;
+        return detectSphereCapsule(sphere1, s0, false, out_points);
+    }
+
+    const bool isParallel = (denom <= 1.0e-9 * a * c);
 
     if(!isParallel){
         double s = (b * e - c * d) / denom;
@@ -1449,7 +1488,12 @@ bool detectCapsuleCapsule(
         if(depth <= 0.0){
             return false;
         }
-        const Vector3 n = (dist > 1.0e-12) ? Vector3(diff / dist) : Vector3::UnitZ();
+        Vector3 n;
+        if(dist > 1.0e-12){
+            n = diff / dist;
+        } else {
+            n = u.cross(v).normalized();
+        }
         addContactPoint(out_points, p + n * (s0.radius - 0.5 * depth), n, depth);
         return true;
 
@@ -1457,12 +1501,7 @@ bool detectCapsuleCapsule(
         // Parallel capsules: generate up to two contact points over the
         // overlapping range for the resting stability
         const double ul2 = a;
-        if(ul2 < 1.0e-24){
-            // Degenerate to the sphere case
-            PrimitiveCollisionShape sp0 = s0;
-            sp0.type = PrimitiveCollisionShape::Sphere;
-            return detectSphereCapsule(sp0, s1, true, out_points);
-        }
+        const Vector3 zeroDistanceNormal = s0.T.linear().col(0);
         double t0 = (a1 - a0).dot(u) / ul2;
         double t1 = (b1 - a0).dot(u) / ul2;
         if(t0 > t1){
@@ -1482,7 +1521,7 @@ bool detectCapsuleCapsule(
             if(depth <= 0.0){
                 return false;
             }
-            const Vector3 n = (dist > 1.0e-12) ? Vector3(diff / dist) : Vector3::UnitZ();
+            const Vector3 n = (dist > 1.0e-12) ? Vector3(diff / dist) : zeroDistanceNormal;
             addContactPoint(out_points, p + n * (s0.radius - 0.5 * depth), n, depth);
             return true;
         }
@@ -1497,7 +1536,7 @@ bool detectCapsuleCapsule(
             const double dist = diff.norm();
             const double depth = rsum - dist;
             if(depth > 0.0){
-                const Vector3 n = (dist > 1.0e-12) ? Vector3(diff / dist) : Vector3::UnitZ();
+                const Vector3 n = (dist > 1.0e-12) ? Vector3(diff / dist) : zeroDistanceNormal;
                 addContactPoint(out_points, p + n * (s0.radius - 0.5 * depth), n, depth);
                 detected = true;
             }
