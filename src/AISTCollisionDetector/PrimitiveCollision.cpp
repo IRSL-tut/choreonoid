@@ -284,8 +284,9 @@ Vector3 closestPointOnSimplex(Simplex& simplex, bool& containsOrigin)
     }
 
     // simplex.n == 4
-    // Check the origin against the four faces of the tetrahedron and
-    // find the closest one, or detect the origin enclosure.
+    // First test the origin enclosure from the tetrahedron barycentric
+    // coordinates. The previous face-side test could classify a degenerate
+    // tetrahedron as enclosing the origin when one or more faces were skipped.
     static const int faceIndices[4][3] = {
         { 0, 1, 2 }, { 0, 2, 3 }, { 0, 3, 1 }, { 1, 3, 2 }
     };
@@ -293,7 +294,35 @@ Vector3 closestPointOnSimplex(Simplex& simplex, bool& containsOrigin)
         simplex.v[0].w, simplex.v[1].w, simplex.v[2].w, simplex.v[3].w
     };
 
-    bool inside = true;
+    Matrix3 basis;
+    basis.col(0) = points[1] - points[0];
+    basis.col(1) = points[2] - points[0];
+    basis.col(2) = points[3] - points[0];
+    const double maxEdgeLength2 = std::max({
+        (points[1] - points[0]).squaredNorm(),
+        (points[2] - points[0]).squaredNorm(),
+        (points[3] - points[0]).squaredNorm() });
+    const double determinant = basis.col(0).dot(basis.col(1).cross(basis.col(2)));
+    if(determinant * determinant > 1.0e-30 * maxEdgeLength2 * maxEdgeLength2 * maxEdgeLength2){
+        const Vector3 rhs = -points[0];
+        Vector3 uvw;
+        uvw.x() = rhs.dot(basis.col(1).cross(basis.col(2))) / determinant;
+        uvw.y() = basis.col(0).dot(rhs.cross(basis.col(2))) / determinant;
+        uvw.z() = basis.col(0).dot(basis.col(1).cross(rhs)) / determinant;
+        const double lambda0 = 1.0 - uvw.sum();
+        constexpr double barycentricTolerance = 1.0e-12;
+        if(lambda0 >= -barycentricTolerance && uvw.minCoeff() >= -barycentricTolerance){
+            containsOrigin = true;
+            simplex.lambda[0] = lambda0;
+            simplex.lambda[1] = uvw.x();
+            simplex.lambda[2] = uvw.y();
+            simplex.lambda[3] = uvw.z();
+            return Vector3::Zero();
+        }
+    }
+
+    // The origin is outside, or the tetrahedron is degenerate. Find the
+    // closest point over all its triangular faces.
     double minDist2 = DBL_MAX;
     Vector3 closest = Vector3::Zero();
     Simplex bestSub;
@@ -303,46 +332,19 @@ Vector3 closestPointOnSimplex(Simplex& simplex, bool& containsOrigin)
         const int ia = faceIndices[i][0];
         const int ib = faceIndices[i][1];
         const int ic = faceIndices[i][2];
-        const int id = 6 - ia - ib - ic; // the opposite vertex
-        const Vector3& a = points[ia];
-        const Vector3& b = points[ib];
-        const Vector3& c = points[ic];
-        Vector3 n = (b - a).cross(c - a);
-        const double n2 = n.squaredNorm();
-        if(n2 < 1.0e-30){
-            continue; // degenerate face
+        Simplex sub;
+        sub.n = 3;
+        sub.v[0] = simplex.v[ia];
+        sub.v[1] = simplex.v[ib];
+        sub.v[2] = simplex.v[ic];
+        bool dummy;
+        const Vector3 p = closestPointOnSimplex(sub, dummy);
+        const double d2 = p.squaredNorm();
+        if(d2 < minDist2){
+            minDist2 = d2;
+            closest = p;
+            bestSub = sub;
         }
-        // Orient the face normal outward (away from the opposite vertex)
-        double signOpposite = n.dot(points[id] - a);
-        double signOrigin = n.dot(-a);
-        if(signOpposite > 0.0){
-            n = -n;
-            signOpposite = -signOpposite;
-            signOrigin = -signOrigin;
-        }
-        if(signOrigin > 0.0){
-            // The origin is outside this face
-            inside = false;
-            Simplex sub;
-            sub.n = 3;
-            sub.v[0] = simplex.v[ia];
-            sub.v[1] = simplex.v[ib];
-            sub.v[2] = simplex.v[ic];
-            bool dummy;
-            const Vector3 p = closestPointOnSimplex(sub, dummy);
-            const double d2 = p.squaredNorm();
-            if(d2 < minDist2){
-                minDist2 = d2;
-                closest = p;
-                bestSub = sub;
-            }
-        }
-    }
-
-    if(inside){
-        containsOrigin = true;
-        simplex.lambda[0] = simplex.lambda[1] = simplex.lambda[2] = simplex.lambda[3] = 0.25;
-        return Vector3::Zero();
     }
 
     if(bestSub.n == 0){
@@ -369,12 +371,14 @@ bool runGjk(const PrimitiveCollisionShape& shapeA, const PrimitiveCollisionShape
 {
     Vector3 d = shapeCenter(shapeB) - shapeCenter(shapeA);
     if(d.squaredNorm() < 1.0e-20){
-        d = Vector3::UnitX();
+        d = (shapeA.type == PrimitiveCollisionShape::Triangle) ?
+            Vector3(shapeA.vertices[1] - shapeA.vertices[0]) :
+            Vector3(shapeA.T.linear().col(0));
     }
 
     Simplex& simplex = result.simplex;
     simplex.n = 1;
-    simplex.v[0] = supportMinkowski(shapeA, shapeB, -d);
+    simplex.v[0] = supportMinkowski(shapeA, shapeB, d);
     simplex.lambda[0] = 1.0;
 
     Vector3 v = simplex.v[0].w;
