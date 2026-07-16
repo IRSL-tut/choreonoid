@@ -16,6 +16,7 @@
 */
 
 #include "PrimitiveCollision.h"
+#include <algorithm>
 #include <cmath>
 #include <cfloat>
 
@@ -1028,16 +1029,32 @@ void generateContactManifold(
             // Skewed edges: single contact at the closest point pair
             const double a = u.dot(u);
             const double b = u.dot(v);
-            const double c = v.dot(v);
+            const double e = v.dot(v);
             const Vector3 r = p0 - q0;
-            const double d = u.dot(r);
-            const double e = v.dot(r);
-            const double denom = a * c - b * b;
+            const double c = u.dot(r);
+            const double f = v.dot(r);
+            const double denom = a * e - b * b;
             double s = 0.0;
-            if(fabs(denom) > 1.0e-30){
-                s = std::min(1.0, std::max(0.0, (b * e - c * d) / denom));
+            double t = 0.0;
+            if(a <= 1.0e-30 && e <= 1.0e-30){
+                // Both edges are points
+            } else if(a <= 1.0e-30){
+                t = std::min(1.0, std::max(0.0, f / e));
+            } else if(e <= 1.0e-30){
+                s = std::min(1.0, std::max(0.0, -c / a));
+            } else {
+                if(fabs(denom) > 1.0e-30){
+                    s = std::min(1.0, std::max(0.0, (b * f - c * e) / denom));
+                }
+                t = (b * s + f) / e;
+                if(t < 0.0){
+                    t = 0.0;
+                    s = std::min(1.0, std::max(0.0, -c / a));
+                } else if(t > 1.0){
+                    t = 1.0;
+                    s = std::min(1.0, std::max(0.0, (b - c) / a));
+                }
             }
-            const double t = (c > 1.0e-30) ? std::min(1.0, std::max(0.0, (b * s + e) / c)) : 0.0;
             const Vector3 cp0 = p0 + s * u;
             const Vector3 cp1 = q0 + t * v;
             double depth = (cp0 - cp1).dot(n);
