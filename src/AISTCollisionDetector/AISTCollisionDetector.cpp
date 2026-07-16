@@ -648,11 +648,23 @@ void AISTCollisionDetector::Impl::addMeshOrPrimitive
     default: break;
     }
 
+    // The analytic primitive models represent closed solids. A cylinder or
+    // cone with a disabled cap or side does not have the same geometry and
+    // must be processed as its actual triangle mesh.
+    bool isClosedPrimitive = true;
+    if(primitiveType == ColdetModel::SP_CYLINDER){
+        const auto& cylinder = mesh->primitive<SgMesh::Cylinder>();
+        isClosedPrimitive = cylinder.top && cylinder.bottom && cylinder.side;
+    } else if(primitiveType == ColdetModel::SP_CONE){
+        const auto& cone = mesh->primitive<SgMesh::Cone>();
+        isClosedPrimitive = cone.bottom && cone.side;
+    }
+
     bool doAddPrimitive = false;
     Vector3 scale = Vector3::Ones();
     Vector3 translationByScaling = Vector3::Zero();
 
-    if(primitiveType != ColdetModel::SP_MESH){
+    if(primitiveType != ColdetModel::SP_MESH && isClosedPrimitive){
         if(!meshExtractor->isCurrentScaled()){
             doAddPrimitive = true;
         } else {
@@ -662,23 +674,27 @@ void AISTCollisionDetector::Impl::addMeshOrPrimitive
             if(S.linear().isDiagonal()){
                 translationByScaling = S.translation();
                 scale = S.linear().diagonal();
-                auto isEqual = [](double a, double b){ return fabs(a - b) <= 1.0e-9 * fabs(a); };
-                switch(primitiveType){
-                case ColdetModel::SP_BOX:
-                    doAddPrimitive = true;
-                    break;
-                case ColdetModel::SP_SPHERE:
-                case ColdetModel::SP_CAPSULE:
-                    // The shape with the hemisphere parts must be uniformly scaled
-                    doAddPrimitive = isEqual(scale.x(), scale.y()) && isEqual(scale.x(), scale.z());
-                    break;
-                case ColdetModel::SP_CYLINDER:
-                case ColdetModel::SP_CONE:
-                    // The circle cross sections must be kept circular
-                    doAddPrimitive = isEqual(scale.x(), scale.z());
-                    break;
-                default:
-                    break;
+                // A reflection or a degenerate scale cannot be represented
+                // by the positive dimensions of an analytic primitive.
+                if(scale.allFinite() && scale.minCoeff() > 0.0){
+                    auto isEqual = [](double a, double b){ return fabs(a - b) <= 1.0e-9 * fabs(a); };
+                    switch(primitiveType){
+                    case ColdetModel::SP_BOX:
+                        doAddPrimitive = true;
+                        break;
+                    case ColdetModel::SP_SPHERE:
+                    case ColdetModel::SP_CAPSULE:
+                        // The shape with the hemisphere parts must be uniformly scaled
+                        doAddPrimitive = isEqual(scale.x(), scale.y()) && isEqual(scale.x(), scale.z());
+                        break;
+                    case ColdetModel::SP_CYLINDER:
+                    case ColdetModel::SP_CONE:
+                        // The circle cross sections must be kept circular
+                        doAddPrimitive = isEqual(scale.x(), scale.z());
+                        break;
+                    default:
+                        break;
+                    }
                 }
             }
         }
