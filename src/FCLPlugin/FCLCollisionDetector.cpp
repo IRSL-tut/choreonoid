@@ -14,7 +14,14 @@
 #include <fcl/BV/BV.h>
 #include <fcl/narrowphase/gjk.h>
 #else
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcpp"
+#endif
 #include <fcl/fcl.h>
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 #endif
 
 using namespace std;
