@@ -1390,6 +1390,62 @@ bool detectSphereCapsule(
     return true;
 }
 
+bool detectSphereCylinder(
+    const PrimitiveCollisionShape& sphere, const PrimitiveCollisionShape& cylinder,
+    bool sphereIs0, std::vector<PrimitiveContactPoint>& out_points)
+{
+    const Matrix3& R = cylinder.T.linear();
+    const Vector3 p = R.transpose() * (sphere.T.translation() - cylinder.T.translation());
+    const double radialDistance = hypot(p.x(), p.z());
+    const bool isInside =
+        radialDistance <= cylinder.radius && fabs(p.y()) <= cylinder.halfLength;
+
+    Vector3 n; // sphere -> cylinder in the world frame
+    double depth;
+    Vector3 point;
+
+    if(!isInside){
+        Vector3 q = p;
+        q.y() = std::min(cylinder.halfLength, std::max(-cylinder.halfLength, p.y()));
+        if(radialDistance > cylinder.radius){
+            const double scale = cylinder.radius / radialDistance;
+            q.x() *= scale;
+            q.z() *= scale;
+        }
+        const Vector3 delta = q - p;
+        const double distance = delta.norm();
+        depth = sphere.radius - distance;
+        if(depth <= 0.0){
+            return false;
+        }
+        n = R * (delta / distance);
+        point = cylinder.T * q + 0.5 * depth * n;
+    } else {
+        const double radialClearance = cylinder.radius - radialDistance;
+        const double capClearance = cylinder.halfLength - fabs(p.y());
+        Vector3 outward = Vector3::Zero();
+        double clearance;
+        if(radialClearance <= capClearance){
+            if(radialDistance > 1.0e-12){
+                outward.x() = p.x() / radialDistance;
+                outward.z() = p.z() / radialDistance;
+            } else {
+                outward.x() = 1.0;
+            }
+            clearance = radialClearance;
+        } else {
+            outward.y() = (p.y() >= 0.0) ? 1.0 : -1.0;
+            clearance = capClearance;
+        }
+        n = -(R * outward);
+        depth = sphere.radius + clearance;
+        point = sphere.T.translation() - 0.5 * depth * n;
+    }
+
+    addContactPoint(out_points, point, sphereIs0 ? n : Vector3(-n), depth);
+    return true;
+}
+
 bool detectSphereBox(
     const PrimitiveCollisionShape& sphere, const PrimitiveCollisionShape& box,
     bool sphereIs0, std::vector<PrimitiveContactPoint>& out_points)
@@ -1581,12 +1637,16 @@ bool cnoid::detectPrimitiveShapeCollision
             return detectSphereCapsule(shape0, shape1, true, out_points);
         } else if(shape1.type == PCS::Box){
             return detectSphereBox(shape0, shape1, true, out_points);
+        } else if(shape1.type == PCS::Cylinder){
+            return detectSphereCylinder(shape0, shape1, true, out_points);
         }
     } else if(shape1.type == PCS::Sphere){
         if(shape0.type == PCS::Capsule){
             return detectSphereCapsule(shape1, shape0, false, out_points);
         } else if(shape0.type == PCS::Box){
             return detectSphereBox(shape1, shape0, false, out_points);
+        } else if(shape0.type == PCS::Cylinder){
+            return detectSphereCylinder(shape1, shape0, false, out_points);
         }
     } else if(shape0.type == PCS::Capsule && shape1.type == PCS::Capsule){
         return detectCapsuleCapsule(shape0, shape1, out_points);
