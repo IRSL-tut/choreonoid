@@ -600,6 +600,7 @@ bool runEpa(
 
         // Remove the faces visible from the new vertex and collect the
         // horizon edges
+        bestFace = nullptr;
         const int newIndex = vertices.size();
         vertices.push_back(sp);
 
@@ -629,6 +630,13 @@ bool runEpa(
         if(horizon.empty()){
             break;
         }
+        if(faces.size() + horizon.size() > EPA_MAX_FACES){
+            faces.erase(
+                std::remove_if(faces.begin(), faces.end(), [](const EpaFace& face){
+                    return !face.alive;
+                }),
+                faces.end());
+        }
         bool ok = true;
         for(auto& edge : horizon){
             if(!addEpaFace(faces, vertices, edge.first, edge.second, newIndex)){
@@ -639,7 +647,6 @@ bool runEpa(
         if(!ok){
             break;
         }
-        bestFace = nullptr;
     }
 
     if(!bestFace){
