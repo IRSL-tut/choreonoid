@@ -1251,7 +1251,10 @@ bool detectParallelCylinderCylinder(
 
     const Vector3 a0 = s0.T.linear().col(1);
     const Vector3 a1 = s1.T.linear().col(1);
-    if(fabs(a0.dot(a1)) < 0.9999){
+    // The closed form below assumes exactly parallel axes. Treating merely
+    // near-parallel cylinders as parallel can miss an intersection near the
+    // ends of long cylinders.
+    if(a0.cross(a1).squaredNorm() > 1.0e-20){
         return false;
     }
     const Vector3 p = s1.T.translation() - s0.T.translation();
@@ -1269,9 +1272,16 @@ bool detectParallelCylinderCylinder(
     double depth;
     Vector3 witnessPoint;
 
-    if(depthRadial <= depthAxial && radialDist > 1.0e-9){
+    if(depthRadial <= depthAxial){
         // Side - side contact
-        n = radialVec / radialDist;
+        if(radialDist > 1.0e-12){
+            n = radialVec / radialDist;
+        } else {
+            // The axes coincide, so every radial direction is an equivalent
+            // minimum penetration direction. Select one perpendicular to the
+            // common axis instead of incorrectly using the axial direction.
+            n = a0.unitOrthogonal();
+        }
         depth = depthRadial;
         const double lo = std::max(-s0.halfLength, axialOffset - s1.halfLength);
         const double hi = std::min(s0.halfLength, axialOffset + s1.halfLength);
