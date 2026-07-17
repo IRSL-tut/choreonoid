@@ -260,6 +260,12 @@ SceneRenderer::~SceneRenderer()
 }
 
 
+float SceneRenderer::devicePixelRatio() const
+{
+    return 1.0f;
+}
+
+
 void SceneRenderer::setName(const std::string& name)
 {
     impl->name = name;

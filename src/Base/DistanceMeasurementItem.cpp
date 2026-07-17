@@ -983,6 +983,7 @@ void DistanceMeasurementItem::Impl::restoreItems(const Archive& archive)
 ViewportText::ViewportText()
     : SgViewportOverlay(findClassId<ViewportText>())
 {
+    setCoordinateMode(LogicalPixelCoordinates);
     textHeight = 20.0;
     distanceText = new SgText;
     distanceText->setTextHeight(textHeight);
@@ -1035,6 +1036,11 @@ void ViewportText::render(SceneRenderer* renderer)
 {
     Vector3 q1 = renderer->project(p1);
     Vector3 q2 = renderer->project(p2);
+    const double dpr = renderer->devicePixelRatio();
+    if(dpr > 0.0){
+        q1.head<2>() /= dpr;
+        q2.head<2>() /= dpr;
+    }
     Vector3 p = (q1 + q2) / 2.0;
     double x = q2.x() - q1.x();
     double y = q2.y() - q1.y();

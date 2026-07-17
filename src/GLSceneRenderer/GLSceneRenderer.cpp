@@ -186,6 +186,12 @@ void GLSceneRenderer::setDefaultColor(const Vector3f& color)
 }
 
 
+float GLSceneRenderer::devicePixelRatio() const
+{
+    return devicePixelRatio_;
+}
+
+
 void GLSceneRenderer::updateViewportInformation(int x, int y, int width, int height)
 {
     if(height <= 0){

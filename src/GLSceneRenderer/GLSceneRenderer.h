@@ -85,7 +85,7 @@ public:
     };
 
     const Viewport& viewport() const { return viewport_; }
-    float devicePixelRatio() const { return devicePixelRatio_; }
+    virtual float devicePixelRatio() const override;
     void setDevicePixelRatio(float r){ devicePixelRatio_ = r; }
 
     void getPerspectiveProjectionMatrix(

@@ -112,6 +112,7 @@ public:
     virtual const Matrix4& projectionMatrix() const = 0;
     virtual const Matrix4& viewProjectionMatrix() const = 0;
 
+    virtual float devicePixelRatio() const;
     virtual Vector3 project(const Vector3& p) const = 0;
     virtual double projectedPixelSizeRatio(const Vector3& position) const = 0;
     virtual bool unproject(double x, double y, double z, Vector3& out_projected) const = 0;
