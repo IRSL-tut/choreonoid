@@ -298,8 +298,8 @@ public:
     void advertiseModeChangeToNewEditables(SgNode* node);
     
     virtual void initializeGL() override;
-    virtual void resizeGL(int width, int height) override;
     virtual void paintGL() override;
+    void onFramebufferResized();
 
     void showFPS(bool on);
     void doFpsTest(int iteration);
@@ -555,6 +555,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     setMouseTracking(true);
     
     needToUpdateViewportInformation = true;
+    connect(this, &QOpenGLWidget::resized, this, &Impl::onFramebufferResized);
     isEditMode = false;
     isHighlightingEnabled = false;
     isModeSyncEnabled = false;
@@ -771,11 +772,6 @@ void SceneWidget::Impl::initializeGL()
         cout << "SceneWidget::Impl::initializeGL()" << endl;
     }
 
-    renderer->setDefaultFramebufferObject(defaultFramebufferObject());
-
-    lastDevicePixelRatio = devicePixelRatio();
-    renderer->setDevicePixelRatio(lastDevicePixelRatio);
-
     glContext = context();
     if(renderer->initializeGL((GLADloadfunc)getProcAddress)){
         if(glslRenderer){
@@ -793,11 +789,11 @@ void SceneWidget::Impl::initializeGL()
 }
 
 
-void SceneWidget::Impl::resizeGL(int width, int height)
+void SceneWidget::Impl::onFramebufferResized()
 {
-    if(TRACE_FUNCTIONS){
-        cout << "SceneWidget::Impl::resizeGL()" << endl;
-    }
+    // This handles both widget resizing and DPR-driven FBO recreation.
+    lastDevicePixelRatio = devicePixelRatioF();
+    renderer->setDevicePixelRatio(lastDevicePixelRatio);
     needToUpdateViewportInformation = true;
 }
 
@@ -1380,8 +1376,20 @@ void SceneWidget::Impl::updateLatestEvent(QKeyEvent* event)
 
 void SceneWidget::Impl::updateLatestEvent(int x, int y, int modifiers)
 {
-    latestEvent.x_ = lastDevicePixelRatio * x;
-    latestEvent.y_ = lastDevicePixelRatio * (height() - y - 1);
+    double scaleX = lastDevicePixelRatio;
+    double scaleY = lastDevicePixelRatio;
+    double originX = 0.0;
+    double originY = 0.0;
+    auto& viewport = renderer->viewport();
+    if(!needToUpdateViewportInformation &&
+       viewport.w > 0 && viewport.h > 0 && width() > 0 && height() > 0){
+        scaleX = static_cast<double>(viewport.w) / width();
+        scaleY = static_cast<double>(viewport.h) / height();
+        originX = viewport.x;
+        originY = viewport.y;
+    }
+    latestEvent.x_ = originX + scaleX * x;
+    latestEvent.y_ = originY + scaleY * (height() - y - 1);
     latestEvent.modifiers_ = modifiers;
 }
 
