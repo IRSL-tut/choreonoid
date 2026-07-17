@@ -1967,7 +1967,16 @@ void GL1SceneRenderer::Impl::renderViewportOverlay(SgViewportOverlay* overlay)
 
     SgViewportOverlay::ViewVolume vv;
     auto& vp = self->viewport();
-    overlay->calcViewVolume(vp.w, vp.h, vv);
+    double viewportWidth = vp.w;
+    double viewportHeight = vp.h;
+    if(overlay->coordinateMode() == SgViewportOverlay::LogicalPixelCoordinates){
+        const double dpr = self->devicePixelRatio();
+        if(dpr > 0.0){
+            viewportWidth /= dpr;
+            viewportHeight /= dpr;
+        }
+    }
+    overlay->calcViewVolume(viewportWidth, viewportHeight, vv);
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();

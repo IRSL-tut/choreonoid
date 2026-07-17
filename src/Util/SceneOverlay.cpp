@@ -69,21 +69,24 @@ Referenced* SgOverlay::doClone(CloneMap* cloneMap) const
 
 
 SgViewportOverlay::SgViewportOverlay(int classId)
-    : SgOverlay(classId)
+    : SgOverlay(classId),
+      coordinateMode_(PhysicalPixelCoordinates)
 {
 
 }
 
 
 SgViewportOverlay::SgViewportOverlay()
-    : SgOverlay(findClassId<SgViewportOverlay>())
+    : SgOverlay(findClassId<SgViewportOverlay>()),
+      coordinateMode_(PhysicalPixelCoordinates)
 {
 
 }
 
 
 SgViewportOverlay::SgViewportOverlay(const SgViewportOverlay& org, CloneMap* cloneMap)
-    : SgOverlay(org, cloneMap)
+    : SgOverlay(org, cloneMap),
+      coordinateMode_(org.coordinateMode_)
 {
 
 }
@@ -255,6 +258,7 @@ void SgHudOverlay::Impl::layout(double width, double height)
 SgHudOverlay::SgHudOverlay(int classId)
     : SgViewportOverlay(classId)
 {
+    setCoordinateMode(LogicalPixelCoordinates);
     impl = new Impl(this);
 }
 
@@ -262,6 +266,7 @@ SgHudOverlay::SgHudOverlay(int classId)
 SgHudOverlay::SgHudOverlay()
     : SgViewportOverlay(findClassId<SgHudOverlay>())
 {
+    setCoordinateMode(LogicalPixelCoordinates);
     impl = new Impl(this);
 }
 

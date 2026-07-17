@@ -428,6 +428,7 @@ public:
     bool isWorldLightShadowEnabled;
     bool isRenderingShadowMap;
     bool isRenderingViewportOverlay;
+    bool isRenderingLogicalPixelViewportOverlay;
     bool isLightweightRenderingBeingProcessed;
     bool isLowMemoryConsumptionMode;
     bool isLowMemoryConsumptionRenderingBeingProcessed;
@@ -976,6 +977,7 @@ void GLSLSceneRenderer::Impl::initialize()
     isShadowCasterBBoxUpdateEnabled = false;
     needToUpdateShadowCasterBBox = false;
     isRenderingViewportOverlay = false;
+    isRenderingLogicalPixelViewportOverlay = false;
     isLowMemoryConsumptionMode = false;
     isBoundingBoxRenderingMode = false;
     isBoundingBoxRenderingForLightweightRenderingGroupEnabled = false;
@@ -4949,7 +4951,7 @@ void GLSLSceneRenderer::Impl::renderText(SgText* text)
             glGenBuffers(1, &resource->vbo);
         }
         if(resource->isTextUpdateNeeded){
-            freeType.setText(text->text(), text->textHeight() * self->devicePixelRatio());
+            freeType.setText(text->text(), text->textHeight());
             auto& vertices = freeType.vertices();
             resource->numVertices = vertices.size();
             if(!vertices.empty()){
@@ -4969,7 +4971,13 @@ void GLSLSceneRenderer::Impl::renderText(SgText* text)
         glActiveTexture(GL_TEXTURE0 + ImageTextureUnit);
         glBindTexture(GL_TEXTURE_2D, freeType.textureId());
         glBindSampler(ImageTextureUnit, freeType.samplerId());
-        textProgram->setTransform(PV, viewTransform, modelMatrixStack.back(), nullptr);
+        if(isRenderingViewportOverlay && !isRenderingLogicalPixelViewportOverlay){
+            Affine3 M = modelMatrixStack.back();
+            M.linear() *= self->devicePixelRatio();
+            textProgram->setTransform(PV, viewTransform, M, nullptr);
+        } else {
+            textProgram->setTransform(PV, viewTransform, modelMatrixStack.back(), nullptr);
+        }
         textProgram->setColor(text->color());
         glDrawArrays(GL_TRIANGLES, 0, resource->numVertices);
         glDisable(GL_BLEND);
@@ -5083,7 +5091,18 @@ void GLSLSceneRenderer::Impl::renderViewportOverlayMain(SgViewportOverlay* overl
     const Matrix4 PV0 = PV;
     SgViewportOverlay::ViewVolume vv;
     auto& vp = self->viewport();
-    overlay->calcViewVolume(vp.w, vp.h, vv);
+    const bool isLogicalPixelCoordinateMode =
+        overlay->coordinateMode() == SgViewportOverlay::LogicalPixelCoordinates;
+    double viewportWidth = vp.w;
+    double viewportHeight = vp.h;
+    if(isLogicalPixelCoordinateMode){
+        const double dpr = self->devicePixelRatio();
+        if(dpr > 0.0){
+            viewportWidth /= dpr;
+            viewportHeight /= dpr;
+        }
+    }
+    overlay->calcViewVolume(viewportWidth, viewportHeight, vv);
 
     if(isReversedDepthBufferActive){
         self->getReversedOrthographicProjectionMatrix(
@@ -5098,10 +5117,13 @@ void GLSLSceneRenderer::Impl::renderViewportOverlayMain(SgViewportOverlay* overl
     ScopedDepthTestDisabler depthTestDisabler(!isRenderingPickingImage);
     ScopedShaderProgramActivator programActivator(solidColorExProgram.get(), this);
     const bool wasRenderingViewportOverlay = isRenderingViewportOverlay;
+    const bool wasRenderingLogicalPixelViewportOverlay = isRenderingLogicalPixelViewportOverlay;
     isRenderingViewportOverlay = true;
+    isRenderingLogicalPixelViewportOverlay = isLogicalPixelCoordinateMode;
 
     renderOverlayMain(overlay, Affine3::Identity(), emptyNodePath);
     isRenderingViewportOverlay = wasRenderingViewportOverlay;
+    isRenderingLogicalPixelViewportOverlay = wasRenderingLogicalPixelViewportOverlay;
 
     PV = PV0;
 }

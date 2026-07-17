@@ -26,6 +26,14 @@ public:
     SgViewportOverlay(const SgViewportOverlay& org, CloneMap* cloneMap = nullptr);
     ~SgViewportOverlay();
 
+    enum CoordinateMode {
+        PhysicalPixelCoordinates,
+        LogicalPixelCoordinates
+    };
+
+    void setCoordinateMode(CoordinateMode mode) { coordinateMode_ = mode; }
+    CoordinateMode coordinateMode() const { return coordinateMode_; }
+
     struct ViewVolume {
         double left;
         double right;
@@ -40,6 +48,9 @@ public:
 protected:
     SgViewportOverlay(int classId);
     virtual Referenced* doClone(CloneMap* cloneMap) const override;
+
+private:
+    CoordinateMode coordinateMode_;
 };
 
 /**
@@ -101,11 +112,11 @@ private:
 
 
 /**
-   SgHudOverlay places child nodes at pixel-based offsets from one of the
+   SgHudOverlay places child nodes at logical-pixel offsets from one of the
    anchor positions of the viewport (corners, edge centers, or the center).
-   The viewport is mapped to an orthographic projection in pixel units so
-   that text and other 2D elements appear as a head-up display fixed to
-   the screen.
+   The viewport is mapped to an orthographic projection in logical-pixel
+   units so that text and other 2D elements appear as a head-up display
+   fixed to the screen.
 */
 class CNOID_EXPORT SgHudOverlay : public SgViewportOverlay
 {
@@ -128,16 +139,16 @@ public:
 
     /**
        Add a node to be displayed at the given anchor position with
-       a pixel offset. The node is wrapped in an internal SgPosTransform
+       a logical-pixel offset. The node is wrapped in an internal SgPosTransform
        whose translation is updated whenever the viewport size changes.
        offsetX is positive toward the right; offsetY is positive toward
        the bottom.
 
        When anchor is TopRight, BottomRight, or RightCenter, the item's
-       local origin (0, 0) is shifted left by width pixels so that a node
-       whose extent is [0, width] appears flush against the right edge of
-       the anchor. Set width to 0 (default) if the node does not need such
-       right-alignment (its origin is placed exactly at the anchor).
+       local origin (0, 0) is shifted left by width logical pixels so that
+       a node whose extent is [0, width] appears flush against the right
+       edge of the anchor. Set width to 0 (default) if the node does not
+       need such right-alignment (its origin is placed exactly at the anchor).
 
        Returns true if the node was added.
     */
