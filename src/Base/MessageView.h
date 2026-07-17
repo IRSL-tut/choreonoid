@@ -68,6 +68,7 @@ public:
 
     static void blockFlush();
     static void unblockFlush();
+    void setGuiUpdatesEnabled(bool on);
     
     void clear();
       

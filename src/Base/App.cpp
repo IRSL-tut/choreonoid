@@ -127,9 +127,7 @@ void onCtrl_C_Input(int)
         [](){
             ctrl_c_pressed = true;
             if(isNoWindowMode){
-                exitRequested = true;
-                sigAboutToQuit_();
-                QApplication::quit();
+                App::exit();
             } else {
                 MainWindow::instance()->close();
             }
@@ -151,6 +149,13 @@ namespace cnoid {
 class App::Impl : public QObject
 {
 public:
+    enum ShutdownState {
+        ShutdownNotStarted,
+        ShutdownScheduled,
+        ShutdownInProgress,
+        ShutdownCompleted
+    };
+
     App* self;
     QApplication* qapplication;
     int& argc;
@@ -179,12 +184,19 @@ public:
     bool isAppInitialized;
     bool doQuit;
     bool doListQtStyles;
+    ShutdownState shutdownState;
+    bool isEventLoopRunning;
+    bool isAboutToQuitSignalEmitted;
+    bool doCloseMainWindowAfterShutdown;
+    bool doStoreWindowStateOnShutdown;
 
     Impl(App* self, int& argc, char** argv, const std::string& appName, const std::string& organization);
     ~Impl();
     void initialize();
     int exec();
-    void onMainWindowCloseEvent();
+    void requestShutdown(bool doCloseMainWindow, bool doStoreWindowState);
+    void performShutdown(bool areGuiUpdatesAvailable);
+    void closeTopLevelWidgetsExceptMainWindow();
     void enableMessageViewRedirectToStdOut();
     virtual bool eventFilter(QObject* watched, QEvent* event);
 };
@@ -227,6 +239,11 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
     isAppInitialized = false;
     doQuit = false;
     doListQtStyles = false;
+    shutdownState = ShutdownNotStarted;
+    isEventLoopRunning = false;
+    isAboutToQuitSignalEmitted = false;
+    doCloseMainWindowAfterShutdown = false;
+    doStoreWindowStateOnShutdown = false;
 
     // OpenGL settings
     QSurfaceFormat glFormat = QSurfaceFormat::defaultFormat();
@@ -689,34 +706,31 @@ int App::Impl::exec()
                 sigExecutionStarted_();
             });
         
+        isEventLoopRunning = true;
         int result = qapplication->exec();
+        isEventLoopRunning = false;
 
         if(result != 0){
             returnCode = result;
         }
     }
 
+    if(shutdownState != ShutdownCompleted){
+        // This is a fallback for the no-window and --quit modes and for an
+        // event-loop exit that does not originate from the main-window close
+        // sequence. No widget update is allowed here because a native window
+        // may already have been destroyed.
+        performShutdown(false);
+    }
+
     if(returnCode == 0 && messageView->hasErrorMessages()){
         returnCode = 1;
     }
 
-    UnifiedEditHistory::instance()->terminateRecording();
-    RootItem::instance()->clearChildren();
-    
-    pluginManager->finalizePlugins();
-    ext->deleteManagedObjects();
     delete mainWindow;
     mainWindow = nullptr;
-
-    // Finalize the embedded Python interpreter as the very last step, after all
-    // plugins have been finalized and the item tree has been released. Under the
-    // nanobind backend this is when the Python wrappers that still own
-    // Referenced-derived C++ objects are destroyed, so it must run after every
-    // other shutdown step (see src/Python/PythonInterpreter.cpp).
-    if(finalizePythonInterpreter){
-        finalizePythonInterpreter();
-        finalizePythonInterpreter = nullptr;
-    }
+    messageView = nullptr;
+    MessageView::unblockFlush();
 
     // Note that the application must be terminated without deleting
     // the base extension manager pointed by the 'ext' variable
@@ -753,9 +767,19 @@ ExtensionManager* App::baseModule()
 bool App::Impl::eventFilter(QObject* watched, QEvent* event)
 {
     if(watched == mainWindow && event->type() == QEvent::Close){
-        if(ctrl_c_pressed || exitRequested || ProjectManager::instance()->tryToCloseProject()){
-            onMainWindowCloseEvent();
+        if(shutdownState == ShutdownCompleted){
             event->accept();
+            return true;
+        }
+        if(shutdownState != ShutdownNotStarted){
+            event->ignore();
+            return true;
+        }
+        if(ctrl_c_pressed || exitRequested || ProjectManager::instance()->tryToCloseProject()){
+            // Keep the native window alive until all teardown operations that
+            // can update views have been completed.
+            event->ignore();
+            requestShutdown(true, true);
         } else {
             event->ignore();
         }
@@ -765,11 +789,83 @@ bool App::Impl::eventFilter(QObject* watched, QEvent* event)
 }
 
 
-void App::Impl::onMainWindowCloseEvent()
+void App::Impl::requestShutdown(bool doCloseMainWindow, bool doStoreWindowState)
 {
-    sigAboutToQuit_();
-    mainWindow->storeWindowStateConfig();
+    doCloseMainWindowAfterShutdown |= doCloseMainWindow;
+    doStoreWindowStateOnShutdown |= doStoreWindowState;
 
+    if(shutdownState == ShutdownNotStarted){
+        shutdownState = ShutdownScheduled;
+        callLater(
+            [this](){
+                performShutdown(
+                    doCloseMainWindowAfterShutdown && mainWindow && mainWindow->isVisible());
+            });
+    }
+}
+
+
+void App::Impl::performShutdown(bool areGuiUpdatesAvailable)
+{
+    if(shutdownState == ShutdownInProgress || shutdownState == ShutdownCompleted){
+        return;
+    }
+
+    shutdownState = ShutdownInProgress;
+
+    // Prevent message flushing from processing pending Qt events while plugin
+    // and item objects are being destroyed. Direct MessageView updates remain
+    // enabled until the teardown has finished if the native window is valid.
+    MessageView::blockFlush();
+    if(!areGuiUpdatesAvailable && messageView){
+        messageView->setGuiUpdatesEnabled(false);
+    }
+
+    if(!isAboutToQuitSignalEmitted){
+        isAboutToQuitSignalEmitted = true;
+        sigAboutToQuit_();
+    }
+
+    if(doStoreWindowStateOnShutdown && mainWindow){
+        mainWindow->storeWindowStateConfig();
+    }
+
+    UnifiedEditHistory::instance()->terminateRecording();
+    RootItem::instance()->clearChildren();
+
+    pluginManager->finalizePlugins();
+    ext->deleteManagedObjects();
+
+    // Finalize the embedded Python interpreter after all plugins have been
+    // finalized and the item tree has been released. Under the nanobind
+    // backend this is when Python wrappers that still own Referenced-derived
+    // C++ objects are destroyed (see src/Python/PythonInterpreter.cpp).
+    if(finalizePythonInterpreter){
+        finalizePythonInterpreter();
+        finalizePythonInterpreter = nullptr;
+    }
+
+    // Any message arriving after this point may still be forwarded to a
+    // non-GUI sink, but it must not touch widgets while the windows are closed.
+    if(messageView){
+        messageView->setGuiUpdatesEnabled(false);
+    }
+
+    shutdownState = ShutdownCompleted;
+
+    if(doCloseMainWindowAfterShutdown && mainWindow){
+        closeTopLevelWidgetsExceptMainWindow();
+        mainWindow->close();
+    }
+
+    if(isEventLoopRunning){
+        qapplication->exit(returnCode);
+    }
+}
+
+
+void App::Impl::closeTopLevelWidgetsExceptMainWindow()
+{
     QWidgetList windows = QApplication::topLevelWidgets();
     for(int i=0; i < windows.size(); ++i){
         QWidget* window = windows[i];
@@ -777,7 +873,7 @@ void App::Impl::onMainWindowCloseEvent()
             window->close();
         }
     }
-}    
+}
 
 
 void App::exit(int returnCode)
@@ -787,12 +883,9 @@ void App::exit(int returnCode)
         impl->returnCode = returnCode;
         exitRequested = true;
         if(isNoWindowMode){
-            sigAboutToQuit_();
-            impl->qapplication->exit(returnCode);
+            impl->requestShutdown(false, false);
         } else if(impl->mainWindow){
-            if(!impl->mainWindow->close()){
-                impl->qapplication->exit(returnCode);
-            }
+            impl->mainWindow->close();
         }
     }
 }

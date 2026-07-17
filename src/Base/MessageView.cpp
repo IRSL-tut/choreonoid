@@ -22,6 +22,7 @@
 #include <stack>
 #include <regex>
 #include <streambuf>
+#include <atomic>
 #include <iostream>
 #include "gettext.h"
 
@@ -160,10 +161,15 @@ public:
         
     bool exitEventLoopRequested;
     bool hasErrorMessages;
+    atomic_bool isGuiUpdateEnabled;
+
+    MessageOut::SinkHandle masterMessageOutSink;
+    MessageOut::SinkHandle interactiveMessageOutSink;
 
     Signal<void(const std::string& text)> sigMessage;
 
     Impl(MessageView* self);
+    ~Impl();
     void createTextEdit();
     void showFindDialog();
     bool findText(const QString& text, bool backward, bool caseSensitive, bool wholeWord);
@@ -329,22 +335,29 @@ MessageView::Impl::Impl(MessageView* self) :
     createTextEdit();
 
     hasErrorMessages = false;
+    isGuiUpdateEnabled = true;
 
-    MessageOut::master()->addSink(
+    masterMessageOutSink = MessageOut::master()->addSink(
         [this](const std::string& message, int type){
             put(message, type, false, false, false, false);
         },
-        [](const std::string& message, int /* type */){
-            InfoBar::instance()->notify(message);
+        [this](const std::string& message, int /* type */){
+            if(isGuiUpdateEnabled){
+                InfoBar::instance()->notify(message);
+            }
         },
         [this]{
-            if(QThread::currentThreadId() == mainThreadId){
+            if(isGuiUpdateEnabled && QThread::currentThreadId() == mainThreadId){
                 flush();
             }
         });
 
-    MessageOut::interactive()->addSink(
+    interactiveMessageOutSink = MessageOut::interactive()->addSink(
         [this](const std::string& message, int type){
+            if(!isGuiUpdateEnabled){
+                put(message, type, false, false, false, false);
+                return;
+            }
             switch(type){
             case MessageOut::Normal:
             case MessageOut::Highlighted:
@@ -360,10 +373,23 @@ MessageView::Impl::Impl(MessageView* self) :
                 break;
             }
         },
-        [](const std::string& message, int /* type */){
-            InfoBar::instance()->notify(message);
+        [this](const std::string& message, int /* type */){
+            if(isGuiUpdateEnabled){
+                InfoBar::instance()->notify(message);
+            }
         },
-        [this]{ flush(); });
+        [this]{
+            if(isGuiUpdateEnabled){
+                flush();
+            }
+        });
+}
+
+
+MessageView::Impl::~Impl()
+{
+    MessageOut::master()->removeSink(masterMessageOutSink);
+    MessageOut::interactive()->removeSink(interactiveMessageOutSink);
 }
 
 
@@ -584,6 +610,10 @@ void MessageView::endStdioRedirect()
 
 void MessageView::Impl::doClear()
 {
+    if(!isGuiUpdateEnabled){
+        return;
+    }
+
     /*
       The QTextEdit::clear function should be used to clear the text in a QTextEdit widget,
       but it seems that executing the function may cause memory corruption, and the process
@@ -774,18 +804,13 @@ void MessageView::Impl::put(const std::string& message, bool doLF, bool doNotify
 
 void MessageView::Impl::doPut(const string& message, bool doLF, bool doNotify, bool doFlush, bool isMovable)
 {
-    bool isLatestMessageVisible = textEdit->isLatestMessageVisible();
-    if(isLatestMessageVisible){
-        textEdit->moveCursor(QTextCursor::End);
-    }
-
     if(PUT_COUT_TOO){
         std::cout << message;
         if(doLF){
             std::cout << endl;
         }
     }
-    if(doNotify){
+    if(doNotify && isGuiUpdateEnabled){
         InfoBar::instance()->notify(message);
     }
     if(sigMessage.hasConnections()){
@@ -794,6 +819,15 @@ void MessageView::Impl::doPut(const string& message, bool doLF, bool doNotify, b
         } else {
             sigMessage(message);
         }
+    }
+
+    if(!isGuiUpdateEnabled){
+        return;
+    }
+
+    bool isLatestMessageVisible = textEdit->isLatestMessageVisible();
+    if(isLatestMessageVisible){
+        textEdit->moveCursor(QTextCursor::End);
     }
 
     auto pos = message.find_first_of("\x1b");
@@ -884,7 +918,7 @@ void MessageView::flush()
 
 void MessageView::Impl::flush()
 {
-    if(blockFlushCounter == 0){
+    if(isGuiUpdateEnabled && blockFlushCounter == 0){
         App::updateGui();
     }
 }
@@ -901,6 +935,12 @@ void MessageView::unblockFlush()
     if(blockFlushCounter > 0){
         --blockFlushCounter;
     }
+}
+
+
+void MessageView::setGuiUpdatesEnabled(bool on)
+{
+    impl->isGuiUpdateEnabled = on;
 }
 
 
