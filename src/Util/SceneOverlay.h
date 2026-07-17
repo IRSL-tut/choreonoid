@@ -116,7 +116,9 @@ private:
    anchor positions of the viewport (corners, edge centers, or the center).
    The viewport is mapped to an orthographic projection in logical-pixel
    units so that text and other 2D elements appear as a head-up display
-   fixed to the screen.
+   fixed to the screen. If a declared item width is larger than the
+   viewport, the logical view volume is expanded while preserving the
+   aspect ratio so that the item fits in the viewport.
 */
 class CNOID_EXPORT SgHudOverlay : public SgViewportOverlay
 {

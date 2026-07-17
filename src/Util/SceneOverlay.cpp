@@ -216,6 +216,7 @@ public:
     double lastHeight;
 
     Impl(SgHudOverlay* self);
+    double requiredLayoutWidth() const;
     void layout(double width, double height);
 };
 
@@ -228,6 +229,18 @@ SgHudOverlay::Impl::Impl(SgHudOverlay* self)
       lastHeight(0.0)
 {
 
+}
+
+
+double SgHudOverlay::Impl::requiredLayoutWidth() const
+{
+    double width = 0.0;
+    for(const auto& item : items){
+        if(item.width > width){
+            width = item.width;
+        }
+    }
+    return width;
 }
 
 
@@ -368,11 +381,22 @@ void SgHudOverlay::clearItems()
 
 void SgHudOverlay::calcViewVolume(double viewportWidth, double viewportHeight, ViewVolume& io_volume)
 {
+    double layoutWidth = viewportWidth;
+    double layoutHeight = viewportHeight;
+    const double requiredWidth = impl->requiredLayoutWidth();
+    if(requiredWidth > layoutWidth && layoutWidth > 0.0){
+        // Expanding both dimensions by the same ratio keeps the HUD scale
+        // uniform while fitting its declared width in the actual viewport.
+        const double scale = requiredWidth / layoutWidth;
+        layoutWidth = requiredWidth;
+        layoutHeight *= scale;
+    }
+
     io_volume.left = 0.0;
-    io_volume.right = viewportWidth;
+    io_volume.right = layoutWidth;
     io_volume.bottom = 0.0;
-    io_volume.top = viewportHeight;
+    io_volume.top = layoutHeight;
     io_volume.zNear = 1.0;
     io_volume.zFar = -1.0;
-    impl->layout(viewportWidth, viewportHeight);
+    impl->layout(layoutWidth, layoutHeight);
 }
