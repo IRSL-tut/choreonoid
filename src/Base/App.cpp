@@ -256,10 +256,7 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
-
-    // The following attribute is currently disabled because the actual scaling
-    // enabled by this attribute seems too large.
-    // QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
 
     /*
