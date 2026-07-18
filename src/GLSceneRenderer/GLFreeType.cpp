@@ -62,6 +62,9 @@ void GLFreeType::clearGL(bool isGLContextActive)
     }
     asciiCharaInfos.clear();
     charaInfoMap.clear();
+    nextCharacterX = 0;
+    nextCharacterY = 0;
+    maxCharacterHeight = 0;
 }
 
 
@@ -112,7 +115,18 @@ bool GLFreeType::initializeGL(const char* faceName, int resolution, GLuint textu
         glGenTextures(1, &textureId_);
         glBindTexture(GL_TEXTURE_2D, textureId_);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, textureWidth, textureHeight, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
+        if(glad_glClearTexImage){
+            glTexImage2D(
+                GL_TEXTURE_2D, 0, GL_RED, textureWidth, textureHeight, 0,
+                GL_RED, GL_UNSIGNED_BYTE, nullptr);
+            const GLubyte zero = 0;
+            glClearTexImage(textureId_, 0, GL_RED, GL_UNSIGNED_BYTE, &zero);
+        } else {
+            vector<unsigned char> emptyTexture(textureWidth * textureHeight, 0);
+            glTexImage2D(
+                GL_TEXTURE_2D, 0, GL_RED, textureWidth, textureHeight, 0,
+                GL_RED, GL_UNSIGNED_BYTE, emptyTexture.data());
+        }
 
         glGenSamplers(1, &samplerId_);
         glBindSampler(textureUnit, samplerId_);

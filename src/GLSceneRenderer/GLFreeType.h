@@ -35,7 +35,7 @@ public:
     GLuint textureId() const { return textureId_; }
     GLuint samplerId() const { return samplerId_; }
 
-    const std::vector<Vertex> vertices() const { return vertices_; }
+    const std::vector<Vertex>& vertices() const { return vertices_; }
     int vertexDataSize() const { return vertices_.size() * sizeof(Vertex); }
 
 private:

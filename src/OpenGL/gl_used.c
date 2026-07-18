@@ -172,25 +172,31 @@ int cnoidLoadGL(GLADloadfunc load)
     /* Load glGetStringi for extension detection (OpenGL 3.0+) */
     glad_glGetStringi = (PFNGLGETSTRINGIPROC)load("glGetStringi");
 
-    /* Detect GL_ARB_clip_control extension */
-    GLAD_GL_ARB_clip_control = 0;
-    if(major >= 5 || (major == 4 && minor >= 5)){
-        /* OpenGL 4.5+ has clip_control as core feature */
-        GLAD_GL_ARB_clip_control = 1;
-    } else if(glad_glGetStringi && glad_glGetIntegerv){
-        /* Check for ARB_clip_control extension in OpenGL 3.0+ */
+    /* Detect optional features provided by core OpenGL or ARB extensions */
+    GLAD_GL_ARB_clear_texture = major > 4 || (major == 4 && minor >= 4);
+    GLAD_GL_ARB_clip_control = major > 4 || (major == 4 && minor >= 5);
+    if((!GLAD_GL_ARB_clear_texture || !GLAD_GL_ARB_clip_control) &&
+       glad_glGetStringi && glad_glGetIntegerv){
         GLint numExtensions = 0;
         glad_glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
         for(GLint i = 0; i < numExtensions; i++){
             const char* ext = (const char*)glad_glGetStringi(GL_EXTENSIONS, i);
-            if(ext && strcmp(ext, "GL_ARB_clip_control") == 0){
+            if(ext && strcmp(ext, "GL_ARB_clear_texture") == 0){
+                GLAD_GL_ARB_clear_texture = 1;
+            } else if(ext && strcmp(ext, "GL_ARB_clip_control") == 0){
                 GLAD_GL_ARB_clip_control = 1;
+            }
+            if(GLAD_GL_ARB_clear_texture && GLAD_GL_ARB_clip_control){
                 break;
             }
         }
     }
 
-    /* Load glClipControl only if the extension is available */
+    /* Load the optional functions only when the corresponding feature is available */
+    glad_glClearTexImage = NULL;
+    if(GLAD_GL_ARB_clear_texture){
+        glad_glClearTexImage = (PFNGLCLEARTEXIMAGEPROC)load("glClearTexImage");
+    }
     glad_glClipControl = NULL;
     if(GLAD_GL_ARB_clip_control){
         glad_glClipControl = (PFNGLCLIPCONTROLPROC)load("glClipControl");
