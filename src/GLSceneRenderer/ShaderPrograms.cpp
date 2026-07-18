@@ -793,7 +793,12 @@ TextProgram::TextProgram()
           { ":/GLSceneRenderer/shader/Text.frag", GL_FRAGMENT_SHADER } })
 {
     color.setOnes();
+    opacity = 1.0f;
+    isPickingEnabled = false;
     textureUnit = 0;
+    depthPeelingTextureUnit = 0;
+    isDepthPeelingEnabled = false;
+    isDepthPeelingReversedDepth = false;
 }
 
     
@@ -803,10 +808,20 @@ void TextProgram::initialize()
 
     auto& glsl = glslProgram();
     colorLocation = glsl.getUniformLocation("textColor");
+    opacityLocation = glsl.getUniformLocation("opacity");
+    isPickingEnabledLocation = glsl.getUniformLocation("isPickingEnabled");
     textureLocation = glsl.getUniformLocation("textTexture");
+    peeledDepthTextureLocation = glsl.getUniformLocation("peeledDepthTexture");
+    isDepthPeelingEnabledLocation = glsl.getUniformLocation("isDepthPeelingEnabled");
+    isDepthPeelingReversedDepthLocation = glsl.getUniformLocation("isDepthPeelingReversedDepth");
     glsl.use();
     glUniform3fv(colorLocation, 1, color.data());
+    glUniform1f(opacityLocation, opacity);
+    glUniform1i(isPickingEnabledLocation, isPickingEnabled);
     glUniform1i(textureLocation, textureUnit);
+    glUniform1i(peeledDepthTextureLocation, depthPeelingTextureUnit);
+    glUniform1i(isDepthPeelingEnabledLocation, isDepthPeelingEnabled);
+    glUniform1i(isDepthPeelingReversedDepthLocation, isDepthPeelingReversedDepth);
 }
 
 
@@ -819,9 +834,46 @@ void TextProgram::setColor(const Vector3f& c)
 }
 
 
+void TextProgram::setOpacity(float value)
+{
+    if(value != opacity){
+        glUniform1f(opacityLocation, value);
+        opacity = value;
+    }
+}
+
+
+void TextProgram::setPickingEnabled(bool on)
+{
+    if(on != isPickingEnabled){
+        glUniform1i(isPickingEnabledLocation, on);
+        isPickingEnabled = on;
+    }
+}
+
+
 void TextProgram::setTextureUnit(int textureUnit)
 {
     this->textureUnit = textureUnit;
+}
+
+
+void TextProgram::setDepthPeelingTextureUnit(int textureUnit)
+{
+    depthPeelingTextureUnit = textureUnit;
+}
+
+
+void TextProgram::setDepthPeelingEnabled(bool on, bool reversedDepth)
+{
+    if(on != isDepthPeelingEnabled){
+        glUniform1i(isDepthPeelingEnabledLocation, on);
+        isDepthPeelingEnabled = on;
+    }
+    if(on && reversedDepth != isDepthPeelingReversedDepth){
+        glUniform1i(isDepthPeelingReversedDepthLocation, reversedDepth);
+        isDepthPeelingReversedDepth = reversedDepth;
+    }
 }
 
 

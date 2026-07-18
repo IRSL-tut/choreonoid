@@ -192,13 +192,27 @@ public:
     TextProgram();
     virtual void initialize() override;
     void setColor(const Vector3f& color);
+    void setOpacity(float opacity);
+    void setPickingEnabled(bool on);
     void setTextureUnit(int textureUnit);
+    void setDepthPeelingTextureUnit(int textureUnit);
+    void setDepthPeelingEnabled(bool on, bool reversedDepth);
     
 private:
     Vector3f color;
     GLint colorLocation;
+    float opacity;
+    GLint opacityLocation;
+    bool isPickingEnabled;
+    GLint isPickingEnabledLocation;
     int textureUnit;
     GLint textureLocation;
+    int depthPeelingTextureUnit;
+    GLint peeledDepthTextureLocation;
+    bool isDepthPeelingEnabled;
+    GLint isDepthPeelingEnabledLocation;
+    bool isDepthPeelingReversedDepth;
+    GLint isDepthPeelingReversedDepthLocation;
 };
 
 

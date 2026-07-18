@@ -292,6 +292,7 @@ public:
     GLuint vao;
     GLuint vbo;
     GLuint numVertices;
+    BoundingBox boundingBox;
     bool isTextUpdateNeeded;
     ScopedConnection connection;
 
@@ -311,6 +312,7 @@ public:
         vao = 0;
         vbo = 0;
         numVertices = 0;
+        boundingBox.clear();
         isTextUpdateNeeded = true;
     }
 
@@ -427,6 +429,7 @@ public:
     bool isShadowCastingAvailable;
     bool isWorldLightShadowEnabled;
     bool isRenderingShadowMap;
+    bool isRenderingDepthPeeling;
     bool isRenderingViewportOverlay;
     bool isRenderingLogicalPixelViewportOverlay;
     bool isLightweightRenderingBeingProcessed;
@@ -480,8 +483,8 @@ public:
         // enclosing the object of this entry
         float minTransparency;
 
-        // True if the entry is rendered by the full lighting program, which
-        // supports the fragment rejection required by the depth peeling
+        // True if the shader used by the entry supports the fragment rejection
+        // required by the depth peeling
         bool isDepthPeelable;
 
         /*
@@ -700,6 +703,7 @@ public:
     template<class ShaderProgramType>
     void pushProgram(unique_ptr<ShaderProgramType>& program);
     void popProgram();
+    Vector3f getPickColor(int pickIndex) const;
     void setPickColor(int pickIndex);
     void pushPickNode(SgNode* node);
     int pushPickEndNode(SgNode* node);
@@ -742,6 +746,12 @@ public:
     void writePlotColorBuffer(SgPlot* plot, VertexResource* resource, size_t n);
     void renderLineSet(SgLineSet* lineSet);
     void renderText(SgText* text);
+#ifdef CNOID_ENABLE_FREE_TYPE
+    TextResource* prepareTextResource(SgText* text, GLFreeType& freeType);
+    void renderTextMain(
+        SgText* text, TextResource* resource, GLFreeType& freeType,
+        const Affine3& modelTransform, int pickIndex, float opacity);
+#endif
     void renderPolygonDrawStyle(SgPolygonDrawStyle* style);
     void renderTransparentGroup(SgTransparentGroup* transparentGroup);
     void renderOverlay(SgOverlay* overlay);
@@ -973,6 +983,7 @@ void GLSLSceneRenderer::Impl::initialize()
     isShadowCastingAvailable = true;
     isWorldLightShadowEnabled = false;
     isRenderingShadowMap = false;
+    isRenderingDepthPeeling = false;
     hasViewFrustumCorners = false;
     isShadowCasterBBoxUpdateEnabled = false;
     needToUpdateShadowCasterBBox = false;
@@ -1346,6 +1357,7 @@ bool GLSLSceneRenderer::Impl::initializeGLForRendering()
         shadedPointProgram->initialize();
         thickLineProgram->initialize();
         textProgram->setTextureUnit(ImageTextureUnit);
+        textProgram->setDepthPeelingTextureUnit(PeeledDepthTextureUnit);
         textProgram->initialize();
         outlineProgram->initialize();
         minimumLightingProgram->initialize();
@@ -2697,8 +2709,7 @@ void GLSLSceneRenderer::Impl::renderTransparentObjects(bool isDepthPeelingAllowe
     /*
       The depth peeling gives the exactly correct result of the transparent object
       rendering even if the transparent objects intersect one another. It requires
-      the fragment rejection implemented in the full lighting program, so it is only
-      applied when the entries are rendered by that program. The remaining entries
+      fragment rejection in each entry's shader. The remaining entries
       are rendered by the back-to-front sorted alpha blending, which is also used
       as the fallback when the depth peeling is not available.
     */
@@ -2709,8 +2720,7 @@ void GLSLSceneRenderer::Impl::renderTransparentObjects(bool isDepthPeelingAllowe
 
     bool depthPeelingDone = false;
     if(isDepthPeelingAllowed && hasDepthPeelableEntries && isDepthPeelingMode &&
-       !isRenderingPickingImage &&
-       currentProgram == fullLightingProgram.get()){
+       !isRenderingPickingImage){
         if(initializeDepthPeelingResources()){
             renderTransparentObjectsWithDepthPeeling();
             depthPeelingDone = true;
@@ -3069,6 +3079,7 @@ void GLSLSceneRenderer::Impl::renderTransparentObjectsWithDepthPeeling()
       the pipelining between the CPU and the GPU.
     */
     const int maxNumLayers = static_cast<int>(depthPeelingLayerTextures.size());
+    isRenderingDepthPeeling = true;
 
     for(int i=0; i < maxNumLayers; ++i){
 
@@ -3130,6 +3141,8 @@ void GLSLSceneRenderer::Impl::renderTransparentObjectsWithDepthPeeling()
         }
     }
 
+    isRenderingDepthPeeling = false;
+    fullLightingProgram->glslProgram().use();
     fullLightingProgram->setDepthPeelingEnabled(false);
 
     // Composite the extracted layers over the scene in back-to-front order.
@@ -3162,7 +3175,9 @@ void GLSLSceneRenderer::Impl::renderTransparentObjectsWithDepthPeeling()
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
 
-    fullLightingProgram->glslProgram().use();
+    if(currentProgram){
+        currentProgram->glslProgram().use();
+    }
 }
 
 
@@ -3352,7 +3367,7 @@ const Vector3& GLSLSceneRenderer::pickedPoint() const
 }
 
 
-void GLSLSceneRenderer::Impl::setPickColor(int pickIndex)
+Vector3f GLSLSceneRenderer::Impl::getPickColor(int pickIndex) const
 {
     Vector3f color;
     int id = pickIndex + 1;
@@ -3362,7 +3377,13 @@ void GLSLSceneRenderer::Impl::setPickColor(int pickIndex)
     if(isPickingImageOutputEnabled){
         color[2] = 1.0f;
     }
-    currentSolidColorProgram->setColor(color);
+    return color;
+}
+
+
+void GLSLSceneRenderer::Impl::setPickColor(int pickIndex)
+{
+    currentSolidColorProgram->setColor(getPickColor(pickIndex));
 }
 
 
@@ -3664,8 +3685,9 @@ void GLSLSceneRenderer::Impl::renderShape(SgShape* shape)
                 int matrixIndex = modelMatrixBuffer.size();
                 modelMatrixBuffer.push_back(modelMatrixStack.back());
                 auto pickIndex = pushPickEndNode(shape);
+                bool isDepthPeelable = (currentProgram == fullLightingProgram.get());
                 addTransparentRenderingEntry(
-                    modelMatrixStack.back(), mesh->boundingBox(), true,
+                    modelMatrixStack.back(), mesh->boundingBox(), isDepthPeelable,
                     [this, shapePtr, matrixIndex, pickIndex](){
                         renderShapeMain(shapePtr, modelMatrixBuffer[matrixIndex], pickIndex); });
                 popPickNode();
@@ -4941,7 +4963,53 @@ void GLSLSceneRenderer::Impl::renderText(SgText* text)
 {
 #ifdef CNOID_ENABLE_FREE_TYPE
 
+    if(!isRenderingVisibleImage && !isRenderingPickingImage){
+        return;
+    }
+
     GLFreeType& freeType = freeTypeForText(text);
+    TextResourcePtr resource = prepareTextResource(text, freeType);
+
+    if(resource->numVertices == 0){
+        return;
+    }
+
+    float opacity = 1.0f - minTransparency;
+
+    if(isRenderingPickingImage){
+        auto pickIndex = pushPickEndNode(text);
+        renderTextMain(
+            text, resource, freeType, modelMatrixStack.back(), pickIndex, opacity);
+        popPickNode();
+
+    } else if(isRenderingViewportOverlay){
+        Affine3 M = modelMatrixStack.back();
+        if(!isRenderingLogicalPixelViewportOverlay){
+            M.linear() *= self->devicePixelRatio();
+        }
+        ScopedTransparentRendering transparentRendering(true);
+        renderTextMain(text, resource, freeType, M, 0, opacity);
+
+    } else {
+        SgTextPtr textPtr = text;
+        GLFreeType* freeTypePtr = &freeType;
+        int matrixIndex = modelMatrixBuffer.size();
+        modelMatrixBuffer.push_back(modelMatrixStack.back());
+        addTransparentRenderingEntry(
+            modelMatrixStack.back(), resource->boundingBox, true,
+            [this, textPtr, resource, freeTypePtr, matrixIndex, opacity](){
+                renderTextMain(
+                    textPtr, resource, *freeTypePtr,
+                    modelMatrixBuffer[matrixIndex], 0, opacity); });
+    }
+
+#endif
+}
+
+
+#ifdef CNOID_ENABLE_FREE_TYPE
+TextResource* GLSLSceneRenderer::Impl::prepareTextResource(SgText* text, GLFreeType& freeType)
+{
     auto resource = getOrCreateGLResource<TextResource>(text);
 
     {
@@ -4954,6 +5022,10 @@ void GLSLSceneRenderer::Impl::renderText(SgText* text)
             freeType.setText(text->text(), text->textHeight());
             auto& vertices = freeType.vertices();
             resource->numVertices = vertices.size();
+            resource->boundingBox.clear();
+            for(auto& vertex : vertices){
+                resource->boundingBox.expandBy(vertex.x, vertex.y, 0.0);
+            }
             if(!vertices.empty()){
                 glBindBuffer(GL_ARRAY_BUFFER, resource->vbo);
                 glVertexAttribPointer((GLuint)0, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
@@ -4964,28 +5036,37 @@ void GLSLSceneRenderer::Impl::renderText(SgText* text)
         }
     }
 
-    if(resource->numVertices > 0){
-        pushProgram(textProgram);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glActiveTexture(GL_TEXTURE0 + ImageTextureUnit);
-        glBindTexture(GL_TEXTURE_2D, freeType.textureId());
-        glBindSampler(ImageTextureUnit, freeType.samplerId());
-        if(isRenderingViewportOverlay && !isRenderingLogicalPixelViewportOverlay){
-            Affine3 M = modelMatrixStack.back();
-            M.linear() *= self->devicePixelRatio();
-            textProgram->setTransform(PV, viewTransform, M, nullptr);
-        } else {
-            textProgram->setTransform(PV, viewTransform, modelMatrixStack.back(), nullptr);
-        }
+    return resource;
+}
+
+
+void GLSLSceneRenderer::Impl::renderTextMain
+(SgText* text, TextResource* resource, GLFreeType& freeType,
+ const Affine3& modelTransform, int pickIndex, float opacity)
+{
+    pushProgram(textProgram);
+    glActiveTexture(GL_TEXTURE0 + ImageTextureUnit);
+    glBindTexture(GL_TEXTURE_2D, freeType.textureId());
+    glBindSampler(ImageTextureUnit, freeType.samplerId());
+    textProgram->setTransform(PV, viewTransform, modelTransform, nullptr);
+
+    if(isRenderingPickingImage){
+        textProgram->setDepthPeelingEnabled(false, isReversedDepthBufferActive);
+        textProgram->setColor(getPickColor(pickIndex));
+        textProgram->setPickingEnabled(true);
+    } else {
+        textProgram->setPickingEnabled(false);
+        textProgram->setDepthPeelingEnabled(
+            isRenderingDepthPeeling, isReversedDepthBufferActive);
         textProgram->setColor(text->color());
-        glDrawArrays(GL_TRIANGLES, 0, resource->numVertices);
-        glDisable(GL_BLEND);
-        popProgram();
+        textProgram->setOpacity(opacity);
     }
 
-#endif
+    glBindVertexArray(resource->vao);
+    glDrawArrays(GL_TRIANGLES, 0, resource->numVertices);
+    popProgram();
 }
+#endif
 
 
 void GLSLSceneRenderer::Impl::renderPolygonDrawStyle(SgPolygonDrawStyle* style)
