@@ -111,3 +111,6 @@ msgstr ""
 
 msgid "Background execution"
 msgstr "バックグラウンド実行"
+
+msgid "Individual namespace"
+msgstr "独立名前空間"
