@@ -110,7 +110,7 @@ bool readAGXVehicleContinuousTrackDevice(StdBodyLoader* loader, const Mapping* i
                desc.minStabilizingHingeNormalForce);
     info->read({ "stabilizing_hinge_friction_parameter", "stabilizingHingeFrictionParameter" },
                desc.stabilizingHingeFrictionParameter);
-    info->read({ "nodes_to_wheels_merge_treshold", "nodesToWheelsMergeThreshold" },
+    info->read({ "nodes_to_wheels_merge_threshold", "nodes_to_wheels_merge_treshold", "nodesToWheelsMergeThreshold" },
                desc.nodesToWheelsMergeThreshold);
     info->read({ "nodes_to_wheels_split_threshold", "nodesToWheelsSplitThreshold" },
                desc.nodesToWheelsSplitThreshold);
@@ -123,7 +123,7 @@ bool readAGXVehicleContinuousTrackDevice(StdBodyLoader* loader, const Mapping* i
                desc.lockToReachMergeConditionCompliance);
     info->read({ "lock_to_reach_merge_condition_spook_damping", "lockToReachMergeConditionSpookDamping" },
                desc.lockToReachMergeConditionSpookDamping);
-    info->read({ "max_angle_merge_condition" "maxAngleMergeCondition" }, desc.maxAngleMergeCondition);
+    info->read({ "max_angle_merge_condition", "maxAngleMergeCondition" }, desc.maxAngleMergeCondition);
     info->read("material", desc.materialName);
 
     desc.nodeShape = dynamic_cast<SgShape*>(       
