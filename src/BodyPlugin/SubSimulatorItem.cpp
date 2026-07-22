@@ -56,6 +56,12 @@ void SubSimulatorItem::finalizeSimulation()
 }
 
 
+bool SubSimulatorItem::isApplicableToLogPlayback() const
+{
+    return false;
+}
+
+
 void SubSimulatorItem::doPutProperties(PutPropertyFunction& putProperty)
 {
     putProperty(_("Enabled"), isEnabled(), [&](bool on){ return setEnabled(on); });

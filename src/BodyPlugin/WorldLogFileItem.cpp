@@ -1577,10 +1577,12 @@ int WorldLogFileItem::Impl::replaceWithArchiveItems(Item* item, ItemToItemMap& o
            !item->isSubItem() &&
            item->filePath().empty() &&
            !dynamic_cast<SimulatorItem*>(item) &&
-           !dynamic_cast<SubSimulatorItem*>(item) &&
            !dynamic_cast<ControllerItem*>(item))
         {
-            archiveItem = item;
+            auto subSimulatorItem = dynamic_cast<SubSimulatorItem*>(item);
+            if(!subSimulatorItem || subSimulatorItem->isApplicableToLogPlayback()){
+                archiveItem = item;
+            }
         }
     }
     if(archiveItem){

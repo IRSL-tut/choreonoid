@@ -26,6 +26,15 @@ public:
     virtual bool initializeSimulation(SimulatorItem* simulatorItem);
     virtual void finalizeSimulation();
 
+    /**
+       Override this function to return true if the item also functions during
+       the playback of recorded simulation results without an active simulation,
+       such as an item that visualizes device states restored from a log.
+       Items returning true are retained in the projects saved as log playback
+       archives by WorldLogFileItem.
+    */
+    virtual bool isApplicableToLogPlayback() const;
+
 protected:
     virtual void doPutProperties(PutPropertyFunction& putProperty);
     virtual bool store(Archive& archive);
