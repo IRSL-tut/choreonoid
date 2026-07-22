@@ -501,11 +501,17 @@ void WorldLogFileItem::initializeClass(ExtensionManager* ext)
     ItemManager& im = ext->itemManager();
     im.registerClass<WorldLogFileItem>(N_("WorldLogFileItem"));
     im.addCreationPanel<WorldLogFileItem>();
-    im.addLoader<WorldLogFileItem>(
-        _("World Log"), "CNOID-WORLD-LOG", "log",
+    auto loadLogFile =
         [](WorldLogFileItem* item, const std::string& filename, std::ostream&, Item*){
             return item->impl->setLogFile(filename, true);
-        });
+        };
+    im.addLoader<WorldLogFileItem>(_("World Log"), "CNOID-WORLD-LOG", "log", loadLogFile);
+
+    // A log file does not necessarily have the ".log" extension. The following
+    // registration shares the caption with the above one so that it appears as
+    // an additional name filter for loading a log file with any extension in
+    // the same file dialog.
+    im.addLoader<WorldLogFileItem>(_("World Log"), "CNOID-WORLD-LOG", "*", loadLogFile);
 
     ItemTreeView::customizeContextMenu<WorldLogFileItem>(
         [](WorldLogFileItem* item, MenuManager& menuManager, ItemFunctionDispatcher menuFunction){
