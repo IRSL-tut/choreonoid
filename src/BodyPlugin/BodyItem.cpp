@@ -32,10 +32,12 @@
 #include <cnoid/CloneMap>
 #include <cnoid/Format>
 #include <cnoid/MessageOut>
+#include <cnoid/UTF8>
 #include <bitset>
 #include <algorithm>
 #include <vector>
 #include <iostream>
+#include <filesystem>
 #include "gettext.h"
 
 using namespace std;
@@ -2523,6 +2525,44 @@ RenderableItemUtil* BodyItem::Impl::getOrCreateRenderableItemUtil()
 }
 
 
+namespace {
+
+/*
+   The "package://" URIs in model files such as URDF are resolved without the ROS
+   environment by finding a package.xml file in the ancestor directories of the
+   model file being loaded. To keep this self-contained resolution available for
+   the file set copied by ProjectPacker or similar archiving tools, the nearest
+   package.xml file of each dependent file is added to the dependent files.
+*/
+void addRosPackageFiles(std::vector<std::string>& io_files)
+{
+    vector<string> packageFiles;
+    for(auto& file : io_files){
+        std::filesystem::path dir(fromUTF8(file));
+        dir = dir.parent_path();
+        while(!dir.empty()){
+            auto packageFilePath = dir / "package.xml";
+            std::error_code ec;
+            if(std::filesystem::exists(packageFilePath, ec)){
+                auto packageFile = toUTF8(packageFilePath.generic_string());
+                if(std::find(packageFiles.begin(), packageFiles.end(), packageFile) == packageFiles.end()){
+                    packageFiles.push_back(packageFile);
+                }
+                break;
+            }
+            auto parent = dir.parent_path();
+            if(parent == dir){
+                break;
+            }
+            dir = parent;
+        }
+    }
+    io_files.insert(io_files.end(), packageFiles.begin(), packageFiles.end());
+}
+
+}
+
+
 void BodyItem::getDependentFiles(std::vector<std::string>& out_files)
 {
     auto& fp = filePath();
@@ -2536,6 +2576,7 @@ void BodyItem::getDependentFiles(std::vector<std::string>& out_files)
             util->getSceneFilesForArchiving(link->collisionShape(), out_files);
         }
     }
+    addRosPackageFiles(out_files);
 }
 
 
