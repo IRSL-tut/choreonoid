@@ -775,7 +775,22 @@ bool App::Impl::eventFilter(QObject* watched, QEvent* event)
             event->ignore();
             return true;
         }
-        if(ctrl_c_pressed || exitRequested || ProjectManager::instance()->tryToCloseProject()){
+        bool doShutdown;
+        if(ctrl_c_pressed || exitRequested){
+            doShutdown = true;
+            /*
+              The confirmation dialog cannot be used in this case, but the directory
+              extracted from a project pack should still be removed if it does not
+              have any modifications.
+            */
+            ProjectManager::instance()->confirmToRemoveUnpackedProjectPack(false);
+        } else {
+            doShutdown = ProjectManager::instance()->tryToCloseProject();
+            if(doShutdown){
+                ProjectManager::instance()->confirmToRemoveUnpackedProjectPack();
+            }
+        }
+        if(doShutdown){
             // Keep the native window alive until all teardown operations that
             // can update views have been completed.
             event->ignore();
@@ -832,6 +847,10 @@ void App::Impl::performShutdown(bool areGuiUpdatesAvailable)
 
     UnifiedEditHistory::instance()->terminateRecording();
     RootItem::instance()->clearChildren();
+
+    // The removal must be done after the item tree is cleared so that the files
+    // in the extracted directory are not locked by the items using them
+    ProjectManager::instance()->removeUnpackedProjectPackIfDecided();
 
     pluginManager->finalizePlugins();
     ext->deleteManagedObjects();

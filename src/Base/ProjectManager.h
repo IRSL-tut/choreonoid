@@ -40,6 +40,32 @@ public:
     ItemList<> loadProject(const std::string& filename, Item* parentItem = nullptr);
     
     void loadBuiltinProject(const std::string& resourceFile, Item* parentItem = nullptr);
+
+    /**
+       Loads a project pack (zip) file. The pack is extracted into the directory
+       where the pack file is located, and the project file contained in the pack
+       is loaded.
+    */
+    bool loadProjectPack(const std::string& filename);
+
+    /**
+       \internal Determines whether to remove the directory extracted from the last project
+       pack. Note that this function just stores the decision and does not remove the
+       directory. The actual removal is performed by the removeUnpackedProjectPackIfDecided
+       function, which must be called after the item tree is cleared so that the files in
+       the directory are released by the items using them.
+       \param doConfirmDialog Use the confirmation dialog when the directory contents have
+       been modified. Set false to this parameter when the dialog is not available such as
+       in the application termination by Ctrl+C. In that case the modified directory is kept.
+    */
+    void confirmToRemoveUnpackedProjectPack(bool doConfirmDialog = true);
+
+    /**
+       \internal Actually removes the directory extracted from the last project pack only
+       when the removal has been decided by the confirmToRemoveUnpackedProjectPack function.
+    */
+    void removeUnpackedProjectPackIfDecided();
+
     bool isLoadingProject() const;
     bool saveProject(const std::string& filename, Item* item = nullptr);
     bool saveProjectAsBackup(const std::string& filename, Item* item = nullptr);

@@ -6,16 +6,19 @@
 #include "ToolBar.h"
 #include "Archive.h"
 #include "ItemTreeArchiver.h"
+#include "ProjectPacker.h"
 #include "ExtensionManager.h"
 #include "OptionManager.h"
 #include "AppConfig.h"
 #include "AppUtil.h"
 #include "FileDialog.h"
 #include "MainWindow.h"
+#include "MessageView.h"
 #include "CheckBox.h"
 #include <cnoid/MessageOut>
 #include <cnoid/YAMLReader>
 #include <cnoid/YAMLWriter>
+#include <cnoid/FileUtil>
 #include <cnoid/FilePathVariableProcessor>
 #include <cnoid/ExecutablePath>
 #include <cnoid/UTF8>
@@ -84,6 +87,12 @@ public:
     void onInputFileOptionsParsed(std::vector<std::string>& inputFiles);
     bool onSaveDialogAboutToFinish(int result);
     bool confirmToCloseProject(bool isAboutToLoadNewProject);
+    bool loadProjectPack(const std::string& filename, bool doConfirmOverwrite, bool isInvokingApplication);
+    void storeUnpackedProjectPackState();
+    bool checkIfUnpackedProjectPackModified();
+    void confirmToRemoveUnpackedProjectPack(const std::string& nextProjectFile, bool doConfirmDialog);
+    void removeUnpackedProjectPackIfDecided();
+    void clearUnpackedProjectPackInfo();
     static bool checkValidItemExistence(Item* item);
     static bool checkIfItemsConsistentWithProjectArchive(Item* item, bool isTopItem = true);
 
@@ -93,10 +102,23 @@ public:
         std::function<void(const Archive&)> restoreFunction);
 
     ProjectManager* self;
+    MessageOut* mout;
     ItemTreeArchiver itemTreeArchiver;
     string currentProjectName;
     string currentProjectFile;
     string currentProjectDirectory;
+
+    // Information on the project loaded from a project pack (zip) file
+    string loadedProjectPackFile;
+    filesystem::path unpackedProjectPackDirPath; // absolute path of the extracted directory
+
+    // The state (time stamp and size) of each file and directory in the extracted
+    // directory just after the extraction, which is used to check if the directory
+    // contents are modified after the extraction
+    typedef map<filesystem::path, pair<filesystem::file_time_type, uintmax_t>> DirectoryStateMap;
+    DirectoryStateMap unpackedProjectPackState;
+
+    bool doRemoveUnpackedProjectPackDir;
 
     struct ArchiverInfo {
         std::function<bool(Archive&)> storeFunction;
@@ -189,8 +211,10 @@ ProjectManager::ProjectManager()
 ProjectManager::Impl::Impl(ProjectManager* self)
     : self(self)
 {
+    mout = MessageOut::master();
     saveDialog = nullptr;
     isMainInstance = false;
+    doRemoveUnpackedProjectPackDir = false;
 }
 
 
@@ -318,6 +342,259 @@ void ProjectManager::Impl::clearProject()
     currentProjectName.clear();
     currentProjectFile.clear();
     mainWindow->setProjectTitle("");
+
+    // The removal must be done after the item tree is cleared so that the files
+    // in the extracted directory are not locked by the items using them
+    removeUnpackedProjectPackIfDecided();
+}
+
+
+bool ProjectManager::loadProjectPack(const std::string& filename)
+{
+    return impl->loadProjectPack(filename, false, false);
+}
+
+
+bool ProjectManager::Impl::loadProjectPack
+(const std::string& filename, bool doConfirmOverwrite, bool isInvokingApplication)
+{
+    ProjectPacker packer;
+    string topDirName;
+    if(!packer.checkProjectPackFile(filename, &topDirName)){
+        return false; // The error message is put by the packer
+    }
+
+    std::error_code ec;
+    auto packFilePath = filesystem::absolute(fromUTF8(filename), ec);
+    if(ec){
+        return false;
+    }
+    auto unpackDirPath = (packFilePath.parent_path() / fromUTF8(topDirName)).lexically_normal();
+    bool isExistingDirectory = filesystem::exists(unpackDirPath, ec);
+
+    if(isExistingDirectory){
+        if(doConfirmOverwrite){
+            bool confirmed = showWarningDialog(
+                formatR(_("The directory \"{0}\" already exists. "
+                          "Do you want to overwrite it by extracting the project pack?"),
+                        toUTF8(unpackDirPath.string())),
+                true);
+            if(!confirmed){
+                return false;
+            }
+        } else {
+            mout->putErrorln(
+                formatR(_("The directory \"{0}\" already exists, so the project pack \"{1}\" cannot be "
+                          "extracted. Remove the directory or directly load the project file in it."),
+                        toUTF8(unpackDirPath.string()), filename));
+            return false;
+        }
+    }
+
+    mout->putln(
+        formatR(_("Project pack \"{0}\" is extracted to \"{1}\", and the project in the directory is loaded ..."),
+                filename, toUTF8(unpackDirPath.string())));
+
+    if(!packer.unpackProject(filename)){
+        return false;
+    }
+    auto projectFile = packer.unpackedProjectFile();
+    if(projectFile.empty()){
+        mout->putErrorln(
+            formatR(_("The project pack file \"{0}\" does not include a project file."), filename));
+        return false;
+    }
+
+    if(loadProject(projectFile, nullptr, isInvokingApplication, false, true).empty()){
+        return false;
+    }
+
+    if(!isExistingDirectory){
+        /*
+          Only a directory newly created by the extraction is recorded as the
+          target of the removal at the project close. A directory that existed
+          before the extraction may contain files not related to the project
+          pack, and it must not be removed.
+        */
+        loadedProjectPackFile = filename;
+        unpackedProjectPackDirPath = unpackDirPath;
+        doRemoveUnpackedProjectPackDir = false;
+        storeUnpackedProjectPackState();
+    }
+
+    return true;
+}
+
+
+static void scanDirectoryState
+(const filesystem::path& dirPath, ProjectManager::Impl::DirectoryStateMap& out_state)
+{
+    std::error_code ec;
+    filesystem::recursive_directory_iterator it(dirPath, ec);
+    filesystem::recursive_directory_iterator end;
+    while(!ec && it != end){
+        /*
+          The file states must be obtained by the path-based functions instead of
+          the corresponding member functions of the directory entry. The member
+          functions may return the values cached in the directory enumeration,
+          and the cached values of the files just written may be stale on Windows
+          because NTFS updates the directory entries lazily. The stale values
+          cause false detection of the directory modification.
+        */
+        auto& path = it->path();
+        uintmax_t size = 0;
+        if(filesystem::is_regular_file(path, ec)){
+            size = filesystem::file_size(path, ec);
+        }
+        out_state[path] = make_pair(filesystem::last_write_time(path, ec), size);
+        it.increment(ec);
+    }
+}
+
+
+void ProjectManager::Impl::storeUnpackedProjectPackState()
+{
+    unpackedProjectPackState.clear();
+    scanDirectoryState(unpackedProjectPackDirPath, unpackedProjectPackState);
+}
+
+
+bool ProjectManager::Impl::checkIfUnpackedProjectPackModified()
+{
+    DirectoryStateMap currentState;
+    scanDirectoryState(unpackedProjectPackDirPath, currentState);
+
+    if(currentState == unpackedProjectPackState){
+        return false;
+    }
+
+    // The detected changes are reported to make the reason of the modification
+    // detection clear for the user
+    for(auto& kv : currentState){
+        auto it = unpackedProjectPackState.find(kv.first);
+        if(it == unpackedProjectPackState.end()){
+            mout->putln(
+                formatR(_("Change in the extracted directory: \"{0}\" has been added."),
+                        toUTF8(kv.first.string())));
+        } else if(it->second != kv.second){
+            mout->putln(
+                formatR(_("Change in the extracted directory: \"{0}\" has been modified."),
+                        toUTF8(kv.first.string())));
+        }
+    }
+    for(auto& kv : unpackedProjectPackState){
+        if(currentState.find(kv.first) == currentState.end()){
+            mout->putln(
+                formatR(_("Change in the extracted directory: \"{0}\" has been removed."),
+                        toUTF8(kv.first.string())));
+        }
+    }
+
+    return true;
+}
+
+
+void ProjectManager::confirmToRemoveUnpackedProjectPack(bool doConfirmDialog)
+{
+    impl->confirmToRemoveUnpackedProjectPack(string(), doConfirmDialog);
+}
+
+
+void ProjectManager::Impl::confirmToRemoveUnpackedProjectPack
+(const std::string& nextProjectFile, bool doConfirmDialog)
+{
+    if(unpackedProjectPackDirPath.empty()){
+        return;
+    }
+    std::error_code ec;
+    if(!filesystem::exists(unpackedProjectPackDirPath, ec)){
+        clearUnpackedProjectPackInfo();
+        return;
+    }
+    if(!nextProjectFile.empty()){
+        auto nextPath = filesystem::absolute(fromUTF8(nextProjectFile), ec);
+        if(!ec && checkIfSubFilePath(nextPath.lexically_normal(), unpackedProjectPackDirPath)){
+            // Reloading a project in the same project pack; the extracted directory is kept in use
+            return;
+        }
+    }
+
+    if(!checkIfUnpackedProjectPackModified()){
+        /*
+          The extracted directory can be removed without any confirmation because
+          all the contents are retained in the project pack file when there are
+          no modifications in the directory.
+        */
+        doRemoveUnpackedProjectPackDir = true;
+        return;
+    }
+
+    auto packName = toUTF8(filesystem::path(fromUTF8(loadedProjectPackFile)).filename().string());
+    auto dirString = toUTF8(unpackedProjectPackDirPath.string());
+
+    if(!doConfirmDialog || AppUtil::isNoWindowMode() || AppUtil::isTestMode()){
+        // The directory is kept because the confirmation dialog cannot be used
+        mout->putln(
+            formatR(_("The files in the directory \"{0}\" extracted from the project pack \"{1}\" "
+                      "have been modified, so the directory is kept."),
+                    dirString, packName));
+        clearUnpackedProjectPackInfo();
+        return;
+    }
+
+    QMessageBox box(mainWindow);
+    box.setWindowTitle(_("Project pack"));
+    box.setIcon(QMessageBox::Question);
+    box.setText(
+        formatR(_("The files in the directory \"{0}\" extracted from the project pack \"{1}\" "
+                  "have been modified. Do you want to keep the directory?"),
+                dirString, packName).c_str());
+    auto keepButton = box.addButton(_("Keep"), QMessageBox::AcceptRole);
+    auto removeButton = box.addButton(_("Remove"), QMessageBox::DestructiveRole);
+    box.setDefaultButton(keepButton);
+    box.exec();
+    doRemoveUnpackedProjectPackDir = (box.clickedButton() == removeButton);
+
+    if(!doRemoveUnpackedProjectPackDir){
+        // The user decided to keep the directory
+        clearUnpackedProjectPackInfo();
+    }
+}
+
+
+void ProjectManager::removeUnpackedProjectPackIfDecided()
+{
+    impl->removeUnpackedProjectPackIfDecided();
+}
+
+
+void ProjectManager::Impl::removeUnpackedProjectPackIfDecided()
+{
+    if(doRemoveUnpackedProjectPackDir){
+        if(!unpackedProjectPackDirPath.empty()){
+            std::error_code ec;
+            filesystem::remove_all(unpackedProjectPackDirPath, ec);
+            if(ec){
+                mout->putWarningln(
+                    formatR(_("The directory \"{0}\" extracted from the project pack cannot be removed: {1}"),
+                            toUTF8(unpackedProjectPackDirPath.string()), toUTF8(ec.message())));
+            } else {
+                mout->putln(
+                    formatR(_("The directory \"{0}\" extracted from the project pack has been removed."),
+                            toUTF8(unpackedProjectPackDirPath.string())));
+            }
+        }
+        clearUnpackedProjectPackInfo();
+    }
+}
+
+
+void ProjectManager::Impl::clearUnpackedProjectPackInfo()
+{
+    loadedProjectPackFile.clear();
+    unpackedProjectPackDirPath.clear();
+    unpackedProjectPackState.clear();
+    doRemoveUnpackedProjectPackDir = false;
 }
 
 
@@ -366,8 +643,11 @@ ItemList<> ProjectManager::Impl::loadProject
     auto mout = MessageOut::master();
     
     ItemList<> topLevelItems;
-    
+
     if(doClearExistingProject){
+        if(!unpackedProjectPackDirPath.empty()){
+            confirmToRemoveUnpackedProjectPack(filename, true);
+        }
         clearProject();
         mout->flush();
         sigProjectCleared();
@@ -844,8 +1124,12 @@ void ProjectManager::Impl::onInputFileOptionsParsed(std::vector<std::string>& in
 {
     auto it = inputFiles.begin();
     while(it != inputFiles.end()){
-        if(filesystem::path(fromUTF8(*it)).extension().string() == ".cnoid"){
+        auto extension = filesystem::path(fromUTF8(*it)).extension().string();
+        if(extension == ".cnoid"){
             loadProject(*it, nullptr, true, false, false);
+            it = inputFiles.erase(it);
+        } else if(extension == ".zip"){
+            loadProjectPack(*it, false, true);
             it = inputFiles.erase(it);
         } else {
             ++it;
@@ -869,6 +1153,7 @@ bool ProjectManager::showDialogToLoadProject()
 
     QStringList filters;
     filters << _("Project files (*.cnoid)");
+    filters << _("Project pack files (*.zip)");
     filters << _("Any files (*)");
     dialog.setNameFilters(filters);
 
@@ -877,8 +1162,12 @@ bool ProjectManager::showDialogToLoadProject()
     bool loaded = false;
     if(dialog.exec()){
         string filename = dialog.selectedFiles().front().toStdString();
-        if(!impl->loadProject(filename, nullptr, false, false, true).empty()){
-            loaded = true;
+        if(filesystem::path(fromUTF8(filename)).extension().string() == ".zip"){
+            loaded = impl->loadProjectPack(filename, true, false);
+        } else {
+            if(!impl->loadProject(filename, nullptr, false, false, true).empty()){
+                loaded = true;
+            }
         }
     }
 

@@ -1748,6 +1748,15 @@ msgstr "プロジェクトパックの展開先ディレクトリ \"{0}\" を削
 msgid "The temporary directory \"{0}\" for packing cannot be removed: {1}"
 msgstr "パック用の一時ディレクトリ \"{0}\" を削除できません： {1}"
 
+msgid "Change in the extracted directory: \"{0}\" has been added."
+msgstr "展開先ディレクトリ内の変化： \"{0}\" が追加されています．"
+
+msgid "Change in the extracted directory: \"{0}\" has been modified."
+msgstr "展開先ディレクトリ内の変化： \"{0}\" が変更されています．"
+
+msgid "Change in the extracted directory: \"{0}\" has been removed."
+msgstr "展開先ディレクトリ内の変化： \"{0}\" が削除されています．"
+
 msgid ""
 "The current project has not been saved yet. Do you want to save it as a project file before "
 "loading a new project?"
