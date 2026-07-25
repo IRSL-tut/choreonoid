@@ -2,20 +2,18 @@
 #include "SimulatorItem.h"
 #include "SubSimulatorItem.h"
 #include "ControllerItem.h"
-#include "BodyItemFileIO.h"
 #include <cnoid/MainWindow>
 #include <cnoid/ItemManager>
 #include <cnoid/MenuManager>
 #include <cnoid/ProjectManager>
+#include <cnoid/ProjectPacker>
+#include <cnoid/RootItem>
 #include <cnoid/WorldItem>
 #include <cnoid/BodyItem>
-#include <cnoid/StdBodyWriter>
 #include <cnoid/SceneItem>
-#include <cnoid/SceneItemFileIO>
 #include <cnoid/FolderItem>
 #include <cnoid/ItemTreeView>
 #include <cnoid/MessageView>
-#include <cnoid/TimeBar>
 #include <cnoid/TimeSyncItemEngine>
 #include <cnoid/Timer>
 #include <cnoid/PutPropertyFunction>
@@ -27,10 +25,11 @@
 #include <filesystem>
 #include <QDateTime>
 #include <QElapsedTimer>
+#include <QMessageBox>
 #include <fstream>
 #include <stack>
 #include <map>
-#include <regex>
+#include <algorithm>
 #include "gettext.h"
 
 using namespace std;
@@ -380,15 +379,32 @@ public:
 };
 typedef ref_ptr<WorldLogFileEngine> WorldLogFileEnginePtr;
 
-typedef map<ItemPtr, ItemPtr> ItemToItemMap;
-
-struct ArchiveInfo
+/**
+   The packer to save the current project as a log playback archive.
+   The model files and the log file are copied into the archive by the
+   ProjectPacker functions, and the items only used for executing a
+   simulation are removed from the archived project.
+*/
+class LogPlaybackArchivePacker : public ProjectPacker
 {
-    ItemToItemMap orgItemToArchiveItemMap;
-    filesystem::path archiveDirPath;
-    BodyItemBodyFileIO* bodyFileIO;
-    SceneItemStdSceneFileExporter* stdSceneFileExporter;
-    map<string, int> baseNameCounterMap;
+public:
+    LogPlaybackArchivePacker(WorldLogFileItem* logFileItem, const std::string& logFile);
+    bool analyzeItemTree();
+
+protected:
+    virtual void getItemDependentFiles(Item* item, std::vector<std::string>& out_files) override;
+    virtual Item* getPackingItem(Item* item) override;
+
+private:
+    enum Disposition { Keep, ReplaceWithFolder, Remove };
+
+    int analyzeSubTree(Item* item);
+    void checkRosPackageDirectoryConsistency(Item* item, const std::vector<std::string>& files);
+
+    WorldLogFileItem* logFileItem;
+    string logFile;
+    map<Item*, Disposition> dispositionMap;
+    int numModelItems;
 };
 
 }
@@ -482,9 +498,6 @@ public:
     void exchangeDeviceStateCacheArrays();
     void showPlaybackArchiveSaveDialog();
     void saveProjectAsPlaybackArchive(const string& filename);
-    int createArchiveItemMap(Item* item, ArchiveInfo& info);
-    ItemPtr createArchiveModelItem(Item* modelItem, ArchiveInfo& info, bool isBodyItem);
-    int replaceWithArchiveItems(Item* item, ItemToItemMap& orgItemToArchiveItemMap);
     WorldLogFileEngine* getOrCreateLogEngine();
     bool setLivePlaybackReadInterval(int interval);
     bool setLivePlaybackReadTimeout(double timeout);
@@ -729,7 +742,11 @@ bool WorldLogFileItem::Impl::readTopHeader()
         ifs.close();
     }
     readFilePath = filesystem::path(fromUTF8(getActualFilename()));
-    if(filesystem::exists(readFilePath)){
+    std::error_code ec;
+
+    // An empty log file is not corrupt; it is a log file whose data has not been
+    // recorded or transferred yet, and it is just treated as a log with no data
+    if(filesystem::exists(readFilePath, ec) && filesystem::file_size(readFilePath, ec) > 0){
         ifs.open(readFilePath.string(), ios::in | ios::binary);
         if(ifs.is_open()){
             readBuf.clear();
@@ -1336,34 +1353,106 @@ void WorldLogFileItem::showPlaybackArchiveSaveDialog()
 
 void WorldLogFileItem::Impl::showPlaybackArchiveSaveDialog()
 {
+    string actualFilename = getActualFilename();
+    if(actualFilename.empty()){
+        showWarningDialog(formatR(_("The log file of {0} is not specified."), self->displayName()));
+        return;
+    }
+    std::error_code ec;
+    auto logFilePath = filesystem::absolute(fromUTF8(actualFilename), ec);
+    bool logFileExists = filesystem::exists(logFilePath, ec);
+    if(!logFileExists || filesystem::file_size(logFilePath, ec) == 0){
+        if(!showWarningDialog(
+               formatR(_("The log file of {0} is empty or does not exist, so the archive will "
+                         "not contain any recorded log data. Do you want to save the archive "
+                         "anyway?"),
+                       self->displayName()),
+               true)){
+            return;
+        }
+    }
+
+    if(!showWarningDialog(
+           _("The current project is temporarily modified to create the archive, and it is "
+             "restored by reloading its project file after the archive is saved. Note that "
+             "the simulation results recorded in memory are lost by the reloading. "
+             "Do you want to continue?"),
+           true)){
+        return;
+    }
+
+    auto pm = ProjectManager::instance();
+
+    // The current project is temporarily modified for the archive during the packing,
+    // and it is restored by reloading the project file after the packing. Therefore
+    // the current project must have its project file in advance.
+    if(pm->currentProjectFile().empty()){
+        bool doSaveProject = showWarningDialog(
+            _("The current project has not been saved, and it must first be saved to create "
+              "the log playback archive. Do you want to save the project and continue?"),
+            true);
+        if(!doSaveProject || !pm->overwriteCurrentProject()){
+            return;
+        }
+    } else if(!ProjectManager::checkIfItemsConsistentWithProjectArchive()){
+        auto clicked = QMessageBox::question(
+            MainWindow::instance(), _("Log playback archive"),
+            _("The current project has been modified. Do you want to save the project "
+              "to restore it after creating the log playback archive?"),
+            QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes);
+        if(clicked == QMessageBox::Cancel){
+            return;
+        }
+        if(clicked == QMessageBox::Yes){
+            if(!pm->overwriteCurrentProject()){
+                return;
+            }
+        }
+    }
+
     FileDialog dialog;
     dialog.setWindowTitle(_("Save project as log playback archive"));
     dialog.setViewMode(QFileDialog::List);
     dialog.setFileMode(QFileDialog::AnyFile);
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+
+    // The overwrite confirmation is done by the own check below
+    dialog.setOption(QFileDialog::DontConfirmOverwrite);
+
     dialog.setLabelText(QFileDialog::Accept, _("Save"));
     dialog.setLabelText(QFileDialog::Reject, _("Cancel"));
     dialog.updatePresetDirectories(true);
 
-    QStringList filters;
-    filters << _("Project files (*.cnoid)");
-    filters << _("Any files (*)");
-    dialog.setNameFilters(filters);
+    // The archive is a product of the current project, so the directory of the
+    // current project file is used as the initial directory
+    dialog.setDirectory(pm->currentProjectDirectory());
 
-    auto logfile = toUTF8(filesystem::path(fromUTF8(getActualFilename())).stem().generic_string());
-    if(!logfile.empty()){
-        dialog.selectFile(QString("%1-log.cnoid").arg(logfile.c_str()));
+    dialog.setNameFilter(_("Log playback archive pack (*.zip)"));
+    dialog.fileDialog()->setDefaultSuffix("zip");
+
+    auto& projectName = pm->currentProjectName();
+    if(!projectName.empty()){
+        dialog.selectFile(QString("%1-log.zip").arg(projectName.c_str()));
     }
-        
+
     if(dialog.exec()){
         auto filenames = dialog.selectedFiles();
         string filename(filenames.at(0).toStdString());
         if(!filename.empty()){
-            bool confirmed = showWarningDialog(
-                _("Project replacement"),
-                _("The current project will be replaced with a new project for the log playback. "
-                  "Do you want to continue?"),
-                true);
-            if(confirmed){
+            filesystem::path path(fromUTF8(filename));
+            if(path.extension().string() != ".zip"){
+                filename += ".zip";
+                path = fromUTF8(filename);
+            }
+            std::error_code ec;
+            bool doSave = true;
+            if(filesystem::exists(path, ec)){
+                doSave = showWarningDialog(
+                    formatR(_("\"{0}\" already exists. Do you want to replace it?"),
+                            toUTF8(path.filename().string())),
+                    true);
+            }
+            if(doSave){
                 saveProjectAsPlaybackArchive(filename);
             }
         }
@@ -1377,230 +1466,258 @@ void WorldLogFileItem::saveProjectAsPlaybackArchive(const std::string& projectFi
 }
 
 
-void WorldLogFileItem::Impl::saveProjectAsPlaybackArchive(const string& projectFile)
+void WorldLogFileItem::Impl::saveProjectAsPlaybackArchive(const string& filename)
 {
+    // Keep this item alive because clearing the project for restoring the original
+    // project may release the item during this function execution
+    WorldLogFileItemPtr selfHolder = self;
+
     auto worldItem = self->findOwnerItem<WorldItem>();
     if(!worldItem){
         showWarningDialog(formatR(_("The world item of {0} is not found."), self->displayName()));
         return;
     }
 
-    ArchiveInfo info;
-
-    info.bodyFileIO = dynamic_cast<BodyItemBodyFileIO*>(BodyItem::bodyFileIO());
-    if(!info.bodyFileIO){
-        return;
-    }
-    info.stdSceneFileExporter =
-        dynamic_cast<SceneItemStdSceneFileExporter*>(SceneItem::stdSceneFileExporter());
-    if(!info.stdSceneFileExporter){
+    string actualFilename = getActualFilename();
+    if(actualFilename.empty()){
+        showWarningDialog(formatR(_("The log file of {0} is not specified."), self->displayName()));
         return;
     }
 
     std::error_code ec;
-
-    auto logFilePath = filesystem::absolute(fromUTF8(getActualFilename()), ec);
-    if(!filesystem::exists(logFilePath ,ec)){
-        showWarningDialog(formatR(_("Log file of {0} does not exist."), self->displayName()));
-        return;
+    auto logFilePath = filesystem::absolute(fromUTF8(actualFilename), ec);
+    bool logFileExists = filesystem::exists(logFilePath, ec);
+    if(!logFileExists || filesystem::file_size(logFilePath, ec) == 0){
+        mout->putWarningln(
+            formatR(_("The log file of {0} is empty or does not exist, so the archive does not "
+                      "contain any recorded log data."),
+                    self->displayName()));
     }
-
-    mout->putln(_("Creating the project for the log playback ..."));
-    
-    auto projectFilePath = filesystem::absolute(fromUTF8(projectFile), ec);
-    if(ec){
-        return;
-    }
-    if(!projectFilePath.has_extension()){
-        projectFilePath += ".cnoid";
-    }
-        
-    info.archiveDirPath = projectFilePath.parent_path() / projectFilePath.stem();
-    filesystem::create_directories(info.archiveDirPath, ec);
-    if(ec){
-        showWarningDialog(formatR(_("Archive directory \"{0}\" cannot be created: {1}"),
-                                  info.archiveDirPath.string(), ec.message()));
-        return;
-    }
-
-    info.bodyFileIO->bodyWriter()->setExtModelFileMode(StdBodyWriter::ReplaceWithObjModelFiles);
-    
-    if(createArchiveItemMap(worldItem, info) > 0){
-
-        filesystem::copy_file(
-            logFilePath, info.archiveDirPath / logFilePath.filename(),
-#if __cplusplus > 201402L            
-            filesystem::copy_options::overwrite_existing,
-#else
-            filesystem::copy_option::overwrite_if_exists,
-#endif
-            ec);
-        if(ec){
-            showWarningDialog(
-                formatR(_("Log file \"{0}\" cannot be copied to \"{1}\": {2}"),
-                        toUTF8(logFilePath.filename().string()),
-                        toUTF8(info.archiveDirPath.string()),
-                        ec.message()));
+    if(!logFileExists){
+        /*
+          An empty log file is created and included in the archive as a placeholder
+          so that the log file property of the archived project points to the file
+          to be filled later, for example, by the log file transfer for the remote
+          live playback.
+        */
+        ofstream emptyLogFile(logFilePath, ios::out | ios::binary);
+        if(!emptyLogFile.is_open()){
+            mout->putErrorln(
+                formatR(_("The empty log file \"{0}\" cannot be created."),
+                        toUTF8(logFilePath.string())));
             return;
         }
-        setLogFile(toUTF8((info.archiveDirPath / logFilePath.filename()).generic_string()));
-        isTimeStampSuffixEnabled = false;
-
-        auto rootItem = RootItem::instance();
-        info.orgItemToArchiveItemMap[rootItem] = rootItem;
-        info.orgItemToArchiveItemMap[worldItem] = worldItem;
-        info.orgItemToArchiveItemMap[self] = self;
-
-        if(replaceWithArchiveItems(rootItem, info.orgItemToArchiveItemMap)){
-            TimeBar::instance()->setTime(0.0);
-            self->setSelected(true);
-            ProjectManager::instance()->saveProject(toUTF8(projectFilePath.string()));
-        }
-    }
-}
-
-
-int WorldLogFileItem::Impl::createArchiveItemMap(Item* item, ArchiveInfo& info)
-{
-    int numModelItems = 0;
-    for(auto childItem = item->childItem(); childItem; childItem = childItem->nextItem()){
-        ItemPtr archiveChildItem;
-        bool isBodyItem = false;
-        ItemPtr modelItem = dynamic_cast<BodyItem*>(childItem);
-        if(modelItem){
-            isBodyItem = true;
-        } else {
-            modelItem = dynamic_cast<SceneItem*>(childItem);
-        }
-        if(modelItem){
-            auto archiveModelItem = createArchiveModelItem(modelItem, info, isBodyItem);
-            if(!archiveModelItem){
-                return -1;
-            }
-            ++numModelItems;
-            archiveChildItem = archiveModelItem;
-        }
-        int numSubTreeModelItems = createArchiveItemMap(childItem, info);
-        if(numSubTreeModelItems < 0){ // error
-            return -1;
-        }
-        numModelItems += numSubTreeModelItems;
-        if(archiveChildItem){
-            info.orgItemToArchiveItemMap[childItem] = archiveChildItem;
-        }
-    }
-    return numModelItems;
-}
-
-
-ItemPtr WorldLogFileItem::Impl::createArchiveModelItem(Item* modelItem, ArchiveInfo& info, bool isBodyItem)
-{
-    ItemPtr archiveModelItem;
-    
-    // Replace space and symbol characters in the filename string
-    string baseName = regex_replace(modelItem->name(), regex("\\s"), "_");
-    baseName = regex_replace(baseName, regex("[\\W]"), "_");
-
-    // Check and avoid the duplication of the model directory names
-    auto emplaced = info.baseNameCounterMap.emplace(baseName, 1);
-    if(baseName.empty() || !emplaced.second){
-        auto& counter = emplaced.first->second;
-        if(!baseName.empty()){
-            ++counter;
-        }
-        string baseNameWithId;
-        while(true){
-            baseNameWithId = formatC("{0}-{1}", baseName, counter++);
-            if(info.baseNameCounterMap.find(baseNameWithId) == info.baseNameCounterMap.end()){
-                baseName = baseNameWithId;
-                break;
-            }
-        }
     }
 
-    string nativeBaseName = fromUTF8(baseName);
-    filesystem::path modelDirPath = info.archiveDirPath / nativeBaseName;
-    std::error_code ec;
+    auto pm = ProjectManager::instance();
+    string orgProjectFile = pm->currentProjectFile();
+    if(orgProjectFile.empty()){
+        showWarningDialog(
+            _("The current project must be saved as a project file "
+              "before saving the log playback archive."));
+        return;
+    }
 
-    filesystem::create_directories(modelDirPath, ec);
-    if(ec){
-        mout->putErrorln(
-            formatR(_("Directory \"{0}\" cannot be created: {1}."),
-                    toUTF8(modelDirPath.filename().string()), ec.message()));
+    mout->putln(_("Creating the log playback archive ..."));
+
+    LogPlaybackArchivePacker packer(self, toUTF8(logFilePath.generic_string()));
+    if(!packer.analyzeItemTree()){
+        showWarningDialog(_("There are no model items to be archived for the log playback."));
+        return;
+    }
+
+    filesystem::path path(fromUTF8(filename));
+    string archiveName;
+    bool packed;
+    if(path.extension().string() == ".zip"){
+        archiveName = filename;
+        packed = packer.packProjectToZipFile(filename);
     } else {
-        archiveModelItem = modelItem->clone();
-        auto filePath = modelDirPath / nativeBaseName;
-        bool saved = false;
-        if(isBodyItem){
-            filePath += ".body"; // Is this necessary?
-            saved = info.bodyFileIO->saveItem(archiveModelItem, toUTF8(filePath.string()));
-        } else {
-            filePath += ".scen"; // Is this necessary?
-            saved = info.stdSceneFileExporter->saveItem(archiveModelItem, toUTF8(filePath.string()));
+        if(path.extension().string() == ".cnoid"){
+            path.replace_extension(); // the archive directory
         }
-        if(!saved){
-            archiveModelItem.reset();
-        }
+        archiveName = toUTF8(path.generic_string());
+        packed = packer.packProjectToDirectory(archiveName);
     }
-    return archiveModelItem;
+
+    // The packing modifies the project item tree for the archive, so the original
+    // project is restored by reloading its project file.
+    pm->clearProject();
+    pm->loadProject(orgProjectFile);
+
+    if(packed){
+        mout->putln(formatR(_("The log playback archive has been saved as \"{0}\"."), archiveName));
+    } else {
+        mout->putErrorln(formatR(_("Failed to save the log playback archive \"{0}\"."), archiveName));
+    }
 }
 
 
-int WorldLogFileItem::Impl::replaceWithArchiveItems(Item* item, ItemToItemMap& orgItemToArchiveItemMap)
+namespace {
+
+LogPlaybackArchivePacker::LogPlaybackArchivePacker
+(WorldLogFileItem* logFileItem, const std::string& logFile)
+    : logFileItem(logFileItem),
+      logFile(logFile)
 {
-    int numValidItems = 0;
-    bool keptOrReplaced = false;
-    ItemPtr archiveItem;
-    
-    auto p = orgItemToArchiveItemMap.find(item);
+    numModelItems = 0;
+}
 
-    if(p != orgItemToArchiveItemMap.end()){
-        archiveItem = p->second;
-        if(archiveItem != item){
-            if(archiveItem->replace(item)){
-                item = archiveItem;
-            }
+
+bool LogPlaybackArchivePacker::analyzeItemTree()
+{
+    dispositionMap.clear();
+    numModelItems = 0;
+    analyzeSubTree(RootItem::instance());
+    return numModelItems > 0;
+}
+
+
+int LogPlaybackArchivePacker::analyzeSubTree(Item* item)
+{
+    if(item->isSubItem()){
+        // A sub item is a part of the data of its owner item and is kept with it
+        dispositionMap[item] = Keep;
+        return 0;
+    }
+
+    bool keep = false;
+    if(dynamic_cast<BodyItem*>(item) || dynamic_cast<SceneItem*>(item)){
+        keep = true;
+        ++numModelItems;
+    } else if(item == logFileItem){
+        keep = true;
+    } else if(!item->isTemporary() &&
+              item->filePath().empty() &&
+              !dynamic_cast<SimulatorItem*>(item) &&
+              !dynamic_cast<ControllerItem*>(item)){
+        auto subSimulatorItem = dynamic_cast<SubSimulatorItem*>(item);
+        if(!subSimulatorItem || subSimulatorItem->isApplicableToLogPlayback()){
+            keep = true;
         }
     }
-    
-    // Child items must be preserved in advance because each item may be replaced 
-    vector<ItemPtr> childItems;
+
+    int numKeptItems = keep ? 1 : 0;
     for(auto childItem = item->childItem(); childItem; childItem = childItem->nextItem()){
-        childItems.push_back(childItem);
-    }
-    for(auto& childItem : childItems){
-        numValidItems += replaceWithArchiveItems(childItem, orgItemToArchiveItemMap);
+        numKeptItems += analyzeSubTree(childItem);
     }
 
-    if(!archiveItem){
-        if(!item->isTemporary() &&
-           !item->isSubItem() &&
-           item->filePath().empty() &&
-           !dynamic_cast<SimulatorItem*>(item) &&
-           !dynamic_cast<ControllerItem*>(item))
-        {
-            auto subSimulatorItem = dynamic_cast<SubSimulatorItem*>(item);
-            if(!subSimulatorItem || subSimulatorItem->isApplicableToLogPlayback()){
-                archiveItem = item;
+    if(keep){
+        dispositionMap[item] = Keep;
+    } else if(numKeptItems > 0){
+        // The item itself is removed but the sub tree structure must be kept
+        // for the remaining descendant items
+        dispositionMap[item] = ReplaceWithFolder;
+    } else {
+        dispositionMap[item] = Remove;
+    }
+
+    return numKeptItems;
+}
+
+
+void LogPlaybackArchivePacker::getItemDependentFiles(Item* item, std::vector<std::string>& out_files)
+{
+    auto it = dispositionMap.find(item);
+    if(it != dispositionMap.end() && it->second != Keep){
+        return;
+    }
+    if(auto bodyItem = dynamic_cast<BodyItem*>(item)){
+        bodyItem->getDependentFiles(out_files);
+        checkRosPackageDirectoryConsistency(item, out_files);
+    } else if(auto sceneItem = dynamic_cast<SceneItem*>(item)){
+        sceneItem->getDependentFiles(out_files);
+    } else if(item == logFileItem){
+        out_files.push_back(logFile);
+    } else {
+        ProjectPacker::getItemDependentFiles(item, out_files);
+    }
+}
+
+
+/**
+   The "package://" references of a model are resolved in a self-contained manner
+   only when the referenced packages share the parent directory with the package
+   of the model file. If the dependent files of a model belong to the ROS packages
+   located in different directory trees, the archive may not be self-contained,
+   and a warning message is put in that case.
+
+   \todo This limitation can be resolved by storing the directories of the
+   packages bundled in the archive in the archived project file and registering
+   them as additional package search paths of the "package://" URI scheme
+   handler when the project is loaded.
+*/
+void LogPlaybackArchivePacker::checkRosPackageDirectoryConsistency
+(Item* item, const std::vector<std::string>& files)
+{
+    vector<filesystem::path> packageParentPaths;
+    for(auto& file : files){
+        filesystem::path path(fromUTF8(file));
+        if(path.filename() == "package.xml"){
+            auto parentPath = path.parent_path().parent_path();
+            if(std::find(packageParentPaths.begin(), packageParentPaths.end(), parentPath)
+               == packageParentPaths.end()){
+                packageParentPaths.push_back(parentPath);
             }
         }
     }
-    if(archiveItem){
-        ++numValidItems;
+    if(packageParentPaths.size() >= 2){
+        mout()->putWarningln(
+            formatR(_("The files on which {0} depends belong to the ROS packages located in "
+                      "different directory trees. The \"package://\" references between those "
+                      "packages may not be resolved when the archived project is loaded "
+                      "in another environment."),
+                    item->displayName()));
+    }
+}
+
+
+Item* LogPlaybackArchivePacker::getPackingItem(Item* item)
+{
+    auto it = dispositionMap.find(item);
+    if(it != dispositionMap.end()){
+        if(it->second == Remove){
+            return nullptr;
+        }
+        if(it->second == ReplaceWithFolder){
+            auto folderItem = new FolderItem;
+            folderItem->setName(item->displayName());
+            return folderItem;
+        }
     }
 
-    if(numValidItems == 0){
-        item->removeFromParentItem();
+    auto relocateFilePath = [this](const std::string& path){ return getRelocatedFilePath(path); };
 
-    } else if(!archiveItem){
-        archiveItem = new FolderItem;
-        archiveItem->setName(item->displayName());
-        archiveItem->replace(item);
+    if(auto bodyItem = dynamic_cast<BodyItem*>(item)){
+        bodyItem->relocateDependentFiles(relocateFilePath);
+    } else if(auto sceneItem = dynamic_cast<SceneItem*>(item)){
+        sceneItem->relocateDependentFiles(relocateFilePath);
+    } else if(item == logFileItem){
+        auto relocatedLogFile = getRelocatedFilePath(logFile);
+        if(relocatedLogFile.empty()){
+            mout()->putErrorln(
+                formatR(_("Log file \"{0}\" of {1} cannot be relocated to be a file path in the archive."),
+                        logFile, item->displayName()));
+            return nullptr;
+        }
+        /*
+          The file information is directly updated here instead of using the
+          setLogFile function. The setLogFile function opens the relocated log
+          file to read its header and keeps the file open, which prevents the
+          removal of the temporary packing directory for a zip archive on
+          Windows. Just updating the file information is sufficient because it
+          is what the project archiving stores, and the state of this item does
+          not matter here because the original project is restored by reloading
+          it after the packing.
+        */
+        logFileItem->updateFileInformation(relocatedLogFile, "CNOID-WORLD-LOG");
+        logFileItem->setTimeStampSuffixEnabled(false);
+        return item;
     }
 
-    item->setSelected(false);
+    return ProjectPacker::getPackingItem(item);
+}
 
-    return numValidItems;
 }
 
 
