@@ -22,8 +22,21 @@ public:
     const std::string& unpackingDirectory() const;
     bool packProjectToZipFile(const std::string& filename);
     bool packProjectToDirectory(const std::string& packingDirectory);
+
+    /**
+       Checks whether the file is a valid project pack file that contains a project
+       file in a single top directory, without extracting the file.
+       \param out_topDirectoryName The name of the top directory in the project pack
+       is returned if this parameter is specified.
+    */
+    bool checkProjectPackFile(const std::string& filename, std::string* out_topDirectoryName = nullptr);
+
     bool loadPackedProject(const std::string& projectPackFile);
     bool unpackProject(const std::string& projectPackFile);
+
+    //! The project file contained in the project pack unpacked last time
+    std::string unpackedProjectFile() const;
+
     bool loadUnpackedProject(const std::string& projectFile);
 
 protected:

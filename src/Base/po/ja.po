@@ -1697,6 +1697,57 @@ msgstr "開く"
 msgid "Project files (*.cnoid)"
 msgstr "プロジェクトファイル (*.cnoid)"
 
+msgid "Project pack files (*.zip)"
+msgstr "プロジェクトパックファイル (*.zip)"
+
+msgid "\"{0}\" is not a valid project pack file that contains a project file in a single top directory."
+msgstr ""
+"\"{0}\" は単一のトップディレクトリにプロジェクトファイルを含む有効なプロジェクトパックファイルでは"
+"ありません．"
+
+msgid "The directory \"{0}\" already exists. Do you want to overwrite it by extracting the project pack?"
+msgstr "ディレクトリ \"{0}\" は既に存在します．プロジェクトパックの展開で上書きしてもよろしいですか？"
+
+msgid ""
+"The directory \"{0}\" already exists, so the project pack \"{1}\" cannot be extracted. Remove "
+"the directory or directly load the project file in it."
+msgstr ""
+"ディレクトリ \"{0}\" が既に存在するため，プロジェクトパック \"{1}\" を展開できません．ディレクトリ"
+"を削除するか，その中のプロジェクトファイルを直接読み込んでください．"
+
+msgid "Project pack \"{0}\" is extracted to \"{1}\", and the project in the directory is loaded ..."
+msgstr ""
+"プロジェクトパック \"{0}\" を \"{1}\" に展開し，その中のプロジェクトを読み込みます…"
+
+msgid "Project pack"
+msgstr "プロジェクトパック"
+
+msgid ""
+"The files in the directory \"{0}\" extracted from the project pack \"{1}\" have been modified. Do "
+"you want to keep the directory?"
+msgstr ""
+"プロジェクトパック \"{1}\" の展開先ディレクトリ \"{0}\" 内のファイルに変更があります．このディレクト"
+"リを維持しますか？"
+
+msgid ""
+"The files in the directory \"{0}\" extracted from the project pack \"{1}\" have been modified, "
+"so the directory is kept."
+msgstr ""
+"プロジェクトパック \"{1}\" の展開先ディレクトリ \"{0}\" 内のファイルに変更があるため，ディレクトリ"
+"は維持されます．"
+
+msgid "Keep"
+msgstr "維持する"
+
+msgid "The directory \"{0}\" extracted from the project pack cannot be removed: {1}"
+msgstr "プロジェクトパックの展開先ディレクトリ \"{0}\" を削除できません： {1}"
+
+msgid "The directory \"{0}\" extracted from the project pack has been removed."
+msgstr "プロジェクトパックの展開先ディレクトリ \"{0}\" を削除しました．"
+
+msgid "The temporary directory \"{0}\" for packing cannot be removed: {1}"
+msgstr "パック用の一時ディレクトリ \"{0}\" を削除できません： {1}"
+
 msgid ""
 "The current project has not been saved yet. Do you want to save it as a project file before "
 "loading a new project?"

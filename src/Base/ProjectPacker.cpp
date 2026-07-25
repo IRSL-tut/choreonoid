@@ -61,6 +61,8 @@ public:
     std::string getRelocatedFilePath(const std::string& pathString);
     bool createProjectZipFile(const string& zipFilename);
     bool addDirectoryToZip(zip_t * zip, fs::path dirPath, const fs::path& zipTopDirPath);
+    bool checkProjectPackFile(const std::string& filename, std::string* out_topDirectoryName);
+    bool checkProjectPackEntries(zip_t* zip, const std::string& filename, std::string* out_topDirectoryName);
     bool unpackProject(const std::string& projectPackFile);
     bool extractFiles(
         zip_t* zip, const string& zipFilename, const fs::path&  zipFilePath, const fs::path& topDirPath);
@@ -158,8 +160,13 @@ bool ProjectPacker::Impl::packProjectToZipFile(const std::string& filename, cons
     bool packed = packProjectToDirectory(directory, projectName);
     if(packed){
         packed = createProjectZipFile(filename);
-        std::error_code ec;        
-        fs::remove_all(fromUTF8(directory), ec);
+    }
+    std::error_code ec;
+    fs::remove_all(fromUTF8(directory), ec);
+    if(ec){
+        mout->putWarningln(
+            formatR(_("The temporary directory \"{0}\" for packing cannot be removed: {1}"),
+                    directory, toUTF8(ec.message())));
     }
     return packed;
 }
@@ -357,7 +364,7 @@ bool ProjectPacker::Impl::packProjectToDirectory(const std::string& packingDirec
                     projectFile));
     }
 
-    return true;
+    return saved;
 }
 
 
@@ -590,6 +597,79 @@ bool ProjectPacker::Impl::addDirectoryToZip(zip_t* zip, fs::path dirPath, const 
 }
 
 
+bool ProjectPacker::checkProjectPackFile(const std::string& filename, std::string* out_topDirectoryName)
+{
+    return impl->checkProjectPackFile(filename, out_topDirectoryName);
+}
+
+
+bool ProjectPacker::Impl::checkProjectPackFile(const std::string& filename, std::string* out_topDirectoryName)
+{
+    fs::path packFilePath(fromUTF8(filename));
+
+    int errorp;
+    zip_t* zip = zip_open(packFilePath.make_preferred().string().c_str(), ZIP_RDONLY, &errorp);
+    if(!zip){
+        zip_error_t error;
+        zip_error_init_with_code(&error, errorp);
+        mout->putErrorln(
+            formatR(_("Failed to open the project pack file \"{0}\": {1}"),
+                    filename, zip_error_strerror(&error)));
+        return false;
+    }
+
+    bool checked = checkProjectPackEntries(zip, filename, out_topDirectoryName);
+    zip_close(zip);
+
+    return checked;
+}
+
+
+bool ProjectPacker::Impl::checkProjectPackEntries
+(zip_t* zip, const std::string& filename, std::string* out_topDirectoryName)
+{
+    string topDirName;
+    bool hasSingleTopDirectory = true;
+    bool hasProjectFile = false;
+
+    int numEntries = zip_get_num_entries(zip, 0);
+    for(int i = 0; i < numEntries; ++i){
+        const char* entryName = zip_get_name(zip, i, 0);
+        if(!entryName){
+            continue;
+        }
+        string name(entryName);
+        auto pos = name.find('/');
+        if(pos == string::npos || pos == 0){
+            hasSingleTopDirectory = false;
+            break;
+        }
+        string top = name.substr(0, pos);
+        if(topDirName.empty()){
+            topDirName = top;
+        } else if(top != topDirName){
+            hasSingleTopDirectory = false;
+            break;
+        }
+        if(name.size() >= 6 && name.compare(name.size() - 6, 6, ".cnoid") == 0){
+            hasProjectFile = true;
+        }
+    }
+
+    if(!hasSingleTopDirectory || !hasProjectFile || topDirName.empty()){
+        mout->putErrorln(
+            formatR(_("\"{0}\" is not a valid project pack file that contains a project file "
+                      "in a single top directory."),
+                    filename));
+        return false;
+    }
+    if(out_topDirectoryName){
+        *out_topDirectoryName = topDirName;
+    }
+    return true;
+}
+
+
 bool ProjectPacker::unpackProject(const std::string& projectPackFile)
 {
     return impl->unpackProject(projectPackFile);
@@ -610,6 +690,18 @@ bool ProjectPacker::Impl::unpackProject(const std::string& projectPackFile)
         mout->putErrorln(
             formatR(_("Failed to open the project pack file \"{0}\": {1}"),
                     projectPackFile, zip_error_strerror(&error)));
+        return false;
+    }
+
+    /*
+      The following check may be a duplicate of the check which the caller has
+      done in advance with the checkProjectPackFile function. However, its cost
+      is negligible because it just scans the central directory loaded in the
+      memory, and doing the check here guarantees that this function never
+      extracts files from an invalid project pack.
+    */
+    if(!checkProjectPackEntries(zip, projectPackFile, nullptr)){
+        zip_close(zip);
         return false;
     }
 
@@ -714,6 +806,12 @@ bool ProjectPacker::Impl::extractFiles
     }
 
     return true;
+}
+
+
+std::string ProjectPacker::unpackedProjectFile() const
+{
+    return toUTF8(impl->unpackedProjectFile);
 }
 
 
