@@ -996,8 +996,14 @@ void Item::Impl::doRemoveFromParentItem(bool isMoving, bool isParentBeingDeleted
         if(checkIfAnyItemInSubTreeSelected(self)){
             isAnyItemInSubTreesBeingAddedOrRemovedSelected = true;
         }
-        // Clear all the selection of the sub tree to remove
-        setSubTreeItemsSelectedIter(self, false);
+        if(!isMoving){
+            /*
+              Clear all the selection of the sub tree to remove. Note that the
+              selection states are kept when the sub tree is just moved to
+              another position in the same tree.
+            */
+            setSubTreeItemsSelectedIter(self, false);
+        }
 
         rootItem = self->findRootItem();
         if(rootItem){

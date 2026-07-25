@@ -146,6 +146,8 @@ public:
     
     virtual void mousePressEvent(QMouseEvent* event) override;
     virtual void keyPressEvent(QKeyEvent* event) override;
+    void clearSubTreeSelectionsInTreeWidget(Item* item);
+    void applySubTreeItemSelectionsToTreeWidget(Item* item);
     virtual void dragEnterEvent(QDragEnterEvent *event) override;
     virtual void dragMoveEvent(QDragMoveEvent *event) override;
     virtual void dragLeaveEvent(QDragLeaveEvent *event) override;
@@ -1727,6 +1729,17 @@ void ItemTreeWidget::Impl::revertItemPosition(Item* item)
 
 void ItemTreeWidget::Impl::onTreeWidgetSelectionChanged()
 {
+    /*
+      The selection changes made by the internal operations to update the tree
+      widget structure must not be applied to the items. For example, when an
+      item is moved by the item replacement, the temporary removal of the
+      corresponding tree widget item clears its selection in the tree widget,
+      and the selection state of the item is lost if it is applied to the item.
+    */
+    if(isChangingTreeWidgetTreeStructure){
+        return;
+    }
+
     ItemList<> items;
     auto selectedTwItems = selectedItems();
     bool doEmitSignal = sigSelectionChanged.hasConnections();
@@ -2078,6 +2091,30 @@ void ItemTreeWidget::Impl::dragLeaveEvent(QDragLeaveEvent *event)
 }
 
 
+void ItemTreeWidget::Impl::clearSubTreeSelectionsInTreeWidget(Item* item)
+{
+    if(auto itwItem = findItwItem(item)){
+        if(itwItem->isSelected()){
+            itwItem->setSelected(false);
+        }
+    }
+    for(Item* child = item->childItem(); child; child = child->nextItem()){
+        clearSubTreeSelectionsInTreeWidget(child);
+    }
+}
+
+
+void ItemTreeWidget::Impl::applySubTreeItemSelectionsToTreeWidget(Item* item)
+{
+    if(auto itwItem = findItwItem(item)){
+        setItwItemSelected(itwItem, item->isSelected());
+    }
+    for(Item* child = item->childItem(); child; child = child->nextItem()){
+        applySubTreeItemSelectionsToTreeWidget(child);
+    }
+}
+
+
 void ItemTreeWidget::Impl::dropEvent(QDropEvent* event)
 {
     isDropping = true;
@@ -2087,14 +2124,47 @@ void ItemTreeWidget::Impl::dropEvent(QDropEvent* event)
         unifiedEditHistory->beginEditGroup(formatR(_("Drop items in {0}"), getViewTitle()));
         editGroupCreated = true;
     }
-    
+
+    /*
+      The selection change connections must be blocked during the drop processing.
+      Otherwise, the temporary removal of the tree widget items being dropped clears
+      their selections in the tree widget, and the selection states of the
+      corresponding items are lost by applying the selection change to the items.
+      Note that the selection states are restored after the drop processing because
+      the drop operation of the tree widget keeps the moved rows unselected.
+    */
+    treeWidgetSelectionChangeConnections.block();
+
+    /*
+      The drop operation of QTreeWidget moves all the rows currently selected in
+      the tree widget to the drop position. If a descendant of a dragged item is
+      also selected, it is pulled out of the sub tree by the drop operation and
+      the tree structure is unexpectedly changed. To avoid this, the selections of
+      the descendants in the tree widget are temporarily cleared before the drop
+      operation. This does not affect the selection states of the corresponding
+      items because the selection change connections are blocked here.
+    */
+    for(auto& item : dragItems){
+        // The dragged top items must be kept selected in the tree widget so that
+        // the drop operation moves them
+        for(Item* child = item->childItem(); child; child = child->nextItem()){
+            clearSubTreeSelectionsInTreeWidget(child);
+        }
+    }
+
     TreeWidget::dropEvent(event);
+    treeWidgetSelectionChangeConnections.unblock();
+
+    // Restore the selection states of the moved sub trees to the tree widget
+    for(auto& item : dragItems){
+        applySubTreeItemSelectionsToTreeWidget(item);
+    }
     dragItems.clear();
 
     if(editGroupCreated){
         unifiedEditHistory->endEditGroup();
     }
-    
+
     isDropping = false;
 }
 
