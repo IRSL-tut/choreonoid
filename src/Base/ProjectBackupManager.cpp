@@ -1,5 +1,5 @@
 #include "ProjectBackupManager.h"
-#include "App.h"
+#include "AppUtil.h"
 #include "AppConfig.h"
 #include "LazyCaller.h"
 #include "ProjectManager.h"
@@ -146,7 +146,7 @@ void ProjectBackupManager::initializeClass()
 {
     config = AppConfig::archive()->openMapping("ProjectBackupManager");
     if(config->get("enable_auto_backup", false)){
-        App::sigExecutionStarted().connect(
+        AppUtil::sigAppExecutionStarted().connect(
             []{ instance()->enableAutoBackupAtStartup(); });
     }
 }
@@ -158,7 +158,7 @@ ProjectBackupManager* ProjectBackupManager::instance()
 
     if(!instance_ && !isAboutToQuit){
         instance_ = new ProjectBackupManager;
-        App::sigAboutToQuit().connect(
+        AppUtil::sigAboutToQuit().connect(
             []{
                 delete instance_;
                 instance_ = nullptr;
@@ -204,7 +204,7 @@ ProjectBackupManager::Impl::Impl(ProjectBackupManager* self)
     isCrashMarkerCreated = false;
     isBackupDeferred = false;
     requestBackupLater.setFunction([this]{ onAutoBackupRequest(); });
-    App::sigNestedEventLoopExited().connect([this]{ onNestedEventLoopExited(); });
+    AppUtil::sigNestedEventLoopExited().connect([this]{ onNestedEventLoopExited(); });
     configDialog = nullptr;
     recoveryDialog = nullptr;
 }
@@ -369,7 +369,7 @@ void ProjectBackupManager::Impl::unpauseAutoBackup()
 
 void ProjectBackupManager::Impl::onAutoBackupRequest()
 {
-    if(App::isNestedEventLoopActive()){
+    if(AppUtil::isNestedEventLoopActive()){
         isBackupDeferred = true;
         return;
     }

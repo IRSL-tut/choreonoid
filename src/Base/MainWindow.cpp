@@ -3,7 +3,7 @@
 #include "InfoBar.h"
 #include "ToolBarArea.h"
 #include "ExtensionManager.h"
-#include "App.h"
+#include "AppUtil.h"
 #include "AppConfig.h"
 #include "TimeBar.h"
 #include "UnifiedEditHistory.h"
@@ -479,7 +479,7 @@ bool MainWindow::waitForWindowSystemToActivate()
     */
     int timeoutCounter = 0;
     while(true){
-        App::updateGui();
+        AppUtil::updateGui();
         if(impl->windowActivationChecker.isWindowActivated){
             break;
         }

@@ -1,5 +1,5 @@
 #include "MessageView.h"
-#include "App.h"
+#include "AppUtil.h"
 #include "MainWindow.h"
 #include "ViewManager.h"
 #include "InfoBar.h"
@@ -919,7 +919,7 @@ void MessageView::flush()
 void MessageView::Impl::flush()
 {
     if(isGuiUpdateEnabled && blockFlushCounter == 0){
-        App::updateGui();
+        AppUtil::updateGui();
     }
 }
 
@@ -1395,9 +1395,9 @@ std::ostream& cnoid::mvout(bool doFlush)
 
 void cnoid::showMessageBox(const std::string& message)
 {
-    App::beginNestedEventLoop();
+    AppUtil::beginNestedEventLoop();
     QMessageBox::information(MainWindow::instance(), _("Message"), message.c_str());
-    App::endNestedEventLoop();
+    AppUtil::endNestedEventLoop();
 }
 
 
@@ -1411,7 +1411,7 @@ bool cnoid::showWarningDialog(const std::string& caption, const std::string& mes
 {
     bool result = true;
 
-    App::beginNestedEventLoop();
+    AppUtil::beginNestedEventLoop();
     if(!doConfirmation){
         QMessageBox::warning(MainWindow::instance(), caption.c_str(), message.c_str());
     } else {
@@ -1424,7 +1424,7 @@ bool cnoid::showWarningDialog(const std::string& caption, const std::string& mes
             result = false;
         }
     }
-    App::endNestedEventLoop();
+    AppUtil::endNestedEventLoop();
 
     return result;
 }
@@ -1432,9 +1432,9 @@ bool cnoid::showWarningDialog(const std::string& caption, const std::string& mes
 
 void cnoid::showErrorDialog(const std::string& message)
 {
-    App::beginNestedEventLoop();
+    AppUtil::beginNestedEventLoop();
     QMessageBox::critical(MainWindow::instance(), _("Error"), message.c_str());
-    App::endNestedEventLoop();
+    AppUtil::endNestedEventLoop();
 }
 
 
@@ -1452,18 +1452,18 @@ void cnoid::showErrorDialog
         mbox.setDetailedText(detailed.c_str());
     }
     mbox.setStandardButtons(QMessageBox::Ok);
-    App::beginNestedEventLoop();
+    AppUtil::beginNestedEventLoop();
     mbox.exec();
-    App::endNestedEventLoop();
+    AppUtil::endNestedEventLoop();
 }
 
 
 bool cnoid::showConfirmDialog(const std::string& caption, const std::string& message)
 {
-    App::beginNestedEventLoop();
+    AppUtil::beginNestedEventLoop();
     QMessageBox::StandardButton clicked =
         QMessageBox::question(
             MainWindow::instance(), caption.c_str(), message.c_str(), QMessageBox::Ok | QMessageBox::Cancel);
-    App::endNestedEventLoop();
+    AppUtil::endNestedEventLoop();
     return (clicked == QMessageBox::Ok);
 }

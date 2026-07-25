@@ -2,6 +2,7 @@
 #include "ViewManager.h"
 #include "ViewArea.h"
 #include "App.h"
+#include "AppUtil.h"
 #include "AppConfig.h"
 #include "MainWindow.h"
 #include "MessageView.h"
@@ -766,7 +767,7 @@ bool MovieRecorder::Impl::startOfflineModeRecording()
 
         doContinue = timeBar->setTime(time);
 
-        App::updateGui(true);
+        AppUtil::updateGui(true);
 
         if(requestStopRecording){
             break;

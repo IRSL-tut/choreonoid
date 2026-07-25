@@ -16,7 +16,7 @@
 #include <cnoid/ItemTreeView>
 #include <cnoid/ControllerIO>
 #include <cnoid/BodyState>
-#include <cnoid/App>
+#include <cnoid/AppUtil>
 #include <cnoid/TimeBar>
 #include <cnoid/MessageOut>
 #include <cnoid/LazyCaller>
@@ -1960,7 +1960,7 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
     }
 
     aboutToQuitConnection.disconnect();
-    aboutToQuitConnection = App::sigAboutToQuit().connect(
+    aboutToQuitConnection = AppUtil::sigAboutToQuit().connect(
         [&](){ stopSimulation(true, true); });
 
     if(worldLogFileItem){

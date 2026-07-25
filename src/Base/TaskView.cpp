@@ -7,7 +7,7 @@
 #include "SpinBox.h"
 #include "Timer.h"
 #include "LazyCaller.h"
-#include "App.h"
+#include "AppUtil.h"
 #include "Archive.h"
 #include <cnoid/ConnectionSet>
 #include <cnoid/Format>
@@ -204,7 +204,7 @@ void TaskView::initializeClass(ExtensionManager* ext)
 {
     ext->viewManager().registerClass<TaskView>(N_("TaskView"), N_("Task"));
 
-    App::sigAboutToQuit().connect([](){ onAboutToQuit(); });
+    AppUtil::sigAboutToQuit().connect([](){ onAboutToQuit(); });
 }
 
 
@@ -1340,7 +1340,7 @@ bool TaskViewImpl::executeCommand(int commandIndex)
                 setCurrentCommandIndex(commandIndex);
                 isPendingCommandCompleted = false;
                 func(this);
-                App::updateGui(true);
+                AppUtil::updateGui(true);
                 setCurrentCommandIndex(callerCommandIndex);
                 completed = isPendingCommandCompleted;
             }

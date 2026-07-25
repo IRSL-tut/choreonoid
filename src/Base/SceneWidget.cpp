@@ -1,5 +1,5 @@
 #include "SceneWidget.h"
-#include "App.h"
+#include "AppUtil.h"
 #include "SceneBar.h"
 #include "SceneWidgetEventHandler.h"
 #include "InteractiveCameraTransform.h"
@@ -746,7 +746,7 @@ void SceneWidget::renderScene(bool doImmediately)
 {
     if(doImmediately){
         impl->repaint();
-        App::updateGui();
+        AppUtil::updateGui();
     } else {
         impl->update();
     }
@@ -987,7 +987,7 @@ void SceneWidget::Impl::doFpsTest(int iteration)
                 Translation3(-p) *
                 C);
             repaint();
-            App::updateGui(true);
+            AppUtil::updateGui(true);
             ++numFrames;
             if(isFpsTestCanceled){
                 break;
@@ -2952,7 +2952,7 @@ void SceneWidget::Impl::setInteractiveCameraPosition(
             }
             transform->setTranslation(interp.interpolate(time));
             repaint();
-            App::updateGui(true);
+            AppUtil::updateGui(true);
         }
     }
     transform->setTranslation(position);
@@ -2997,7 +2997,7 @@ void SceneWidget::Impl::setCameraPositionLookingFor
             T.linear() = rotFromRpy(pos.tail<3>());
             builtinCameraTransform->setPosition(T);
             repaint();
-            App::updateGui(true);
+            AppUtil::updateGui(true);
         }
     }
 
@@ -3060,7 +3060,7 @@ void SceneWidget::Impl::setCameraPositionLookingAt
             Vector3 up = Vector3(AngleAxis(theta, upRotationAxis) * up0).normalized();
             builtinCameraTransform->setPosition(SgCamera::positionLookingAt(eye, center, up));
             repaint();
-            App::updateGui(true);
+            AppUtil::updateGui(true);
         }
     }
 

@@ -3,7 +3,7 @@
 */
 
 #include "Dialog.h"
-#include "App.h"
+#include "AppUtil.h"
 #include "MainWindow.h"
 #include <QStyle>
 #include <QKeyEvent>
@@ -76,9 +76,9 @@ void Dialog::show()
 
 int Dialog::exec()
 {
-    App::beginNestedEventLoop();
+    AppUtil::beginNestedEventLoop();
     int result = QDialog::exec();
-    App::endNestedEventLoop();
+    AppUtil::endNestedEventLoop();
     return result;
 }
 

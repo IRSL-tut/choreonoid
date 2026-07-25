@@ -4,7 +4,7 @@
 #include "PythonExecutor.h"
 #include <cnoid/PyUtil>
 #include <cnoid/Plugin>
-#include <cnoid/App>
+#include <cnoid/AppUtil>
 #include <cnoid/AppConfig>
 #include <cnoid/MenuManager>
 #include <cnoid/MainMenu>
@@ -259,7 +259,7 @@ void PythonPlugin::Impl::executeScriptFileOnStartup(const string& scriptFile)
         MessageView::instance()->put(executor().exceptionText());
     }
 
-    App::checkErrorAndExitIfTestMode();
+    AppUtil::checkErrorAndExitIfTestMode();
 }
 
 

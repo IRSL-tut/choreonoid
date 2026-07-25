@@ -693,7 +693,7 @@ int App::Impl::exec()
 
     if(!doQuit){
         if(mainWindow->isVisible()){
-            App::updateGui();
+            AppUtil::updateGui();
         } else {
             if(!isNoWindowMode){
                 mainWindow->show();
@@ -914,7 +914,7 @@ void App::checkErrorAndExitIfTestMode()
     if(isTestMode){
         auto impl = instance_->impl;
         if(impl->messageView->hasErrorMessages()){
-            App::updateGui();
+            AppUtil::updateGui();
             exit(1);
         }
     }
@@ -924,6 +924,36 @@ void App::checkErrorAndExitIfTestMode()
 SignalProxy<void()> App::sigExecutionStarted()
 {
     return sigExecutionStarted_;
+}
+
+
+bool AppUtil::isAppInitializing()
+{
+    return isDoingInitialization_;
+}
+
+
+SignalProxy<void()> AppUtil::sigAppExecutionStarted()
+{
+    return sigExecutionStarted_;
+}
+
+
+bool AppUtil::isTestMode()
+{
+    return ::isTestMode;
+}
+
+
+void AppUtil::checkErrorAndExitIfTestMode()
+{
+    if(::isTestMode){
+        auto impl = instance_->impl;
+        if(impl->messageView->hasErrorMessages()){
+            AppUtil::updateGui();
+            App::exit(1);
+        }
+    }
 }
 
 
@@ -961,14 +991,7 @@ SignalProxy<void()> cnoid::sigAboutToQuit()
 
 void App::updateGui(bool allEvents)
 {
-    ++nestedEventLoopCounter;
-    if(allEvents){
-        QCoreApplication::processEvents();
-    } else {
-        QCoreApplication::processEvents(
-            QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers);
-    }
-    --nestedEventLoopCounter;
+    AppUtil::updateGui(allEvents);
 }
 
 
@@ -998,9 +1021,42 @@ SignalProxy<void()> App::sigNestedEventLoopExited()
 }
 
 
-void AppUtil::updateGui()
+void AppUtil::updateGui(bool allEvents)
 {
-    return App::updateGui();
+    ++nestedEventLoopCounter;
+    if(allEvents){
+        QCoreApplication::processEvents();
+    } else {
+        QCoreApplication::processEvents(
+            QEventLoop::ExcludeUserInputEvents | QEventLoop::ExcludeSocketNotifiers);
+    }
+    --nestedEventLoopCounter;
+}
+
+
+bool AppUtil::isNestedEventLoopActive()
+{
+    return nestedEventLoopCounter > 0;
+}
+
+
+void AppUtil::beginNestedEventLoop()
+{
+    ++nestedEventLoopCounter;
+}
+
+
+void AppUtil::endNestedEventLoop()
+{
+    if(--nestedEventLoopCounter == 0){
+        sigNestedEventLoopExited_();
+    }
+}
+
+
+SignalProxy<void()> AppUtil::sigNestedEventLoopExited()
+{
+    return sigNestedEventLoopExited_;
 }
 
 
@@ -1024,5 +1080,5 @@ bool AppUtil::isOffscreenMode()
 
 void cnoid::updateGui()
 {
-    return App::updateGui();
+    return AppUtil::updateGui();
 }

@@ -41,17 +41,26 @@ public:
     ErrorCode error() const;
     const std::string& errorMessage() const;
 
-    static bool isDoingInitialization();
     static ExtensionManager* baseModule();
-    static void updateGui(bool allEvents = false);
     static void exit(int returnCode = 0);
-    static void checkErrorAndExitIfTestMode();
-    static SignalProxy<void()> sigExecutionStarted();
-    static SignalProxy<void()> sigAboutToQuit();
 
+    [[deprecated("Use AppUtil::isAppInitializing")]]
+    static bool isDoingInitialization();
+    [[deprecated("Use AppUtil::updateGui")]]
+    static void updateGui(bool allEvents = false);
+    [[deprecated("Use AppUtil::checkErrorAndExitIfTestMode")]]
+    static void checkErrorAndExitIfTestMode();
+    [[deprecated("Use AppUtil::sigAppExecutionStarted")]]
+    static SignalProxy<void()> sigExecutionStarted();
+    [[deprecated("Use AppUtil::sigAboutToQuit")]]
+    static SignalProxy<void()> sigAboutToQuit();
+    [[deprecated("Use AppUtil::isNestedEventLoopActive")]]
     static bool isNestedEventLoopActive();
+    [[deprecated("Use AppUtil::beginNestedEventLoop")]]
     static void beginNestedEventLoop();
+    [[deprecated("Use AppUtil::endNestedEventLoop")]]
     static void endNestedEventLoop();
+    [[deprecated("Use AppUtil::sigNestedEventLoopExited")]]
     static SignalProxy<void()> sigNestedEventLoopExited();
         
 private:

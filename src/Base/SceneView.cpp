@@ -10,7 +10,7 @@
 #include "ProjectManager.h"
 #include "RootItem.h"
 #include "RenderableItem.h"
-#include "App.h"
+#include "AppUtil.h"
 #include <cnoid/SceneGraph>
 #include <cnoid/ConnectionSet>
 #include <QBoxLayout>
@@ -260,7 +260,7 @@ void SceneView::setSceneViewConfig(SceneViewConfig* config)
     impl->config = config;
     
     // Flag to avoid redundant initialization
-    bool doUpdate = !ProjectManager::instance()->isLoadingProject() && !App::isDoingInitialization();
+    bool doUpdate = !ProjectManager::instance()->isLoadingProject() && !AppUtil::isAppInitializing();
     impl->isPendingInitialUpdate = !doUpdate;
     config->addSceneView(this, doUpdate);
 }
