@@ -1276,7 +1276,13 @@ void ViewArea::storeAllViewAreaLayouts(ArchivePtr archive)
         ArchivePtr layout = new Archive;
         layout->inheritSharedInfoFrom(*archive);
         viewAreas[i]->storeLayout(layout);
-        layouts->append(layout);
+
+        // A view area without the actual layout (e.g. in the no-window mode)
+        // stores nothing, and the empty layout must be omitted so that it does
+        // not clear the existing layout when the project is loaded in the GUI
+        if(!layout->empty()){
+            layouts->append(layout);
+        }
     }
     if(!layouts->empty()){
         archive->insert("view_areas", layouts);
@@ -1292,6 +1298,11 @@ void ViewArea::storeLayout(ArchivePtr archive)
 
 void ViewArea::Impl::storeLayout(Archive* archive)
 {
+    if(!topSplitter){
+        // The view area does not have the actual layout to store, for example,
+        // when the application is executed in the no-window mode
+        return;
+    }
     try {
         MappingPtr state = storeSplitterState(topSplitter, archive);
         if(state){
