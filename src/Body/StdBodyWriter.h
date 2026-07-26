@@ -41,6 +41,9 @@ public:
        If this directory is specified, relative file path from the body file to each
        external model files copied from the original model files may be simplified in
        the CopyModelFiles mode.
+       \note The directory must be specified as an absolute path. A relative path is
+       just ignored because the directory is compared with the absolute paths of the
+       original model files.
     */
     void setOriginalBaseDirectory(const std::string& directory);
 

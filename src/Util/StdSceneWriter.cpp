@@ -59,6 +59,9 @@ public:
     bool isOriginalSceneExtModelFileUriRewritingEnabled;
     unordered_map<SgObjectPtr, string> uriRewritingMap;
     set<string> extModelFiles;
+    // Maps the relative path of a copied model file to the absolute path of its original
+    // file. This is used to detect the model files copied to the same path.
+    unordered_map<string, string> copiedModelFileMap;
 
     ostream* os_;
     ostream& os() { return *os_; }
@@ -79,6 +82,9 @@ public:
     void makeLinkToOriginalModelFile(Mapping* archive, SgObject* sceneObject);
     void copyModelFilesAndLinkToCopiedFile(Mapping* archive, SgObject* sceneObject);
     string copyModelFiles(SgObject* sceneObject);
+    filesystem::path getRelativeFilePathToCopyModelFile(
+        SgObject* sceneObject, const filesystem::path& srcFilePath);
+    filesystem::path getUriPathOfNonFileSchemeUri(const filesystem::path& srcFilePath);
     bool replaceOriginalModelFile(
         Mapping* archive, SgNode* node, bool isAppearanceEnabled, SgObject* objectOfUri);
     void processUnknownNode(Mapping* archive, SgNode* node);
@@ -392,6 +398,7 @@ void StdSceneWriter::clear()
     impl->sceneToYamlNodeMap.clear();
     impl->uriRewritingMap.clear();
     impl->extModelFiles.clear();
+    impl->copiedModelFileMap.clear();
     clearImageFileInformation();
 }
 
@@ -489,6 +496,7 @@ bool StdSceneWriter::Impl::writeScene
     yamlWriter->closeFile();
 
     extModelFiles.clear();
+    copiedModelFileMap.clear();
 
     sceneToYamlNodeMap.clear();    
     
@@ -642,24 +650,25 @@ string StdSceneWriter::Impl::copyModelFiles(SgObject* sceneObject)
             if(!filesystem::exists(srcFilePath, ec)){
                 os() << formatR(_("Warning: File \"{0}\" is not found."), srcFile) << endl;
             } else {
-                filesystem::path relativeFilePath;
-                if(!originalBaseDirPath.empty()){
-                    findPathInDirectory(originalBaseDirPath, srcFilePath, relativeFilePath);
-                }
-                if(relativeFilePath.empty()){
-                    filesystem::path uriPath = fromUTF8(uriSchemeProcessor->getFilePath(sceneObject->uri()));
-                    uriPath = uriPath.lexically_normal();
-                    if(uriPath.has_root_path()){
-                        uriPath = uriPath.relative_path();
-                    }
-                    // Remove ".." elements
-                    for(auto& element : uriPath){
-                        if(element != ".."){
-                            relativeFilePath /= element;
-                        }
-                    }
-                }
+                filesystem::path relativeFilePath =
+                    getRelativeFilePathToCopyModelFile(sceneObject, srcFilePath);
                 if(!relativeFilePath.empty()){
+                    /*
+                      Detect the different model files that are copied to the same path.
+                      Copying the same file more than once is not a conflict because a
+                      model file is usually referred to by more than one object. Note that
+                      which of the conflicting files remains is not defined, so that the
+                      scene written cannot be correct in this case.
+                    */
+                    auto inserted = copiedModelFileMap.emplace(
+                        toUTF8(relativeFilePath.generic_string()), srcFile);
+                    if(!inserted.second && inserted.first->second != srcFile){
+                        os() << formatR(
+                            _("Warning: Model files \"{0}\" and \"{1}\" conflict with each other "
+                              "because both of them are copied to \"{2}\"."),
+                            inserted.first->second, srcFile,
+                            toUTF8(relativeFilePath.generic_string())) << endl;
+                    }
                     filesystem::path destFilePath = outputBaseDirPath / relativeFilePath;
                     if(!filesystem::equivalent(srcFilePath, destFilePath, ec)){
                         filesystem::path destDirPath = destFilePath.parent_path();
@@ -706,6 +715,114 @@ string StdSceneWriter::Impl::copyModelFiles(SgObject* sceneObject)
     }
 
     return relativeFilePathToCopiedFile;
+}
+
+
+/**
+   This function determines the path of a model file copied by the copyModelFiles function.
+   The path is relative to the output base directory, and it is also used as the URI to the
+   copied file in the output scene file.
+*/
+filesystem::path StdSceneWriter::Impl::getRelativeFilePathToCopyModelFile
+(SgObject* sceneObject, const filesystem::path& srcFilePath)
+{
+    filesystem::path relativeFilePath;
+
+    // If the original model file is in the directory of the original main file, the relative
+    // path from the directory can be used as it is to keep the original directory structure.
+    if(!originalBaseDirPath.empty()){
+        findPathInDirectory(originalBaseDirPath, srcFilePath, relativeFilePath);
+    }
+
+    if(relativeFilePath.empty()){
+        ensureUriSchemeProcessor();
+        filesystem::path uriPath;
+        if(uriSchemeProcessor->detectScheme(sceneObject->uri()) && !uriSchemeProcessor->isFileScheme()){
+            uriPath = getUriPathOfNonFileSchemeUri(srcFilePath);
+        } else {
+            /*
+              The path part of the URI is used as it is. Note that the URI must not be
+              resolved into a file path here because the base directory of a relative URI
+              is the directory of the file that the object was loaded from, which is not
+              necessarily the same as that of the main file being written. For example,
+              the meshes of a sub body are referred to by the paths relative to the sub
+              body file.
+            */
+            uriPath = fromUTF8(uriSchemeProcessor->path());
+        }
+        uriPath = uriPath.lexically_normal();
+        if(uriPath.has_root_path()){
+            uriPath = uriPath.relative_path();
+        }
+        // Remove ".." elements
+        for(auto& element : uriPath){
+            if(element != ".."){
+                relativeFilePath /= element;
+            }
+        }
+    }
+
+    if(relativeFilePath.empty()){
+        // Fall back to putting the file directly in the output base directory
+        relativeFilePath = srcFilePath.filename();
+    }
+
+    return relativeFilePath;
+}
+
+
+/**
+   This function returns the path used to copy a model file whose URI has a scheme that
+   identifies the file by a resource name such as "package://<package name>/<path>".
+   Such a URI cannot be resolved into a file path here because the scheme handler needs
+   the search directories that are only available to the loader that loaded the model.
+   The path part of the URI is used instead of the resolved file path. Note that the
+   leading package name works as a namespace that avoids conflicts between the model
+   files of different packages, and it must be kept in general.
+*/
+filesystem::path StdSceneWriter::Impl::getUriPathOfNonFileSchemeUri(const filesystem::path& srcFilePath)
+{
+    // The path part detected by the last detectScheme call
+    filesystem::path uriPath(fromUTF8(uriSchemeProcessor->path()));
+
+    if(originalBaseDirPath.empty()){
+        return uriPath;
+    }
+
+    // Split the URI path into the leading package name and the path in the package
+    vector<filesystem::path> elementsInPackage;
+    auto it = uriPath.begin();
+    if(it != uriPath.end()){
+        while(++it != uriPath.end()){
+            elementsInPackage.push_back(*it);
+        }
+    }
+    if(elementsInPackage.empty()){
+        return uriPath;
+    }
+
+    // Detect the package directory by removing the path in the package from the file path
+    filesystem::path packageDirPath(srcFilePath);
+    for(auto it = elementsInPackage.rbegin(); it != elementsInPackage.rend(); ++it){
+        if(packageDirPath.filename() != *it){
+            // The file path does not correspond to the URI path
+            return uriPath;
+        }
+        packageDirPath = packageDirPath.parent_path();
+    }
+
+    // The package name can be omitted if the original main file is in the same package.
+    // This makes the copied file paths shorter for the main package of the model.
+    filesystem::path pathFromPackageDir;
+    if(findPathInDirectory(packageDirPath, originalBaseDirPath, pathFromPackageDir)){
+        filesystem::path pathInPackage;
+        for(auto& element : elementsInPackage){
+            pathInPackage /= element;
+        }
+        return pathInPackage;
+    }
+
+    return uriPath;
 }
 
 
