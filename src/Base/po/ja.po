@@ -127,7 +127,7 @@ msgid "Near clip distance"
 msgstr "近方クリップ距離"
 
 msgid "Far clip distance"
-msgstr "近方クリップ距離"
+msgstr "遠方クリップ距離"
 
 msgid "CaptureBar"
 msgstr "キャプチャバー"
