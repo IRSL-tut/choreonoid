@@ -25,11 +25,12 @@ items:
           class: BodyItem
           is_checked: true
           data:
+            schema: 2
             file: "${SHARE}/model/PA10/PA10.body"
             format: CHOREONOID-BODY
             root_translation: [ 0, 0, 0 ]
             root_rotation: [ 1, 0, 0, 0 ]
-            joint_displacements: [ 0, -30, 0, 60, 0, -30, 0, -1.43239, 1.43239 ]
+            joint_displacements: [ 0, -30, 0, 60, 0, -30, 0, -0.025, 0.025 ]
             initial_root_translation: [ 0, 0, 0 ]
             initial_root_rotation: [ 1, 0, 0, 0 ]
             fix_root: true
