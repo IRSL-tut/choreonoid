@@ -19,6 +19,14 @@ using namespace cnoid;
 
 namespace {
 
+/*
+  Format for the values written to a body file. The parameters of a body such as the
+  mass, the inertia and the link offsets are stored as double, and 12 significant digits
+  keep the precision that is practically required for them. Note that "%.17g" is not used
+  because it produces redundant digits for a value like 0.1.
+*/
+constexpr const char* doubleValueFormat = "%.12g";
+
 struct WriterInfo
 {
     std::string typeName;
@@ -81,6 +89,12 @@ StdBodyWriter::Impl::Impl(StdBodyWriter* self)
 {
     sceneWriter.setExtModelFileMode(StdSceneWriter::EmbedModels);
     yamlWriter.setKeyOrderPreservationMode(true);
+    /*
+      This is for the values directly written by the writer. Note that a value written to
+      a Mapping or a Listing is converted into a string when it is written to the node,
+      so that the format of each node must be specified to the node itself.
+    */
+    yamlWriter.setDoubleFormat(doubleValueFormat);
     os_ = &nullout();
 }
 
@@ -190,6 +204,7 @@ void StdBodyWriter::Impl::updateDeviceWriteFunctions()
 MappingPtr StdBodyWriter::Impl::writeBody(Body* body)
 {
     MappingPtr node = new Mapping;
+    node->setFloatingNumberFormat(doubleValueFormat);
 
     node->write("format", "ChoreonoidBody");
     node->write("format_version", "2.0");
@@ -241,6 +256,7 @@ MappingPtr StdBodyWriter::Impl::writeBody(Body* body)
 MappingPtr StdBodyWriter::Impl::writeLink(Link* link)
 {
     MappingPtr node = new Mapping;
+    node->setFloatingNumberFormat(doubleValueFormat);
 
     if(link->name().empty()){
         os() << formatR(

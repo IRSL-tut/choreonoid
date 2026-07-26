@@ -24,6 +24,27 @@
 using namespace std;
 using namespace cnoid;
 
+namespace {
+
+/*
+  Format for the values originally stored as double. 12 significant digits keep the
+  precision that is practically required for the model parameters written by hand or
+  computed in double, and it avoids the redundant digits that "%.17g" would produce
+  for a value like 0.1.
+*/
+constexpr const char* doubleValueFormat = "%.12g";
+
+/*
+  Format for the values originally stored as float such as the vertices, the normals,
+  the texture coordinates and the colors. 9 significant digits are necessary and
+  sufficient to restore the original float value (FLT_DECIMAL_DIG). Fewer digits break
+  the round trip, and more digits only expose the rounding error of float and increase
+  the file size, which matters because a mesh may have a huge number of elements.
+*/
+constexpr const char* floatValueFormat = "%.9g";
+
+}
+
 namespace cnoid {
 
 class StdSceneWriter::Impl
@@ -220,6 +241,8 @@ YAMLWriter* StdSceneWriter::Impl::getOrCreateYamlWriter()
     if(!yamlWriter){
         yamlWriter.reset(new YAMLWriter);
         yamlWriter->setKeyOrderPreservationMode(true);
+        // The default format for the values that are not given their own format
+        yamlWriter->setDoubleFormat(doubleValueFormat);
     }
     return yamlWriter.get();
 }
@@ -524,6 +547,8 @@ pair<MappingPtr, bool> StdSceneWriter::Impl::findOrCreateMapping(SgObject* objec
 {
     bool found = false;
     MappingPtr mapping = new Mapping;
+    // The default format for the nodes that are not given their own format
+    mapping->setFloatingNumberFormat(doubleValueFormat);
     auto inserted = sceneToYamlNodeMap.insert(SceneToYamlNodeMap::value_type(object, mapping));
     if(!inserted.second){
         mapping = dynamic_pointer_cast<Mapping>(inserted.first->second);
@@ -953,7 +978,6 @@ void StdSceneWriter::Impl::writeGroup(Mapping* archive, SgGroup* group)
 
 void StdSceneWriter::Impl::writePosTransform(Mapping* archive, SgPosTransform* transform)
 {
-    archive->setFloatingNumberFormat("%.12g");
     writeObjectHeader(archive, "Transform", transform);
     AngleAxis aa(transform->rotation());
     if(aa.angle() != 0.0){
@@ -1025,6 +1049,7 @@ MappingPtr StdSceneWriter::Impl::writeGeometry(SgShape* shape)
         // Geometry resource nodes should not be shared to make scene files more readable
         // by avoiding aliases and anchors for URIs.
         archive = new Mapping;
+        archive->setFloatingNumberFormat(doubleValueFormat);
     } else {
         bool found;
         std::tie(archive, found) = findOrCreateMapping(mesh);
@@ -1120,6 +1145,7 @@ bool StdSceneWriter::Impl::writeMesh(Mapping* archive, SgMesh* mesh)
             tie(normals, found) = findOrCreateListing(srcNormals);
             if(!found){
                 normals->setFlowStyle();
+                normals->setFloatingNumberFormat(floatValueFormat);
                 const int scalarElementSize = srcNormals->size() * 3;
                 normals->reserve(scalarElementSize);
                 for(auto& n : *srcNormals){
@@ -1148,6 +1174,7 @@ bool StdSceneWriter::Impl::writeMesh(Mapping* archive, SgMesh* mesh)
             tie(texCoords, found) = findOrCreateListing(srcTexCoords);
             if(!found){
                 texCoords->setFlowStyle();
+                texCoords->setFloatingNumberFormat(floatValueFormat);
                 const int scalarElementSize = srcTexCoords->size() * 2;
                 texCoords->reserve(scalarElementSize);
                 for(auto& t : *srcTexCoords){
@@ -1185,6 +1212,7 @@ void StdSceneWriter::Impl::writeVertices(Mapping* archive, SgVertexArray* srcVer
     tie(vertices, found) = findOrCreateListing(srcVertices);
     if(!found){
         vertices->setFlowStyle();
+        vertices->setFloatingNumberFormat(floatValueFormat);
         const int scalarElementSize = srcVertices->size() * 3;
         vertices->reserve(scalarElementSize);
         for(auto& v : *srcVertices){
@@ -1324,6 +1352,8 @@ MappingPtr StdSceneWriter::Impl::writeMaterial(SgMaterial* material)
     if(found){
         return archive;
     }
+
+    archive->setFloatingNumberFormat(floatValueFormat);
 
     if(material->ambientIntensity() != defaultMaterial->ambientIntensity()){
         archive->write("ambient", material->ambientIntensity());

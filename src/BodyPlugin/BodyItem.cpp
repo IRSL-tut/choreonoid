@@ -2015,7 +2015,14 @@ bool BodyItem::Impl::store(Archive& archive)
 {
     archive.writeFileInformation(self);
 
-    archive.setFloatingNumberFormat("%.9g");
+    /*
+      The state values such as the link positions and the joint displacements are stored
+      as double. 12 significant digits keep the precision that is practically required to
+      restore the same state, and it avoids the redundant digits that "%.17g" would
+      produce for a value like 0.1. Note that a value with fewer digits such as an angle
+      set by hand is not expanded by this format because the trailing zeros are omitted.
+    */
+    archive.setFloatingNumberFormat("%.12g");
 
     if(currentBaseLink){
         archive.write("current_base_link", currentBaseLink->name(), DOUBLE_QUOTED);
@@ -2033,7 +2040,6 @@ bool BodyItem::Impl::store(Archive& archive)
         auto initialJointDisplacements = initialState.jointDisplacements();
         int numInitialJointDisplacements = initialState.numJointDisplacements();
         qs = archive.createFlowStyleListing("joint_displacements");
-        qs->setFloatingNumberFormat("%g");
         for(int i=0; i < n; ++i){
             double q = body->joint(i)->q();
             qs->append(degree(q), 10, n);
@@ -2045,7 +2051,6 @@ bool BodyItem::Impl::store(Archive& archive)
         }
         if(doWriteInitialJointDisplacements){
             qs = archive.createFlowStyleListing("initial_joint_displacements");
-            qs->setFloatingNumberFormat("%g");
             for(size_t i=0; i < numInitialJointDisplacements; ++i){
                 qs->append(degree(initialJointDisplacements[i]), 10, n);
             }
