@@ -47,6 +47,32 @@ namespace {
 
 const bool TRACE_FUNCTIONS = false;
 
+/*
+  Schema version of the state archive of BodyItem. The "schema" key is not
+  written by the schema 1, and an archive without the key is therefore
+  regarded as the schema 1.
+
+  1: The initial schema. All the joint displacements including those of
+     prismatic joints are stored in degree.
+  2: The joint displacements of prismatic joints are stored in meter.
+*/
+constexpr int StateArchiveSchema = 2;
+
+//! \note This function corresponds to the schema 2 or later.
+double storedJointDisplacement(Link* joint, double q)
+{
+    return joint->isRevoluteJoint() ? degree(q) : q;
+}
+
+//! \note The unit of a prismatic joint value depends on the schema version.
+double restoredJointDisplacement(Link* joint, double value, int schema)
+{
+    if(schema >= 2 && !joint->isRevoluteJoint()){
+        return value;
+    }
+    return radian(value);
+}
+
 vector<string> bodyFilesToLoad;
 
 class BodyLocation : public LocationProxy
@@ -2013,6 +2039,10 @@ bool BodyItem::store(Archive& archive)
 
 bool BodyItem::Impl::store(Archive& archive)
 {
+    // This must be written first because it determines how the following contents
+    // should be interpreted.
+    archive.write("schema", StateArchiveSchema);
+
     archive.writeFileInformation(self);
 
     /*
@@ -2042,7 +2072,7 @@ bool BodyItem::Impl::store(Archive& archive)
         qs = archive.createFlowStyleListing("joint_displacements");
         for(int i=0; i < n; ++i){
             double q = body->joint(i)->q();
-            qs->append(degree(q), 10, n);
+            qs->append(storedJointDisplacement(body->joint(i), q), 10, n);
             if(!doWriteInitialJointDisplacements){
                 if(i < numInitialJointDisplacements && q != initialJointDisplacements[i]){
                     doWriteInitialJointDisplacements = true;
@@ -2050,9 +2080,11 @@ bool BodyItem::Impl::store(Archive& archive)
             }
         }
         if(doWriteInitialJointDisplacements){
+            int m = std::min(numInitialJointDisplacements, n);
             qs = archive.createFlowStyleListing("initial_joint_displacements");
-            for(size_t i=0; i < numInitialJointDisplacements; ++i){
-                qs->append(degree(initialJointDisplacements[i]), 10, n);
+            for(int i=0; i < m; ++i){
+                qs->append(
+                    storedJointDisplacement(body->joint(i), initialJointDisplacements[i]), 10, m);
             }
         }
     }
@@ -2379,6 +2411,14 @@ void BodyItem::Impl::restoreNonRootLinkStates(const Archive& archive)
     Listing* qs;
     bool useNewJointDisplacementFormat = false;
 
+    int schema = archive.get("schema", 1);
+    if(schema > StateArchiveSchema){
+        MessageOut::master()->putWarningln(
+            formatR(_("The state of \"{0}\" is stored with schema version {1}, which is newer than "
+                      "the supported version {2}. Some values may not be restored correctly."),
+                    self->displayName(), schema, StateArchiveSchema));
+    }
+
     qs = archive.findListing({ "joint_displacements", "jointDisplacements" });
     Listing* qs_initial = archive.findListing({ "initial_joint_displacements", "initialJointDisplacements" });
     if(qs->isValid()){
@@ -2387,10 +2427,11 @@ void BodyItem::Impl::restoreNonRootLinkStates(const Archive& archive)
         initialState.allocate(1, nj);
         auto q_initial = initialState.jointDisplacements();
         for(int i=0; i < nj; ++i){
-            double q = radian((*qs)[i].toDouble());
-            body->joint(i)->q() = q;
+            auto joint = body->joint(i);
+            double q = restoredJointDisplacement(joint, (*qs)[i].toDouble(), schema);
+            joint->q() = q;
             if(qs_initial->isValid() && i < qs_initial->size()){
-                q_initial[i] = radian((*qs_initial)[i].toDouble());
+                q_initial[i] = restoredJointDisplacement(joint, (*qs_initial)[i].toDouble(), schema);
             } else {
                 q_initial[i] = q;
             }
