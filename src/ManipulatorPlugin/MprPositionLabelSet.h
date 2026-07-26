@@ -6,6 +6,8 @@
 #include <cnoid/CheckBox>
 #include <QLabel>
 #include <QGridLayout>
+#include <vector>
+#include <memory>
 
 namespace cnoid {
 
@@ -49,8 +51,14 @@ private:
     QLabel configLabel;
     CheckBox autoConfigCheck;
     
-    QLabel jointNameLabels[MprPosition::MaxNumJoints];
-    QLabel jointDisplacementLabels[MprPosition::MaxNumJoints];
+    /**
+       The labels are created on demand because the number of joints of a target
+       body is not limited.
+    */
+    std::vector<std::unique_ptr<QLabel>> jointNameLabels;
+    std::vector<std::unique_ptr<QLabel>> jointDisplacementLabels;
+    void reserveJointLabels(int numJoints);
+
     int numValidJoints;
 };
 

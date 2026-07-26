@@ -7,8 +7,7 @@
 #include <cnoid/EigenTypes>
 #include <cnoid/Signal>
 #include <string>
-#include <array>
-#include <bitset>
+#include <vector>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -37,8 +36,6 @@ typedef ref_ptr<MprCompositePosition> MprCompositePositionPtr;
 class CNOID_EXPORT MprPosition : public ClonableReferenced
 {
 public:
-    static constexpr int MaxNumJoints = 8;
-    
     enum PositionType { InvalidPositionType, IK, FK, Composite };
 
     MprPosition& operator=(const MprPosition& rhs) = delete;
@@ -103,7 +100,7 @@ private:
 
 class CNOID_EXPORT MprFkPosition : public MprPosition
 {
-    typedef std::array<double, MaxNumJoints> JointDisplacementArray;
+    typedef std::vector<double> JointDisplacementArray;
 
 public:
     /*
@@ -140,7 +137,7 @@ public:
     virtual bool read(const Mapping* archive) override;
     virtual bool write(Mapping* archive) const override;
 
-    int numJoints() const { return numJoints_; }
+    int numJoints() const { return jointDisplacements_.size(); }
 
     void setJointDisplacementOrder(JointDisplacementOrder order) { jointDisplacementOrder_ = order; }
     JointDisplacementOrder jointDisplacementOrder() const { return jointDisplacementOrder_; }
@@ -150,8 +147,8 @@ public:
 
     iterator begin() { return jointDisplacements_.begin(); }
     const_iterator begin() const { return jointDisplacements_.cbegin(); }
-    iterator end() { return jointDisplacements_.begin() + numJoints_; }
-    const_iterator end() const { return jointDisplacements_.cbegin() + numJoints_; }
+    iterator end() { return jointDisplacements_.end(); }
+    const_iterator end() const { return jointDisplacements_.cend(); }
 
     double& jointDisplacement(int index) { return jointDisplacements_[index]; }
     double jointDisplacement(int index) const { return jointDisplacements_[index]; }
@@ -170,9 +167,10 @@ private:
     template<class JointContainer>
     bool applyJointDisplacements(BodyKinematicsKit* kinematicsKit, JointContainer& joints) const;
 
+    void setNumJoints(int n);
+
     JointDisplacementArray jointDisplacements_;
-    std::bitset<MaxNumJoints> prismaticJointFlags_;
-    int numJoints_;
+    std::vector<bool> prismaticJointFlags_;
     JointDisplacementOrder jointDisplacementOrder_;
 };
 
@@ -256,7 +254,7 @@ private:
     GeneralId baseFrameId_;
     GeneralId offsetFrameId_;
     int configuration_;
-    std::array<int, MaxNumJoints> phase_;
+    std::vector<int> phase_;
 };
 
 

@@ -227,6 +227,7 @@ int MprPositionLabelSet::attachJointLabels
     currentRow = row;
     currentPositionType = MprPosition::FK;
     numValidJoints = numJoints;
+    reserveJointLabels(numJoints);
 
     int i = 0;
     int column = 1;
@@ -236,13 +237,13 @@ int MprPositionLabelSet::attachJointLabels
             column = 1;
         }
         if(isJointNameLabelEnabled){
-            auto& nameLabel = jointNameLabels[i];
-            sharedGrid->addWidget(&nameLabel, row, column++, Qt::AlignLeft);
-            nameLabel.show();
+            auto nameLabel = jointNameLabels[i].get();
+            sharedGrid->addWidget(nameLabel, row, column++, Qt::AlignLeft);
+            nameLabel->show();
         }
-        auto& displacementLabel = jointDisplacementLabels[i];
-        sharedGrid->addWidget(&displacementLabel, row, column++, Qt::AlignCenter);
-        displacementLabel.show();
+        auto displacementLabel = jointDisplacementLabels[i].get();
+        sharedGrid->addWidget(displacementLabel, row, column++, Qt::AlignCenter);
+        displacementLabel->show();
 
         if(isJointNameLabelEnabled){
             ++column; // space between joints
@@ -250,13 +251,13 @@ int MprPositionLabelSet::attachJointLabels
         
         ++i;
     }
-    while(i < MprPosition::MaxNumJoints){
-        auto& nameLabel = jointNameLabels[i];
-        sharedGrid->removeWidget(&nameLabel);
-        nameLabel.hide();
-        auto& displacementLabel = jointDisplacementLabels[i];
-        sharedGrid->removeWidget(&displacementLabel);
-        displacementLabel.hide();
+    while(i < static_cast<int>(jointNameLabels.size())){
+        auto nameLabel = jointNameLabels[i].get();
+        sharedGrid->removeWidget(nameLabel);
+        nameLabel->hide();
+        auto displacementLabel = jointDisplacementLabels[i].get();
+        sharedGrid->removeWidget(displacementLabel);
+        displacementLabel->hide();
         ++i;
     }
 
@@ -264,16 +265,25 @@ int MprPositionLabelSet::attachJointLabels
 }
 
 
+void MprPositionLabelSet::reserveJointLabels(int numJoints)
+{
+    while(static_cast<int>(jointNameLabels.size()) < numJoints){
+        jointNameLabels.push_back(std::make_unique<QLabel>());
+        jointDisplacementLabels.push_back(std::make_unique<QLabel>());
+    }
+}
+
+
 void MprPositionLabelSet::detachJointLabels()
 {
     if(currentPositionType == MprPosition::FK){
-        for(int i=0; i < MprPosition::MaxNumJoints; ++i){
-            auto& nameLabel = jointNameLabels[i];
-            sharedGrid->removeWidget(&nameLabel);
-            nameLabel.hide();
-            auto& displacementLabel = jointDisplacementLabels[i];
-            sharedGrid->removeWidget(&displacementLabel);
-            displacementLabel.hide();
+        for(size_t i=0; i < jointNameLabels.size(); ++i){
+            auto nameLabel = jointNameLabels[i].get();
+            sharedGrid->removeWidget(nameLabel);
+            nameLabel->hide();
+            auto displacementLabel = jointDisplacementLabels[i].get();
+            sharedGrid->removeWidget(displacementLabel);
+            displacementLabel->hide();
         }
         currentRow = -1;
         currentPositionType = MprPosition::InvalidPositionType;
@@ -299,24 +309,24 @@ void MprPositionLabelSet::updateJointLabels
     bool isJointPathOrder = (position->jointDisplacementOrder() == MprFkPosition::JointPathOrder);
 
     for(int i=0; i < numValidJoints; ++i){
-        auto& nameLabel = jointNameLabels[i];
+        auto nameLabel = jointNameLabels[i].get();
         auto joint = kinematicsKit->jointAtIdOrder(i);
         if(isJointNameLabelEnabled){
-            nameLabel.setText(QString("%1:").arg(joint->jointName().c_str()));
-            nameLabel.show();
+            nameLabel->setText(QString("%1:").arg(joint->jointName().c_str()));
+            nameLabel->show();
         } else {
-            nameLabel.hide();
+            nameLabel->hide();
         }
         int dispIndex = isJointPathOrder ? kinematicsKit->jointIndexAtIdOrder(i) : i;
-        auto& displacementLabel = jointDisplacementLabels[i];
+        auto displacementLabel = jointDisplacementLabels[i].get();
         double q = position->jointDisplacement(dispIndex);
         double value = helper.toPresentationValue(joint, q);
         if(helper.getPresentationType(joint) == JointDisplacementPresentationHandler::Angle){
-            displacementLabel.setText(QString::number(degree(value), 'f', 1));
+            displacementLabel->setText(QString::number(degree(value), 'f', 1));
         } else {
-            displacementLabel.setText(QString::number(lengthRatio * value, 'f', decimals));
+            displacementLabel->setText(QString::number(lengthRatio * value, 'f', decimals));
         }
-        displacementLabel.setVisible(true);
+        displacementLabel->setVisible(true);
     }
 }
 

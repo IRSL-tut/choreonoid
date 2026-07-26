@@ -18,7 +18,6 @@
 using namespace std;
 using namespace cnoid;
 
-constexpr int MprPosition::MaxNumJoints;
 
 namespace {
 
@@ -180,11 +179,8 @@ MprFkPosition::MprFkPosition()
 
 
 MprFkPosition::MprFkPosition(const GeneralId& id)
-    : MprPosition(FK, id),
-      prismaticJointFlags_(0)
+    : MprPosition(FK, id)
 {
-    jointDisplacements_.fill(0.0);
-    numJoints_ = 0;
     jointDisplacementOrder_ = JointIdOrder;
 }
 
@@ -194,8 +190,14 @@ MprFkPosition::MprFkPosition(const MprFkPosition& org)
       jointDisplacements_(org.jointDisplacements_),
       prismaticJointFlags_(org.prismaticJointFlags_)
 {
-    numJoints_ = org.numJoints_;
     jointDisplacementOrder_ = org.jointDisplacementOrder_;
+}
+
+
+void MprFkPosition::setNumJoints(int n)
+{
+    jointDisplacements_.assign(n, 0.0);
+    prismaticJointFlags_.assign(n, false);
 }
 
 
@@ -211,7 +213,7 @@ bool MprFkPosition::fetchJointDisplacements(const JointContainer& joints, Messag
     bool fetched = false;
 
     if(checkJointDisplacementRanges(joints, mout)){
-        numJoints_ = std::min(joints.numJoints(), MaxNumJoints);
+        setNumJoints(joints.numJoints());
 
         /*
           Store joint displacements sorted by joint ID in ascending order.
@@ -219,15 +221,10 @@ bool MprFkPosition::fetchJointDisplacements(const JointContainer& joints, Messag
           joint's logical position (e.g. J1=index 0, J2=index 1, ..., J7=index 6)
           regardless of the kinematic chain order.
         */
-        int i;
-        for(i = 0; i < numJoints_; ++i){
+        for(size_t i = 0; i < jointDisplacements_.size(); ++i){
             auto joint = joints.jointAtIdOrder(i);
             jointDisplacements_[i] = joint->q();
             prismaticJointFlags_[i] = joint->isPrismaticJoint();
-        }
-        for( ; i < MaxNumJoints; ++i){
-            jointDisplacements_[i] = 0.0;
-            prismaticJointFlags_[i] = false;
         }
         jointDisplacementOrder_ = JointIdOrder;
         fetched = true;
@@ -252,7 +249,7 @@ bool MprFkPosition::fetch(BodyKinematicsKit* kinematicsKit, MessageOut* mout)
 template<class JointContainer>
 bool MprFkPosition::applyJointDisplacements(BodyKinematicsKit* kinematicsKit, JointContainer& joints) const
 {
-    int nj = std::min(joints.numJoints(), numJoints_);
+    int nj = std::min<int>(joints.numJoints(), jointDisplacements_.size());
 
     if(jointDisplacementOrder_ == JointIdOrder){
         /* The displacement array is sorted by joint ID */
@@ -310,21 +307,6 @@ bool MprFkPosition::read(const Mapping* archive)
         return false;
     }
 
-    prismaticJointFlags_.reset();
-    auto plist = archive->findListing("prismatic_joints");
-    if(!plist->isValid()){
-        plist = archive->findListing("prismaticJoints"); // old
-    }
-    if(plist->isValid()){
-        for(int i=0; i < plist->size(); ++i){
-            int index = plist->at(i)->toInt();
-            if(index < MaxNumJoints){
-                prismaticJointFlags_[index] = true;
-            }
-        }
-    }
-
-    
     /*
       In format_version 2.0, "joint_displacements" means JointIdOrder (default),
       and "joint_path_ordered_displacements" means JointPathOrder (legacy migration).
@@ -340,24 +322,32 @@ bool MprFkPosition::read(const Mapping* archive)
             jointDisplacementOrder_ = JointPathOrder;
         }
     }
-    if(!nodes->isValid()){
-        numJoints_ = 0;
-    } else {
-        numJoints_ = std::min(nodes->size(), MaxNumJoints);
-        int i = 0;
-        while(i < numJoints_){
-            double q = nodes->at(i)->toDouble();
-            if(!prismaticJointFlags_[i]){
-                q = radian(q);
+
+    setNumJoints(nodes->isValid() ? nodes->size() : 0);
+
+    // The prismatic joint flags must be read before converting the displacement
+    // values because the unit of a value depends on the corresponding joint type.
+    auto plist = archive->findListing("prismatic_joints");
+    if(!plist->isValid()){
+        plist = archive->findListing("prismaticJoints"); // old
+    }
+    if(plist->isValid()){
+        for(int i=0; i < plist->size(); ++i){
+            int index = plist->at(i)->toInt();
+            if(index < static_cast<int>(prismaticJointFlags_.size())){
+                prismaticJointFlags_[index] = true;
             }
-            jointDisplacements_[i] = q;
-            ++i;
-        }
-        while(i < MaxNumJoints){
-            jointDisplacements_[i++] = 0.0;
         }
     }
-    
+
+    for(size_t i = 0; i < jointDisplacements_.size(); ++i){
+        double q = nodes->at(i)->toDouble();
+        if(!prismaticJointFlags_[i]){
+            q = radian(q);
+        }
+        jointDisplacements_[i] = q;
+    }
+
     return true;
 }
 
@@ -376,7 +366,8 @@ bool MprFkPosition::write(Mapping* archive) const
     auto qlist = archive->createFlowStyleListing(displacementKey);
     ListingPtr plist = new Listing;
 
-    for(int i=0; i < numJoints_; ++i){
+    const int n = jointDisplacements_.size();
+    for(int i=0; i < n; ++i){
         double q = jointDisplacements_[i];
         if(prismaticJointFlags_[i]){
             plist->append(i);
@@ -410,7 +401,6 @@ MprIkPosition::MprIkPosition(const GeneralId& id)
     T.setIdentity();
     referenceRpy_.setZero();
     configuration_ = 0;
-    phase_.fill(0);
 }
 
 
