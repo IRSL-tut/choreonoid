@@ -404,7 +404,7 @@ bool SDFBodyLoader::Impl::load(Body* body, const string& filename)
 
     const string modelName = modelNode.attribute("name").as_string();
     if (!modelName.empty()) {
-        body->setName(modelName);
+        body->setModelName(modelName);
     }
 
     // Ensures the per-load model search paths are cleared whether load() returns normally or

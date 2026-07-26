@@ -195,7 +195,13 @@ MappingPtr StdBodyWriter::Impl::writeBody(Body* body)
     node->write("format_version", "2.0");
     node->write("angle_unit", "degree");
 
-    node->write("name", body->name(), DOUBLE_QUOTED);
+    /*
+      The name written in a body file is the name of the model itself, not the name of a
+      body instance. The instance name is used as a fallback for the case where a body is
+      created without loading a model file and only the instance name is given to it.
+    */
+    auto& modelName = body->modelName();
+    node->write("name", modelName.empty() ? body->name() : modelName, DOUBLE_QUOTED);
     auto rootLinkNode = new ScalarNode(body->rootLink()->name(), DOUBLE_QUOTED);
     // Insert a blank line after the header area (before the links and the following elements)
     rootLinkNode->setBlankLineAppended();

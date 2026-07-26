@@ -296,7 +296,18 @@ bool BodyLoader::Impl::load(Body* body, const std::string& filename)
         (*os) << ex.what();
     }
     os->flush();
-    
+
+    /*
+      A body loader is only responsible for setting the model name described in a model
+      file. The body name is the name of a body instance, and it is usually set by the
+      owner of the body such as BodyItem. The model name is used as the default instance
+      name so that a body loaded without such an owner also has a valid name. Note that
+      the name given by the owner before loading must not be overwritten here.
+    */
+    if(result && body->name().empty()){
+        body->setName(body->modelName());
+    }
+
     return result;
 }
 

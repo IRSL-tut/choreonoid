@@ -253,7 +253,7 @@ bool URDFBodyLoader::Impl::load(Body* body, const string& filename)
     const xml_node& robotNode = doc.child(ROBOT);
     const string robotName = robotNode.attribute(NAME).as_string();
     if (!robotName.empty()) {
-        body->setName(robotName);
+        body->setModelName(robotName);
     }
 
     // creates a color dictionary before parsing the robot model
