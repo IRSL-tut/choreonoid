@@ -300,6 +300,7 @@ public:
     
     class Impl;
 
+    SignalProxy<void()> sigKinematicsPostProcess() { return sigKinematicsPostProcess_; }
 protected:
     BodyItem(const BodyItem& org, CloneMap* cloneMap);
     virtual Item* doCloneItem(CloneMap* cloneMap) const override;
@@ -317,6 +318,7 @@ private:
     std::vector<bool> collisionLinkBitSet_;
     std::vector<std::vector<CollisionLinkPairPtr>> collisionsOfLink_;
     Signal<void()> sigCollisionsUpdated_;
+    Signal<void()> sigKinematicsPostProcess_;
 
     friend class PyBodyPlugin;
 };

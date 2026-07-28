@@ -1183,6 +1183,7 @@ void BodyItem::Impl::emitSigKinematicStateChanged()
 
 void BodyItem::notifyKinematicStateChange(bool requestFK, bool requestVelFK, bool requestAccFK)
 {
+    sigKinematicsPostProcess_();
     impl->notifyKinematicStateChange(requestFK, requestVelFK, requestAccFK, true);
 }
 
