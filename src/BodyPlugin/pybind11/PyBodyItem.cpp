@@ -35,6 +35,7 @@ void exportBodyItem(py::module m)
         .def("restoreInitialState", &BodyItem::restoreInitialState, py::arg("doNotify") = true)
         .def("getInitialState", &BodyItem::getInitialState)
         .def_property_readonly("sigKinematicStateChanged", &BodyItem::sigKinematicStateChanged)
+        .def_property_readonly("sigKinematicsPostProcess", &BodyItem::sigKinematicsPostProcess)
         .def("notifyKinematicStateChange",
              (void (BodyItem::*)(bool, bool, bool)) &BodyItem::notifyKinematicStateChange,
              py::arg("requestFK") = false, py::arg("requestVelFK") = false, py::arg("requestAccFK") = false)
