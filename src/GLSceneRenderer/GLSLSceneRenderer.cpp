@@ -432,6 +432,7 @@ public:
     bool isRenderingDepthPeeling;
     bool isRenderingViewportOverlay;
     bool isRenderingLogicalPixelViewportOverlay;
+    bool isRenderingPureWireframe;
     bool isLightweightRenderingBeingProcessed;
     bool isLowMemoryConsumptionMode;
     bool isLowMemoryConsumptionRenderingBeingProcessed;
@@ -987,6 +988,7 @@ void GLSLSceneRenderer::Impl::initialize()
     needToUpdateShadowCasterBBox = false;
     isRenderingViewportOverlay = false;
     isRenderingLogicalPixelViewportOverlay = false;
+    isRenderingPureWireframe = false;
     isLowMemoryConsumptionMode = false;
     isBoundingBoxRenderingMode = false;
     isBoundingBoxRenderingForLightweightRenderingGroupEnabled = false;
@@ -2565,7 +2567,18 @@ void GLSLSceneRenderer::Impl::renderFog(LightingProgram* program)
 void GLSLSceneRenderer::Impl::doPureWireframeRendering()
 {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    
+
+    /*
+      The polygon mode set above is a fixed function state that is only valid
+      during this function. A transparent shape must therefore be rendered here
+      immediately instead of being put into the transparent rendering queue,
+      which is processed after this function with the polygon mode restored to
+      GL_FILL. This does not break the transparency blending because only the
+      edge lines are drawn in this mode and the faces that need the back-to-front
+      blending are not drawn at all.
+    */
+    isRenderingPureWireframe = true;
+
     for(auto& info : pureWireframeRenderingNodes){
         auto style = static_cast<SgPolygonDrawStyle*>(info.node.get());
         auto T = modelMatrixBuffer[info.modelMatrixIndex];
@@ -2574,6 +2587,8 @@ void GLSLSceneRenderer::Impl::doPureWireframeRendering()
         modelMatrixStack.pop_back();
     }
     pureWireframeRenderingNodes.clear();
+
+    isRenderingPureWireframe = false;
 }
 
 
@@ -3652,7 +3667,14 @@ void GLSLSceneRenderer::Impl::renderShape(SgShape* shape)
                 isTransparent = true;
             }
         }
-        if(!isTransparent){
+        /*
+          A transparent shape is also rendered here in the pure wireframe mode.
+          Only the edge lines are drawn in that mode and they do not require the
+          back-to-front blending of the transparent faces. The shape must be
+          rendered here because the polygon mode of the mode is only valid while
+          doPureWireframeRendering is running.
+        */
+        if(!isTransparent || isRenderingPureWireframe){
             auto pickIndex = pushPickEndNode(shape);
             renderShapeMain(shape, modelMatrixStack.back(), pickIndex);
             popPickNode();
