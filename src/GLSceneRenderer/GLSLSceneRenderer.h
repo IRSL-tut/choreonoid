@@ -104,15 +104,6 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     void setLowMemoryConsumptionMode(bool on);
 
-    /**
-       The maximum number of the transparent object layers extracted by the depth
-       peeling, which is used when the transparent rendering mode is
-       DepthPeelingTransparentRendering. The transparent surfaces deeper than
-       this number at a pixel are not rendered. The default value is 4.
-    */
-    void setMaxNumDepthPeelingLayers(int n);
-    int maxNumDepthPeelingLayers() const;
-
     virtual void setPickingImageOutputEnabled(bool on) override;
     virtual bool getPickingImage(Image& out_image) override;
 

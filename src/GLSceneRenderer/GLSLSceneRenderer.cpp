@@ -530,7 +530,6 @@ public:
 
     // Resources for the depth peeling of the transparent object rendering
     bool isDepthPeelingAvailable; // Set to false when the resource initialization fails
-    int maxNumDepthPeelingLayers;
 
     /*
       The framebuffer objects used in the peeling passes. The attachment
@@ -1001,8 +1000,6 @@ void GLSLSceneRenderer::Impl::initialize()
     isDepthBufferUpdateEnabled = false;
     isReversedDepthBufferActive = false;
     isInfiniteFarOverrideEnabled = true;
-
-    maxNumDepthPeelingLayers = 4;
 
     lightingMode = NormalLighting;
     
@@ -2790,7 +2787,7 @@ bool GLSLSceneRenderer::Impl::initializeDepthPeelingResources()
     const int h = vp.h * scale;
 
     bool sizeChanged = (w != depthPeelingBufferWidth || h != depthPeelingBufferHeight);
-    int numLayers = std::max(1, maxNumDepthPeelingLayers);
+    int numLayers = GLSceneRenderer::numDepthPeelingLayers();
     bool numLayersChanged = (static_cast<size_t>(numLayers) != depthPeelingLayerTextures.size());
     if(!sizeChanged && !numLayersChanged && !depthPeelingPassFBOs.empty()){
         return true;
@@ -5700,13 +5697,3 @@ void GLSLSceneRenderer::setLowMemoryConsumptionMode(bool on)
 }
 
 
-void GLSLSceneRenderer::setMaxNumDepthPeelingLayers(int n)
-{
-    impl->maxNumDepthPeelingLayers = std::max(1, n);
-}
-
-
-int GLSLSceneRenderer::maxNumDepthPeelingLayers() const
-{
-    return impl->maxNumDepthPeelingLayers;
-}

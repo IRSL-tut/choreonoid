@@ -200,6 +200,9 @@ void MainMenu::setMenuItems()
     mm.setPath("/" N_("Options")).setPath(N_("OpenGL")).setPath(N_("Transparent Rendering"));
     SceneRendererConfig::setMenuAsOpenGLTransparentRenderingModeMenu(mm.currentMenu());
 
+    mm.setPath("/" N_("Options")).setPath(N_("OpenGL")).setPath(N_("Transparent Rendering Layers"));
+    SceneRendererConfig::setMenuAsOpenGLNumDepthPeelingLayersMenu(mm.currentMenu());
+
     //------------------------ Help ------------------------
 
     mm.setPath("/").setBackwardMode().setPath(N_("Help"));

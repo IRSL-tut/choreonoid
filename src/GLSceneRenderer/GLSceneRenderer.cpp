@@ -14,6 +14,8 @@ int rendererType_ = GLSceneRenderer::GLSL_RENDERER;
 bool isStandardDepthBufferForced_ = false;
 int transparentRenderingMode_ = GLSceneRenderer::DepthPeelingTransparentRendering;
 Signal<void()> sigTransparentRenderingModeChanged_;
+int numDepthPeelingLayers_ = 4;
+Signal<void()> sigNumDepthPeelingLayersChanged_;
 
 }
 
@@ -80,6 +82,32 @@ int GLSceneRenderer::transparentRenderingMode()
 SignalProxy<void()> GLSceneRenderer::sigTransparentRenderingModeChanged()
 {
     return sigTransparentRenderingModeChanged_;
+}
+
+
+void GLSceneRenderer::setNumDepthPeelingLayers(int n)
+{
+    if(n < MinNumDepthPeelingLayers){
+        n = MinNumDepthPeelingLayers;
+    } else if(n > MaxNumDepthPeelingLayers){
+        n = MaxNumDepthPeelingLayers;
+    }
+    if(n != numDepthPeelingLayers_){
+        numDepthPeelingLayers_ = n;
+        sigNumDepthPeelingLayersChanged_();
+    }
+}
+
+
+int GLSceneRenderer::numDepthPeelingLayers()
+{
+    return numDepthPeelingLayers_;
+}
+
+
+SignalProxy<void()> GLSceneRenderer::sigNumDepthPeelingLayersChanged()
+{
+    return sigNumDepthPeelingLayersChanged_;
 }
 
 

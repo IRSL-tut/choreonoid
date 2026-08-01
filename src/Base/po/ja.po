@@ -1107,6 +1107,9 @@ msgstr "ピクセル単位の重ね合わせ"
 msgid "Per-Pixel Compositing (Anti-Aliased)"
 msgstr "ピクセル単位の重ね合わせ（アンチエイリアス付き）"
 
+msgid "Transparent Rendering Layers"
+msgstr "半透明描画のレイヤ数"
+
 msgid "Help"
 msgstr "ヘルプ"
 

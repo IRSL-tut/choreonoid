@@ -14,6 +14,7 @@
 #include <cnoid/Selection>
 #include <cnoid/ValueTree>
 #include <cnoid/EigenArchive>
+#include <cnoid/ConnectionSet>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QColorDialog>
@@ -59,6 +60,18 @@ void loadSystemTransparentRenderingMode()
                 break;
             }
         }
+        initialized = true;
+    }
+}
+
+
+void loadSystemNumDepthPeelingLayers()
+{
+    static bool initialized = false;
+    if(!initialized){
+        auto glConfig = AppConfig::archive()->openMapping("OpenGL");
+        GLSceneRenderer::setNumDepthPeelingLayers(
+            glConfig->get("num_depth_peeling_layers", GLSceneRenderer::numDepthPeelingLayers()));
         initialized = true;
     }
 }
@@ -178,7 +191,7 @@ public:
     double lineWidth;
     int msaaLevel;
 
-    ScopedConnection transparentRenderingModeConnection;
+    ScopedConnectionSet systemSettingConnections;
 
     ConfigWidgetSet* widgetSet;
     ConfigDialog* dialog;
@@ -227,12 +240,18 @@ void SceneRendererConfig::Impl::doCommonInitialization()
         }
     });
 
-    // The transparent rendering mode is a system-wide setting directly referred
-    // to by the renderers, so only the re-rendering is requested here.
+    // The transparent rendering mode and the number of the depth peeling layers
+    // are system-wide settings directly referred to by the renderers, so only
+    // the re-rendering is requested here.
     loadSystemTransparentRenderingMode();
-    transparentRenderingModeConnection =
+    systemSettingConnections.add(
         GLSceneRenderer::sigTransparentRenderingModeChanged().connect(
-            [this](){ self->onRendererConfigUpdated(true); });
+            [this](){ self->onRendererConfigUpdated(true); }));
+
+    loadSystemNumDepthPeelingLayers();
+    systemSettingConnections.add(
+        GLSceneRenderer::sigNumDepthPeelingLayersChanged().connect(
+            [this](){ self->onRendererConfigUpdated(true); }));
 }
 
 
@@ -878,6 +897,36 @@ void SceneRendererConfig::setMenuAsOpenGLTransparentRenderingModeMenu(Menu* menu
         int currentMode = GLSceneRenderer::transparentRenderingMode();
         for(auto action : actionGroup->actions()){
             action->setChecked(action->data().toInt() == currentMode);
+        }
+    });
+}
+
+
+void SceneRendererConfig::setMenuAsOpenGLNumDepthPeelingLayersMenu(Menu* menu)
+{
+    loadSystemNumDepthPeelingLayers();
+
+    auto actionGroup = new QActionGroup(menu);
+    actionGroup->setExclusive(true);
+
+    for(int n = GLSceneRenderer::MinNumDepthPeelingLayers;
+        n <= GLSceneRenderer::MaxNumDepthPeelingLayers; ++n){
+        auto action = menu->addAction(QString::number(n));
+        action->setCheckable(true);
+        action->setData(n);
+        actionGroup->addAction(action);
+
+        QObject::connect(action, &QAction::triggered, [n](){
+            GLSceneRenderer::setNumDepthPeelingLayers(n);
+            auto glConfig = AppConfig::archive()->openMapping("OpenGL");
+            glConfig->write("num_depth_peeling_layers", GLSceneRenderer::numDepthPeelingLayers());
+        });
+    }
+
+    QObject::connect(menu, &QMenu::aboutToShow, [actionGroup](){
+        int current = GLSceneRenderer::numDepthPeelingLayers();
+        for(auto action : actionGroup->actions()){
+            action->setChecked(action->data().toInt() == current);
         }
     });
 }

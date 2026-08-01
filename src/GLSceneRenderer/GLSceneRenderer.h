@@ -40,7 +40,23 @@ public:
     static void setTransparentRenderingMode(int mode);
     static int transparentRenderingMode();
     static SignalProxy<void()> sigTransparentRenderingModeChanged();
-    
+
+    /**
+       The maximum number of the transparent object layers extracted by the depth
+       peeling. The transparent surfaces deeper than this number at a pixel are
+       not rendered. A larger number improves the rendering of the deeply
+       overlapped transparent objects at the cost of the rendering passes, each
+       of which renders all the transparent objects again. This is a system-wide
+       setting shared by all the renderer instances in the same way as the
+       transparent rendering mode. The value is clipped to the range between
+       MinNumDepthPeelingLayers and MaxNumDepthPeelingLayers.
+    */
+    enum { MinNumDepthPeelingLayers = 1, MaxNumDepthPeelingLayers = 8 };
+    static void setNumDepthPeelingLayers(int n);
+    static int numDepthPeelingLayers();
+    static SignalProxy<void()> sigNumDepthPeelingLayersChanged();
+
+
     GLSceneRenderer(SgGroup* root = nullptr);
     virtual ~GLSceneRenderer();
 
