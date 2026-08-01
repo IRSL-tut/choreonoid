@@ -547,7 +547,6 @@ public:
     int depthPeelingBufferHeight;
     int depthPeelingBufferScale; // 2 in the supersampled depth peeling mode, otherwise 1
     GLint maxDepthPeelingTextureSize; // Cache of GL_MAX_TEXTURE_SIZE (0 until it is obtained)
-    vector<GLuint> depthPeelingQueries; // Per-layer occlusion queries for detecting empty layers
     GLuint depthPeelingVAO; // Empty VAO for the full-screen passes
     GLSLProgram depthPeelingInitProgram;
     GLSLProgram depthPeelingCompositeProgram;
@@ -2838,14 +2837,6 @@ bool GLSLSceneRenderer::Impl::initializeDepthPeelingResources()
     if(!depthPeelingVAO){
         glGenVertexArrays(1, &depthPeelingVAO);
     }
-    if(numLayersChanged && !depthPeelingQueries.empty()){
-        glDeleteQueries(depthPeelingQueries.size(), depthPeelingQueries.data());
-        depthPeelingQueries.clear();
-    }
-    if(depthPeelingQueries.empty()){
-        depthPeelingQueries.resize(numLayers, 0);
-        glGenQueries(numLayers, depthPeelingQueries.data());
-    }
 
     /*
       GL_DEPTH_COMPONENT32F is used for the peeling depth textures so that the
@@ -2957,9 +2948,6 @@ void GLSLSceneRenderer::Impl::releaseDepthPeelingResources(bool isGLContextActiv
         if(!depthPeelingLayerTextures.empty()){
             glDeleteTextures(depthPeelingLayerTextures.size(), depthPeelingLayerTextures.data());
         }
-        if(!depthPeelingQueries.empty()){
-            glDeleteQueries(depthPeelingQueries.size(), depthPeelingQueries.data());
-        }
         if(depthPeelingVAO){
             glDeleteVertexArrays(1, &depthPeelingVAO);
         }
@@ -2977,7 +2965,6 @@ void GLSLSceneRenderer::Impl::releaseDepthPeelingResources(bool isGLContextActiv
     depthPeelingBufferHeight = 0;
     depthPeelingBufferScale = 1;
     maxDepthPeelingTextureSize = 0;
-    depthPeelingQueries.clear();
     depthPeelingVAO = 0;
     areDepthPeelingProgramsInitialized = false;
 
@@ -3071,15 +3058,25 @@ void GLSLSceneRenderer::Impl::renderTransparentObjectsWithDepthPeeling()
     glClearDepth(defaultClearDepth);
 
     /*
-      The passes after the first one and the per-layer compositing are executed
-      under the conditional rendering predicated on the occlusion query of the
-      previous pass. When a pass extracts no fragments, the GPU discards the
-      drawing commands of the remaining passes by itself, so the early
-      termination works without any CPU-GPU synchronization that would break
-      the pipelining between the CPU and the GPU.
+      The conditional rendering predicated on an occlusion query is not used to
+      skip the peeling and the compositing of an empty layer. Whether the
+      occlusion query of the discarded drawing commands is updated is not
+      specified in the OpenGL specification, and the query is actually left not
+      updated on some drivers. Skipping the peeling passes that way discards all
+      the following passes one after another and makes the transparent objects
+      disappear, and skipping the compositing that way drops the layers that
+      actually have their contents.
     */
     const int maxNumLayers = static_cast<int>(depthPeelingLayerTextures.size());
     isRenderingDepthPeeling = true;
+
+    /*
+      Each peeling pass extracts a single surface for each pixel and its color
+      must be written into the layer texture as it is. The blending must be
+      disabled explicitly here because it may be left enabled by the rendering
+      done before this function.
+    */
+    glDisable(GL_BLEND);
 
     for(int i=0; i < maxNumLayers; ++i){
 
@@ -3089,14 +3086,9 @@ void GLSLSceneRenderer::Impl::renderTransparentObjectsWithDepthPeeling()
 
         // The alpha channel must be written into the layer texture although
         // the alpha writing is disabled in the main framebuffer rendering.
-        // Note that the clear is not skipped by the conditional rendering.
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-
-        if(i > 0){
-            glBeginConditionalRender(depthPeelingQueries[i - 1], GL_QUERY_WAIT);
-        }
 
         /*
           Copy the depth values of the opaque scene into the peeling depth buffer
@@ -3132,21 +3124,14 @@ void GLSLSceneRenderer::Impl::renderTransparentObjectsWithDepthPeeling()
             fullLightingProgram->setDepthPeelingEnabled(true);
         }
 
-        glBeginQuery(GL_ANY_SAMPLES_PASSED, depthPeelingQueries[i]);
         renderDepthPeelableEntries();
-        glEndQuery(GL_ANY_SAMPLES_PASSED);
-
-        if(i > 0){
-            glEndConditionalRender();
-        }
     }
 
     isRenderingDepthPeeling = false;
     fullLightingProgram->glslProgram().use();
     fullLightingProgram->setDepthPeelingEnabled(false);
 
-    // Composite the extracted layers over the scene in back-to-front order.
-    // The compositing of an empty layer is skipped by the conditional rendering.
+    // Composite the extracted layers over the scene in back-to-front order
     glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
     glViewport(vp.x, vp.y, vp.w, vp.h);
     glScissor(sx0, sy0, sx1 - sx0, sy1 - sy0);
@@ -3165,15 +3150,17 @@ void GLSLSceneRenderer::Impl::renderTransparentObjectsWithDepthPeeling()
     glActiveTexture(GL_TEXTURE0 + DepthPeelingWorkTextureUnit);
     for(int i = maxNumLayers - 1; i >= 0; --i){
         glBindTexture(GL_TEXTURE_2D, depthPeelingLayerTextures[i]);
-        glBeginConditionalRender(depthPeelingQueries[i], GL_QUERY_WAIT);
         glDrawArrays(GL_TRIANGLES, 0, 3);
-        glEndConditionalRender();
     }
     glActiveTexture(GL_TEXTURE0);
 
     glDisable(GL_SCISSOR_TEST);
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
+
+    // Restore the blend function used for the ordinary transparent rendering
+    // so that the function for the premultiplied alpha does not remain
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     if(currentProgram){
         currentProgram->glslProgram().use();
