@@ -2145,8 +2145,14 @@ msgstr "カレントカメラが組み込みのインタラクティブカメラ
 msgid "FPS Test Result"
 msgstr "フレームレートテスト結果"
 
-msgid "FPS: %1 frames / %2 [s] = %3"
-msgstr "フレームレート: %1 フレーム / %2 [秒] = %3 [fps]"
+msgid ""
+"FPS: {0} frames / {1:.3f} [s] = {2:.1f}\n"
+"({0} of {3} frames are used for the measurement to exclude the slow frames "
+"just after the start)"
+msgstr ""
+"フレームレート: {0} フレーム / {1:.3f} [秒] = {2:.1f} [fps]\n"
+"(開始直後の低速なフレームを除外するため，{3} フレーム中 {0} フレームを測定に使"
+"用しています．)"
 
 msgid "Global Position"
 msgstr "グローバル座標位置"

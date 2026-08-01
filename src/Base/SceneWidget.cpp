@@ -970,14 +970,38 @@ void SceneWidget::Impl::doFpsTest(int iteration)
     
     isDoingFpsTest = true;
     isFpsTestCanceled = false;
-    
+
     const Vector3 p = lastClickedPoint;
     const Isometry3 C = builtinCameraTransform->T();
 
-    QElapsedTimer timer;
-    timer.start();
+    /*
+      The frames rendered just after the test is started tend to be much slower
+      than the following ones because the GPU lowers its clock while it is idle
+      and it takes some time to raise the clock to the boost one. Those frames
+      make the measured FPS unstable and smaller than the actual performance.
+      All the frames specified by the iteration are rendered, but the
+      measurement is started when the frame time becomes stable. The same scene
+      is rendered in each frame, so the frame time should be almost constant
+      once the GPU reaches its steady state.
+    */
+    constexpr int numFramesToCheckStability = 5;
+    constexpr double stableFrameTimeRatio = 1.1;
+    // The measurement is started anyway when the frame time is not stabilized
+    constexpr double maxWarmUpTime = 2.0;
 
-    int numFrames = 0;
+    QElapsedTimer totalTimer;
+    totalTimer.start();
+    QElapsedTimer frameTimer;
+
+    bool isMeasuring = false;
+    double measuredTime = 0.0;
+    double totalFrameTime = 0.0;
+    int numMeasuredFrames = 0;
+    int numTotalFrames = 0;
+    // Ring buffer of the latest frame times used for the stability check
+    double recentFrameTimes[numFramesToCheckStability] = { 0.0 };
+    int numRecentFrameTimes = 0;
+
     for(int i=0; i < iteration; ++i){
         for(double theta=1.0; theta <= 360.0; theta += 1.0){
             double a = radian(theta);
@@ -986,24 +1010,64 @@ void SceneWidget::Impl::doFpsTest(int iteration)
                 AngleAxis(a, Vector3::UnitZ()) *
                 Translation3(-p) *
                 C);
+            frameTimer.start();
             repaint();
             AppUtil::updateGui(true);
-            ++numFrames;
+            double frameTime = frameTimer.nsecsElapsed() / 1.0e9;
+            ++numTotalFrames;
+
+            // The total time is used as the fallback when the measurement is
+            // not started until the end of the test
+            totalFrameTime += frameTime;
+
+            if(isMeasuring){
+                ++numMeasuredFrames;
+                measuredTime += frameTime;
+            } else {
+                recentFrameTimes[numRecentFrameTimes % numFramesToCheckStability] = frameTime;
+                ++numRecentFrameTimes;
+                if(numRecentFrameTimes >= numFramesToCheckStability){
+                    double minTime = recentFrameTimes[0];
+                    double maxTime = recentFrameTimes[0];
+                    for(int j=1; j < numFramesToCheckStability; ++j){
+                        minTime = std::min(minTime, recentFrameTimes[j]);
+                        maxTime = std::max(maxTime, recentFrameTimes[j]);
+                    }
+                    if(maxTime <= minTime * stableFrameTimeRatio){
+                        isMeasuring = true;
+                    }
+                }
+                if(!isMeasuring && totalTimer.nsecsElapsed() / 1.0e9 >= maxWarmUpTime){
+                    isMeasuring = true;
+                }
+            }
+
             if(isFpsTestCanceled){
                 break;
             }
         }
+        if(isFpsTestCanceled){
+            break;
+        }
     }
 
-    double time = timer.elapsed() / 1000.0;
-    fps = numFrames / time;
+    if(numMeasuredFrames == 0){
+        // The frame time was not stabilized in the whole test
+        numMeasuredFrames = numTotalFrames;
+        measuredTime = totalFrameTime;
+    }
+    double time = measuredTime;
+    fps = (numMeasuredFrames > 0 && time > 0.0) ? (numMeasuredFrames / time) : 0.0;
     fpsCounter = 0;
 
     update();
 
     QMessageBox::information(
         this, _("FPS Test Result"),
-        QString(_("FPS: %1 frames / %2 [s] = %3")).arg(numFrames).arg(time).arg(fps));
+        formatR(_("FPS: {0} frames / {1:.3f} [s] = {2:.1f}\n"
+                  "({0} of {3} frames are used for the measurement to exclude "
+                  "the slow frames just after the start)"),
+                numMeasuredFrames, time, fps, numTotalFrames).c_str());
 
     builtinCameraTransform->setTransform(C);
     update();
