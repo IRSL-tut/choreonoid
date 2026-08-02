@@ -489,6 +489,16 @@ public:
         bool isDepthPeelable;
 
         /*
+          The SgPolygonDrawStyle node enclosing the object of this entry, or null
+          when the wireframe rendering is not enabled for the object. The wireframe
+          state of the node is applied to the shader program before the entry is
+          rendered because the rendering is done after the traversal that applies
+          the state has finished. A raw pointer is used because the scene graph
+          keeps the node alive while the rendering of a frame is being processed.
+        */
+        SgPolygonDrawStyle* wireframeStyle;
+
+        /*
           The bounding rectangle of the object in the viewport coordinates.
           The depth peeling passes are restricted to the union of the rectangles
           by the scissor test so that their fill cost is proportional to the
@@ -505,6 +515,7 @@ public:
               depth(depth),
               minTransparency(minTransparency),
               isDepthPeelable(isDepthPeelable),
+              wireframeStyle(nullptr),
               hasScreenRect(false)
         { }
     };
@@ -693,6 +704,7 @@ public:
         function<void()> renderingFunction);
     void renderTransparentObjects(bool isDepthPeelingAllowed);
     void renderBlendedTransparentEntries(bool skipDepthPeelableEntries);
+    void applyWireframeState(SgPolygonDrawStyle* style);
     bool initializeDepthPeelingResources();
     void releaseDepthPeelingResources(bool isGLContextActive);
     void renderTransparentObjectsWithDepthPeeling();
@@ -2654,6 +2666,12 @@ void GLSLSceneRenderer::Impl::addTransparentRenderingEntry
     float depth = static_cast<float>(-(viewTransform * p).z());
     transparentRenderingQueue.emplace_back(std::move(renderingFunction), depth, minTransparency, isDepthPeelable);
 
+    // Keep the enclosing SgPolygonDrawStyle node so that its wireframe state can
+    // be applied when the entry is rendered after the traversal
+    if(!solidWireframeStyleStack.empty()){
+        transparentRenderingQueue.back().wireframeStyle = solidWireframeStyleStack.back();
+    }
+
     if(isDepthPeelable && !bbox.empty()){
         // Calculate the bounding rectangle in the viewport coordinates by
         // projecting the eight corners of the bounding box
@@ -2752,6 +2770,7 @@ void GLSLSceneRenderer::Impl::renderBlendedTransparentEntries(bool skipDepthPeel
 
     float orgMinTransparency = minTransparency;
     float currentMinTransparency = orgMinTransparency;
+    SgPolygonDrawStyle* currentWireframeStyle = nullptr;
 
     // The index-based iteration is used because an entry may add new entries
     // to the queue while it is executed. Each entry is moved to a local variable
@@ -2766,11 +2785,30 @@ void GLSLSceneRenderer::Impl::renderBlendedTransparentEntries(bool skipDepthPeel
             fullLightingProgram->setMinimumTransparency(entry.minTransparency);
             currentMinTransparency = entry.minTransparency;
         }
+        if(entry.wireframeStyle != currentWireframeStyle){
+            applyWireframeState(entry.wireframeStyle);
+            currentWireframeStyle = entry.wireframeStyle;
+        }
         entry.renderingFunction();
+    }
+
+    if(currentWireframeStyle){
+        fullLightingProgram->disableWireframe();
     }
 
     if(currentMinTransparency != orgMinTransparency){
         fullLightingProgram->setMinimumTransparency(orgMinTransparency);
+    }
+}
+
+
+void GLSLSceneRenderer::Impl::applyWireframeState(SgPolygonDrawStyle* style)
+{
+    if(style){
+        fullLightingProgram->enableWireframe(
+            style->edgeColor(), style->edgeWidth(), style->isFaceEnabled());
+    } else {
+        fullLightingProgram->disableWireframe();
     }
 }
 
@@ -3184,6 +3222,7 @@ void GLSLSceneRenderer::Impl::renderDepthPeelableEntries()
 {
     float orgMinTransparency = minTransparency;
     float currentMinTransparency = orgMinTransparency;
+    SgPolygonDrawStyle* currentWireframeStyle = nullptr;
 
     /*
       Unlike renderBlendedTransparentEntries, the entries are referenced in place
@@ -3199,7 +3238,15 @@ void GLSLSceneRenderer::Impl::renderDepthPeelableEntries()
             fullLightingProgram->setMinimumTransparency(entry.minTransparency);
             currentMinTransparency = entry.minTransparency;
         }
+        if(entry.wireframeStyle != currentWireframeStyle){
+            applyWireframeState(entry.wireframeStyle);
+            currentWireframeStyle = entry.wireframeStyle;
+        }
         entry.renderingFunction();
+    }
+
+    if(currentWireframeStyle){
+        fullLightingProgram->disableWireframe();
     }
 
     if(currentMinTransparency != orgMinTransparency){
