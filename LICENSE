@@ -71,14 +71,11 @@ copyrighted by other developers.
  * fmt (http://fmtlib.net)
    see thirdparty/fmt-11.0.0/LICENSE
 
- * FreeType (http://freetype.org/)
-   see thirdparty/freetype-2.13.0/LICENSE.TXT
-
  * gettext (http://www.gnu.org/software/gettext)
    see thirdparty/gettext-0.21/include/libintl.h
 
  * IJG JPEG Library (http://www.ijg.org)
-   see thirdparty/Jpeg-9c/README
+   see thirdparty/jpeg-9c/README
 
  * libpng (http://www.libpng.org/pub/png/libpng.html)
    see thirdparty/lpng1232/LICENSE
@@ -87,7 +84,7 @@ copyrighted by other developers.
    see thirdparty/libzip-1.9.2/LICENSE
 
  * LibYAML (http://pyyaml.org/wiki/LibYAML)
-   MIT license (see thirdparty/yaml-0.2.5/LICENSE)
+   MIT license (see thirdparty/libyaml-0.2.5/License)
 
  * MuJoCo (https://github.com/google-deepmind/mujoco)
    see thirdparty/mujoco-3.9.0/LICENSE
@@ -99,7 +96,7 @@ copyrighted by other developers.
    see src/AISTCollisionDetector/Opcode/ReadMe.txt
 
  * Pugixml (https://pugixml.org)
-   see thirdparty/pugixml-1.11/readme.txt
+   see thirdparty/pugixml-1.11/LICENSE.md
 
  * QuickHull (https://github.com/akuukka/quickhull)
    see thirdparty/quickhull/LICENSE

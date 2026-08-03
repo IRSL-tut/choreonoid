@@ -19,7 +19,7 @@ License: OPCODE
  purpose, including commercial applications, and to alter it and redistribute it
  freely.
 
-Files: thirdparty/CLI11-2.4.1/*
+Files: thirdparty/CLI11/*
 Copyright: 2017-2024 University of Cincinnati
 License: BSD-3-clause
 
@@ -29,7 +29,7 @@ License: MPL-2.0 and others
  Eigen is primarily MPL-2.0 licensed. Some files are licensed under BSD-3-clause,
  LGPL-2.1+, or Apache-2.0. See thirdparty/eigen-3.4.0/COPYING.README for details.
 
-Files: thirdparty/fast_float-0.8.0/*
+Files: thirdparty/fast_float-8.2.10/*
 Copyright: 2021 The fast_float authors
 License: Apache-2.0 or MIT
  fast_float is dual-licensed under Apache-2.0 and MIT.
@@ -37,13 +37,6 @@ License: Apache-2.0 or MIT
 Files: thirdparty/fmt-11.0.0/*
 Copyright: 2012-present, Victor Zverovich and {fmt} contributors
 License: MIT
-
-Files: thirdparty/freetype-2.13.0/*
-Copyright: 1996-2023 David Turner, Robert Wilhelm, and Werner Lemberg
-License: FreeType or GPL-2+
- FreeType is dual-licensed under the FreeType License (BSD-style with a
- credit clause) and the GPL-2+. See thirdparty/freetype-2.13.0/LICENSE.TXT
- for details.
 
 Files: thirdparty/gettext-0.21/*
 Copyright: 1995-2020 Free Software Foundation, Inc.
@@ -71,6 +64,20 @@ Copyright: 1998-2008 Glenn Randers-Pehrson
 License: libpng
  See thirdparty/lpng1232/LICENSE for the full license text.
 
+Files: thirdparty/mujoco-3.9.0/*
+Copyright: 2021 DeepMind Technologies Limited
+License: Apache-2.0
+ This directory contains the official prebuilt MuJoCo shared library and its
+ public C headers. The library statically links several third-party components
+ (abseil, qhull, ccd, tinyxml2, tinyobjloader, lodepng, miniz and others) with
+ hidden symbol visibility. The sources of those components are not included in
+ this package. See thirdparty/mujoco-3.9.0/CHOREONOID_README.md and the
+ upstream MuJoCo distribution for details.
+
+Files: thirdparty/nanobind-2.12.0/*
+Copyright: 2022 Wenzel Jakob <wenzel.jakob@epfl.ch>
+License: BSD-3-clause
+
 Files: thirdparty/physx-5.6.1/*
 Copyright: 2008-2025 NVIDIA Corporation
 License: BSD-3-clause
@@ -82,6 +89,21 @@ License: MIT
 Files: thirdparty/pybind11-2.12.0/*
 Copyright: 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>
 License: BSD-3-clause
+
+Files: thirdparty/quickhull/*
+Copyright: Antti Kuukka
+License: public-domain
+
+Files: thirdparty/robin-map-1.4.1/*
+Copyright: 2017 Thibaut Goetghebuer-Planchon <tessil@gmx.com>
+License: MIT
+
+Files: thirdparty/stb/*
+Copyright: 2017 Sean Barrett
+License: MIT or Unlicense
+ The stb libraries are dual-licensed and may be used under either the MIT
+ license or the Unlicense (public domain dedication). See the license text at
+ the end of thirdparty/stb/stb_image.h and thirdparty/stb/stb_image_write.h.
 
 Files: thirdparty/xacro-1.14.20/*
 Copyright: Open Source Robotics Foundation, Inc.
@@ -164,20 +186,6 @@ License: LGPL-2.1+
  On Debian systems, the full text of the GNU Lesser General Public License
  version 2.1 can be found in the file '/usr/share/common-licenses/LGPL-2.1'.
 
-License: GPL-2+
- This program is free software; you can redistribute it and/or modify it
- under the terms of the GNU General Public License as published by the Free
- Software Foundation; either version 2 of the License, or (at your option)
- any later version.
- .
- This program is distributed in the hope that it will be useful, but WITHOUT
- ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- more details.
- .
- On Debian systems, the full text of the GNU General Public License version 2
- can be found in the file '/usr/share/common-licenses/GPL-2'.
-
 License: MPL-2.0
  This Source Code Form is subject to the terms of the Mozilla Public
  License, v. 2.0. If a copy of the MPL was not distributed with this file,
@@ -253,15 +261,31 @@ License: IJG
  .
  We acknowledge and thank the IJG authors and the Independent JPEG Group.
 
-License: FreeType
- The FreeType  2 font  engine is  copyrighted work  and cannot  be used
- legally  without a  software license.   In order  to make  this project
- usable to a vast majority of developers, it is distributed under two
- mutually exclusive open-source licenses:  The FreeType License (a BSD-style
- license with a credit clause) and the GPL-2+.
+License: Unlicense
+ This is free and unencumbered software released into the public domain.
  .
- See thirdparty/freetype-2.13.0/LICENSE.TXT and
- thirdparty/freetype-2.13.0/docs/FTL.TXT for details.
+ Anyone is free to copy, modify, publish, use, compile, sell, or distribute
+ this software, either in source code form or as a compiled binary, for any
+ purpose, commercial or non-commercial, and by any means.
+ .
+ In jurisdictions that recognize copyright laws, the author or authors of this
+ software dedicate any and all copyright interest in the software to the public
+ domain. We make this dedication for the benefit of the public at large and to
+ the detriment of our heirs and successors. We intend this dedication to be an
+ overt act of relinquishment in perpetuity of all present and future rights to
+ this software under copyright law.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+License: public-domain
+ The QuickHull implementation by Antti Kuukka is released into the public
+ domain by its author. See thirdparty/quickhull/LICENSE for the author's
+ statement.
 
 License: OPCODE
  OPCODE (Optimized Collision Detection) is distributed with the following

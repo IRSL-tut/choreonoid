@@ -1,11 +1,127 @@
-Choreonoid 2.5.0 (under development)
-====================================
+Choreonoid 2.5.0 released on August 3, 2026
+===========================================
 
 Changes since 2.4.0:
 
-(To be documented)
-
----
+* Supported Ubuntu 26.04
+* Added MuJoCoPlugin
+  * Provided the MuJoCo simulator item, which performs physics computation with the MuJoCo physics engine
+  * Bundled the prebuilt library of MuJoCo 3.9.0
+  * Enabled the build by default
+* Renewed BulletPlugin
+  * Newly implemented the plugin, which performs physics computation with version 3 of the Bullet physics engine
+  * Enabled the build by default when the Bullet library is detected
+  * Supported articulated models based on the multibody dynamics
+  * Supported the piecewise rigid simulation of continuous tracks
+* Improved AISTSimulator
+  * Greatly improved the scalability by using a sparse matrix structure for the LCP
+  * Sped up the computation by caching the inverse of the free root inertia used in the test force computation
+  * Adjusted the default value of the maximum number of iterations of the Projected Gauss-Seidel (PGS) method
+  * Added the error criterion parameter for the convergence check of the PGS method
+  * Sped up the computation by reducing redundant contact points
+  * Stabilized the behavior by scaling the saturation of the contact depth correction to the target depth
+  * Supported the individual restitution settings of contact materials
+  * Added the property for the parallel collision detection (the number of collision detection threads)
+  * Improved the extra joints
+    * Supported the hinge type
+    * Supported the constraints between different bodies
+* Improved AISTCollisionDetector
+  * Supported the exact collision detection between primitive shapes (sphere, cylinder, box, capsule, etc.)
+  * Sped up the detection by improving the parallelization for the collision detection pairs
+  * Supported the configuration of the collision detection parameters with the world item properties
+* Improved ODEPlugin
+  * Enabled the build by default when the ODE library is detected
+  * Supported the individual friction and restitution settings of contact materials
+  * Supported the self-collision detection
+  * Added the selection of the collision space type
+  * Supported applying external forces to links
+  * Fixed the joint initialization for offset positions
+  * Fixed the surface velocity (the simplified simulation of continuous tracks)
+  * Added the option to approximate the inertia about the joint axis
+  * Improved the extra joints
+    * Supported the fixed and hinge types
+    * Supported the constraints between different bodies
+* Improved PhysXPlugin
+  * Supported the individual friction and restitution settings of contact materials
+  * Supported the bitmask actuation modes and gated the velocity feedforward
+  * Supported the drive effort output
+  * Supported the extra joints between different bodies
+  * Fixed the surface velocity (the simplified simulation of continuous tracks)
+  * Improved the cleaning process of triangle meshes
+* Organized the other simulation-related functions
+  * Unified the piecewise rigid continuous track devices of PhysXPlugin and BulletPlugin as PiecewiseRigidContinuousTrack
+  * Removed the sources of the experimental SpringheadPlugin and RokiPlugin
+  * Supported multiple simulator item types in the sample projects
+  * Added the Ball sample for checking the restitution
+* Improved the rendering engine
+  * Improved the transparent rendering
+    * Introduced the depth sorting of transparent objects
+    * Achieved the per-pixel composition of transparent objects by introducing the depth peeling
+    * Achieved the edge and wireframe rendering of transparent objects
+  * Improved the cast shadow rendering
+    * Enabled the shadow of a directional light over the whole rendering range
+    * Made the shadow map size (the shadow resolution) configurable
+    * Fixed the striped noise caused by self-shadowing
+  * Improved the point cloud rendering
+    * Sped up the rendering when the point cloud data grows
+    * Supported the specification of the valid point range
+    * Supported the shaded rendering using normals
+  * Improved the text rendering
+    * Supported multiple lines
+    * Supported the selection of the Sans / Mono font types
+    * Fixed the problem that the number of available character types was severely limited
+  * Fixed the rendering of viewport overlays in high-DPI environments
+  * Fixed the problem that picking was disabled when the lightweight view change mode was enabled
+  * Eliminated the picking coordinate error at grazing angles
+* Improved the visualization functions
+  * Improved the bounding box display of a body
+    * Made the box fit tightly by using a convex-hull-based AABB
+    * Introduced the property to always show the box
+    * Changed the box color depending on the selection state
+  * Improved the visualization of collision lines
+    * Made the line length, the line width, and the collision point marker display configurable with the world item properties
+* Improved the mesh and image file I/O
+  * Supported reading and writing glTF / GLB files
+  * Natively implemented the Collada file loading to make it more stable and faster
+  * Fixed the triangulation of non-convex polygons
+  * Supported loading HDR image files
+  * Added the image item for displaying an image file in the image view
+* Improved the model file I/O
+  * Enabled loading a self-contained URDF without path settings such as ROS_PACKAGE_PATH
+  * Supported loading xacro files on Windows
+  * Supported loading SDF
+  * Improved the body file writing
+    * Supported the mesh output in glTF / GLB
+    * Stabilized the behavior of copying the original files
+* Improved the numerical inverse kinematics
+  * Stabilized the solution by adjusting joint angles to the equivalent ones closest to the initial state
+  * Added the option to keep the target link pose exactly
+  * Stabilized the angular velocity vector extraction when the rotation angle is near pi
+* Supported nanobind for the Python bindings
+  * Improved the binary size and the runtime efficiency of the Python bindings
+  * Supported free-threaded Python
+  * Stabilized the object lifetime management
+  * Bundled nanobind 2.12.0
+* Improved the project file I/O
+  * Introduced the project pack, which archives a set of project files into a single zip file
+  * Supported loading a project pack
+  * Improved the precision of the floating point numbers written to a file (12 significant digits for double values and nine for float values)
+  * Fixed the state saving of a body item so that the displacements of prismatic joints are stored in meter
+  * Changed the old camelCase keys of project files to the new snake_case ones (with backward compatibility)
+* Improved WorldLogFileItem
+  * Made the archive for log playback a project pack
+  * Fixed the crash that occurred when RangeSensor was used
+* Improved the GUI and others
+  * Added the find dialog to MessageView, which is operated with Ctrl+F, F3 and Shift+F3
+  * Kept the item selection states when items are moved in the item tree
+  * Reflected the display value format settings in the properties of LinkPropertyView
+  * Selected the Qt offscreen platform and EGL only when no window system is available
+* Build-related changes
+  * Fixed the build errors with Qt 6.8 and the warnings with Qt 6.10
+  * Updated the bundled fast_float to version 8.2.10
+  * Updated the bundled xacro to version 1.14.20
+  * Updated the bundled pybind11 for Python 3.14
+* Many other minor bug fixes, internal class improvements, code cleanups, translation catalog updates, etc.
 
 Choreonoid 2.4.0 released on May 14, 2026
 =========================================
