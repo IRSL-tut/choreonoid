@@ -30,6 +30,9 @@ print_step() {
     echo -e "${BLUE}[STEP]${NC} $1"
 }
 
+# Supported distributions (Ubuntu codenames), used when 'all' is specified
+SUPPORTED_DISTROS=("jammy" "noble" "resolute")
+
 # Default values
 PPA_NAME=""
 DISTROS=""
@@ -46,7 +49,7 @@ show_help() {
     echo ""
     echo "Options:"
     echo "  -p, --ppa PPA           PPA name (e.g., 'username/ppa-name')"
-    echo "  -d, --distro DISTRO     Distribution(s) to build for (jammy,noble or 'all')"
+    echo "  -d, --distro DISTRO     Distribution(s) to build for (jammy,noble,resolute or 'all')"
     echo "  -k, --key GPG_KEY       GPG key ID for signing"
     echo "  -s, --suffix SUFFIX     Debian revision number (default: 1, use 2,3... for re-uploads)"
     echo "  -r, --release           Build release version (without git info)"
@@ -56,7 +59,14 @@ show_help() {
     echo ""
     echo "Examples:"
     echo "  $0 -p myuser/choreonoid -d all -k ABCD1234"
+    echo "  $0 -p myuser/choreonoid -d resolute"
+    echo "  $0 -p myuser/choreonoid -d noble,resolute"
     echo "  $0 -p myuser/test -d jammy -k ABCD1234 --dry-run"
+    echo ""
+    echo "Supported distributions:"
+    echo "  jammy    (Ubuntu 22.04 LTS)"
+    echo "  noble    (Ubuntu 24.04 LTS)"
+    echo "  resolute (Ubuntu 26.04 LTS)"
     echo ""
     echo "Prerequisites:"
     echo "  1. Launchpad account with PPA created"
@@ -139,9 +149,23 @@ fi
 
 # Determine distributions
 if [ "$DISTROS" = "all" ]; then
-    DISTRO_LIST=("jammy" "noble")
+    DISTRO_LIST=("${SUPPORTED_DISTROS[@]}")
 else
     IFS=',' read -ra DISTRO_LIST <<< "$DISTROS"
+    # Warn about codenames that are not in the supported list (typos, new releases)
+    for DIST in "${DISTRO_LIST[@]}"; do
+        FOUND=false
+        for SUPPORTED in "${SUPPORTED_DISTROS[@]}"; do
+            if [ "$DIST" = "$SUPPORTED" ]; then
+                FOUND=true
+                break
+            fi
+        done
+        if [ "$FOUND" = false ]; then
+            print_warning "'$DIST' is not in the supported distribution list (${SUPPORTED_DISTROS[*]})"
+            print_warning "Proceeding anyway; make sure the codename is correct"
+        fi
+    done
 fi
 
 # Check prerequisites
@@ -346,5 +370,9 @@ fi
 echo ""
 print_info "Summary:"
 for DIST in "${DISTRO_LIST[@]}"; do
-    echo "  - ${DIST}: choreonoid_${BASE_VERSION}~git${GIT_DATE}.${GIT_TIME}.${GIT_COMMIT}~${DIST}~${PPA_VERSION_SUFFIX}"
+    if [ "$RELEASE_VERSION" = true ]; then
+        echo "  - ${DIST}: choreonoid_${BASE_VERSION}-${PPA_VERSION_SUFFIX}~${DIST}"
+    else
+        echo "  - ${DIST}: choreonoid_${BASE_VERSION}~git${GIT_DATE}.${GIT_TIME}.${GIT_COMMIT}-${PPA_VERSION_SUFFIX}~${DIST}"
+    fi
 done

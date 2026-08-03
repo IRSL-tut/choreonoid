@@ -74,8 +74,13 @@ gpg --keyserver keyserver.ubuntu.com --send-keys YOUR_KEY_ID
 
 ```bash
 sudo apt update
-sudo apt install dput devscripts git-buildpackage
+sudo apt install dput devscripts
 ```
+
+Note: `git-buildpackage` (gbp) is no longer used; the scripts call the standard
+Debian tools directly. If you upgraded the host to a new Ubuntu release, check
+that `dput` and `debuild` are still installed — they are sometimes dropped
+during a release upgrade.
 
 ## Using the Upload Script
 
@@ -94,11 +99,27 @@ sudo apt install dput devscripts git-buildpackage
 | Option | Description | Example |
 |--------|-------------|---------|
 | `-p, --ppa` | PPA name | `johndoe/choreonoid` |
-| `-d, --distro` | Distribution(s) | `jammy`, `noble`, `all` |
+| `-d, --distro` | Distribution(s) | `jammy`, `noble`, `resolute`, `all` |
 | `-k, --key` | GPG key ID | `ABCD1234EFGH5678` |
-| `-s, --suffix` | Version suffix | `ppa1`, `ppa2` |
+| `-s, --suffix` | Debian revision number | `1`, `2` |
+| `-r, --release` | Build release version (no git info) | |
 | `-f, --force` | Force upload | |
 | `-n, --dry-run` | Test without uploading | |
+
+Multiple distributions can be given as a comma-separated list
+(e.g. `-d noble,resolute`), and `all` expands to every supported distribution.
+
+### Supported Distributions
+
+| Codename | Ubuntu Release |
+|----------|----------------|
+| `jammy` | 22.04 LTS |
+| `noble` | 24.04 LTS |
+| `resolute` | 26.04 LTS |
+
+The list is defined by the `SUPPORTED_DISTROS` array at the top of
+`upload-to-ppa.sh`. See "Adding a New Ubuntu Release" in
+`BUILD_SCRIPT_MANUAL.md` for the procedure when a new release comes out.
 
 ### Examples
 
@@ -110,29 +131,48 @@ sudo apt install dput devscripts git-buildpackage
 #### Upload for Specific Distribution
 ```bash
 ./debian/upload-to-ppa.sh -p johndoe/choreonoid -d noble -k ABCD1234
+
+# Ubuntu 26.04 only
+./debian/upload-to-ppa.sh -p johndoe/choreonoid -d resolute -k ABCD1234
+
+# Several distributions at once
+./debian/upload-to-ppa.sh -p johndoe/choreonoid -d noble,resolute -k ABCD1234
 ```
 
-#### Upload with Custom Version Suffix
+#### Re-upload with an Incremented Debian Revision
 ```bash
-./debian/upload-to-ppa.sh -p johndoe/choreonoid -d all -k ABCD1234 -s ppa2
+./debian/upload-to-ppa.sh -p johndoe/choreonoid -d all -k ABCD1234 -s 2
 ```
 
 ## Version Numbering
 
 The script generates versions in this format:
+
 ```
-2.4.0~git20240814.abc1234~jammy~ppa1
-│     │            │        │     └── PPA revision
-│     │            │        └──────── Distribution
-│     │            └───────────────── Git commit hash
-│     └────────────────────────────── Git snapshot date
-└──────────────────────────────────── Base version
+2.5.0~git20260726.1319.3424c2959-1~resolute
+│     │        │    │             │  └── Distribution codename
+│     │        │    │             └───── Debian revision (-s option)
+│     │        │    └─────────────────── Git commit hash
+│     │        └──────────────────────── Commit time (HHMM)
+│     └───────────────────────────────── Commit date (YYYYMMDD)
+└─────────────────────────────────────── Base version
 ```
+
+Release builds (`-r`) omit the git part: `2.5.0-1~resolute`.
+
+**The hyphen before the Debian revision is required.** It separates the
+upstream version from the Debian revision; without it, `debuild` cannot
+derive the expected orig tarball name and the build fails.
+
+The date and time come from the git commit itself, not from the current
+clock, so rebuilding the same commit always yields the same version.
 
 This ensures:
 - Newer git commits have higher version numbers
-- Distribution-specific builds don't interfere
-- PPA revisions allow re-uploads with fixes
+- Distribution-specific builds don't interfere, and dpkg orders the codename
+  suffixes so that upgrades across Ubuntu releases work
+  (`jammy` < `noble` < `resolute`)
+- Debian revisions allow re-uploads with fixes (`-s 2`, `-s 3`, ...)
 
 ## Workflow
 
@@ -215,10 +255,11 @@ gpg --list-secret-keys --keyid-format LONG
 ```
 Error: File choreonoid_XXX.dsc already uploaded
 ```
-**Solution**: Use `-f` flag to force, or increment PPA suffix:
+**Solution**: Increment the Debian revision with `-s`:
 ```bash
-./debian/upload-to-ppa.sh -p ... -s ppa2 -f
+./debian/upload-to-ppa.sh -p ... -s 2
 ```
+Launchpad never accepts the same version twice, so `-f` alone does not help.
 
 #### 3. Build Failures on Launchpad
 Check the build log:
@@ -279,4 +320,4 @@ gpg --list-secret-keys
 
 ---
 
-*Last updated: 2025-08-14*
+*Last updated: 2026-07-26*

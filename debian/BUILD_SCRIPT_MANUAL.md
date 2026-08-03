@@ -4,6 +4,19 @@
 
 The `build-packages.sh` script automates the process of building Debian packages for Choreonoid on multiple Ubuntu distributions. It supports both local builds for development and clean builds using cowbuilder for production.
 
+## Supported Distributions
+
+| Codename | Ubuntu Release |
+|----------|----------------|
+| `jammy` | 22.04 LTS |
+| `noble` | 24.04 LTS |
+| `resolute` | 26.04 LTS |
+
+When no `-d` option is given, packages are built for all of the above. The list is
+defined by the `SUPPORTED_DISTROS` array at the top of the script; adding a new
+Ubuntu release only requires appending its codename there. A codename that is not
+in the list can still be passed to `-d` — the script prints a warning and proceeds.
+
 ## Prerequisites
 
 ### Required Tools
@@ -42,6 +55,20 @@ sudo cowbuilder --create --distribution noble \
     --basepath /var/cache/pbuilder/base-noble.cow \
     --components "main universe" \
     --mirror http://jp.archive.ubuntu.com/ubuntu
+
+# For Ubuntu 26.04 (resolute)
+sudo cowbuilder --create --distribution resolute \
+    --basepath /var/cache/pbuilder/base-resolute.cow \
+    --components "main universe" \
+    --mirror http://jp.archive.ubuntu.com/ubuntu
+```
+
+**Important**: Verify that each environment uses the APT sources of its own
+distribution. A base image created with the wrong `--distribution` silently
+produces packages with the wrong dependencies:
+
+```bash
+cat /var/cache/pbuilder/base-resolute.cow/etc/apt/sources.list
 ```
 
 ## Usage
@@ -56,7 +83,7 @@ sudo cowbuilder --create --distribution noble \
 
 | Option | Long Form | Description | Default |
 |--------|-----------|-------------|---------|
-| `-d DISTRO` | `--distro DISTRO` | Build for specific distribution (jammy or noble) | Both |
+| `-d DISTRO` | `--distro DISTRO` | Build for specific distribution (jammy, noble or resolute) | All |
 | `-c` | `--cowbuilder` | Use cowbuilder for clean build | No |
 | `-l` | `--local` | Build locally (explicitly set) | Yes |
 | `-r` | `--release` | Build release version (no git suffix) | No |
@@ -100,6 +127,9 @@ Uses the version from debian/changelog as-is:
 
 # Ubuntu 24.04 release build
 ./debian/build-packages.sh -r -d noble
+
+# Ubuntu 26.04 development build
+./debian/build-packages.sh -d resolute
 ```
 
 #### Production Build with Cowbuilder
@@ -109,6 +139,9 @@ Uses the version from debian/changelog as-is:
 
 # Release version with cowbuilder
 ./debian/build-packages.sh -r -c -d noble
+
+# Ubuntu 26.04 with cowbuilder
+./debian/build-packages.sh -c -d resolute
 ```
 
 ## Build Process
@@ -165,6 +198,8 @@ Uses the version from debian/changelog as-is:
 │   └── choreonoid_*.changes
 ├── build-area-noble/    # Ubuntu 24.04 packages
 │   └── ...
+├── build-area-resolute/ # Ubuntu 26.04 packages
+│   └── ...
 └── build-temp-{PID}/    # Temporary files (auto-cleaned)
 ```
 
@@ -183,6 +218,45 @@ choreonoid_2.4.0-1_amd64.deb
            └──┬──┘ └─┬─┘
            version  arch
 ```
+
+## Adding a New Ubuntu Release
+
+1. **Look up the codename** in the authoritative list shipped by `distro-info-data`:
+   ```bash
+   grep '^26\.04' /usr/share/distro-info/ubuntu.csv
+   # 26.04 LTS,Resolute Raccoon,resolute,2025-10-09,2026-04-23,...
+   ```
+
+2. **Append the codename** to the `SUPPORTED_DISTROS` array at the top of both
+   `build-packages.sh` and `upload-to-ppa.sh`:
+   ```bash
+   SUPPORTED_DISTROS=("jammy" "noble" "resolute")
+   ```
+
+3. **Verify build dependencies resolve** on the new release. Package names are
+   occasionally merged or renamed between releases:
+   ```bash
+   apt-cache policy qt6-base-dev
+   apt-cache show qt6-base-dev | grep Provides
+   ```
+   When a `-dev` package is folded into another one, the replacement usually
+   declares `Provides:` for the old name, in which case `debian/control` needs no
+   change. This is what happened in 26.04, where `libqt6opengl6-dev` was merged
+   into `qt6-base-dev`. If there is no `Provides:`, add an OR-alternative:
+   ```
+   new-package-name | old-package-name,
+   ```
+
+4. **Check version ordering.** PPA versions end in `~codename`, so dpkg compares
+   codenames lexically. Upgrades work only if newer releases sort later:
+   ```bash
+   dpkg --compare-versions "2.5.0-1~noble" lt "2.5.0-1~resolute" && echo OK
+   ```
+   `jammy` < `noble` < `resolute` sorts correctly. If a future codename breaks
+   this ordering, switch to a numeric suffix such as `~ubuntu26.04`.
+
+5. **Create the cowbuilder environment** for the new release (see above), and
+   optionally do a local test build before uploading to the PPA.
 
 ## Troubleshooting
 

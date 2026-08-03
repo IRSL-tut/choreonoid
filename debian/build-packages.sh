@@ -2,10 +2,13 @@
 set -e
 
 # Build script for Choreonoid Debian packages
-# Builds packages for Ubuntu 22.04 (jammy) and 24.04 (noble)
+# Builds packages for Ubuntu 22.04 (jammy), 24.04 (noble) and 26.04 (resolute)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
+# Supported distributions (Ubuntu codenames), used when no distribution is specified
+SUPPORTED_DISTROS=("jammy" "noble" "resolute")
 
 # Color output
 RED='\033[0;31m'
@@ -35,17 +38,23 @@ show_help() {
     echo "Usage: $0 [OPTIONS]"
     echo ""
     echo "Options:"
-    echo "  -d, --distro DISTRO     Build for specific distribution (jammy or noble)"
+    echo "  -d, --distro DISTRO     Build for specific distribution (jammy, noble or resolute)"
     echo "  -c, --cowbuilder        Use cowbuilder for clean build"
     echo "  -l, --local             Build locally (default)"
     echo "  -r, --release           Build release version (no git suffix)"
     echo "  -h, --help              Show this help message"
     echo ""
+    echo "Supported distributions:"
+    echo "  jammy    (Ubuntu 22.04 LTS)"
+    echo "  noble    (Ubuntu 24.04 LTS)"
+    echo "  resolute (Ubuntu 26.04 LTS)"
+    echo ""
     echo "Examples:"
-    echo "  $0                      # Build development version locally for both"
-    echo "  $0 -r                   # Build release version locally for both"
+    echo "  $0                      # Build development version locally for all distributions"
+    echo "  $0 -r                   # Build release version locally for all distributions"
     echo "  $0 -d jammy -c          # Build for Ubuntu 22.04 with cowbuilder"
     echo "  $0 -r -d noble          # Build release version for Ubuntu 24.04 locally"
+    echo "  $0 -d resolute -c       # Build for Ubuntu 26.04 with cowbuilder"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -85,9 +94,21 @@ fi
 
 # List of distributions to build
 if [ -z "$DISTRO" ]; then
-    DISTROS=("jammy" "noble")
+    DISTROS=("${SUPPORTED_DISTROS[@]}")
 else
     DISTROS=("$DISTRO")
+    # Warn about codenames that are not in the supported list (typos, new releases)
+    FOUND=false
+    for SUPPORTED in "${SUPPORTED_DISTROS[@]}"; do
+        if [ "$DISTRO" = "$SUPPORTED" ]; then
+            FOUND=true
+            break
+        fi
+    done
+    if [ "$FOUND" = false ]; then
+        print_warning "'$DISTRO' is not in the supported distribution list (${SUPPORTED_DISTROS[*]})"
+        print_warning "Proceeding anyway; make sure the codename is correct"
+    fi
 fi
 
 # Change to project directory
