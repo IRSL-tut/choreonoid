@@ -60,7 +60,14 @@ void parseFloats(const char* text, vector<float>& out)
         }
         float value;
         auto result = fast_float::from_chars(p, end, value);
-        if(result.ec != std::errc()){
+        /*
+           A value that is out of the range of float is not an error. Model files
+           often contain values such as 1.0e-46, which underflow to zero in float.
+           The conversion function stores the correctly rounded value (a signed zero
+           for an underflow and an infinity for an overflow) in this case, so the
+           result can be used as it is.
+        */
+        if(result.ec != std::errc() && result.ec != std::errc::result_out_of_range){
             throw LoadingException(_("An array of floating-point numbers cannot be parsed."));
         }
         out.push_back(value);
