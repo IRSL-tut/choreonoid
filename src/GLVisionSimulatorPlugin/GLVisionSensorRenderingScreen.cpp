@@ -343,8 +343,8 @@ bool GLVisionSensorRenderingScreen::initializeEGL()
         return false;
     }
 
-    // Determine the best available OpenGL version once for the process (GLSL mode only)
-    if(GLSceneRenderer::rendererType() == GLSceneRenderer::GLSL_RENDERER && !eglOpenGLVersionDetermined) {
+    // Determine the best available OpenGL version once for the process
+    if(!eglOpenGLVersionDetermined) {
         // Try OpenGL versions from 4.6 down to 3.3
         struct { int major; int minor; } versions[] = {
             {4, 6}, {4, 5}, {4, 4}, {4, 3}, {4, 2}, {4, 1}, {4, 0},
@@ -374,22 +374,15 @@ bool GLVisionSensorRenderingScreen::initializeEGL()
         }
     }
 
-    // Create EGL context with version based on renderer type
+    // Create EGL context
     EGLint contextAttribs[9];
     int attribIndex = 0;
-    if(GLSceneRenderer::rendererType() == GLSceneRenderer::GLSL_RENDERER){
-        contextAttribs[attribIndex++] = EGL_CONTEXT_MAJOR_VERSION;
-        contextAttribs[attribIndex++] = eglOpenGLMajorVersion;
-        contextAttribs[attribIndex++] = EGL_CONTEXT_MINOR_VERSION;
-        contextAttribs[attribIndex++] = eglOpenGLMinorVersion;
-        contextAttribs[attribIndex++] = EGL_CONTEXT_OPENGL_PROFILE_MASK;
-        contextAttribs[attribIndex++] = EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT;
-    } else {
-        contextAttribs[attribIndex++] = EGL_CONTEXT_MAJOR_VERSION;
-        contextAttribs[attribIndex++] = 1;
-        contextAttribs[attribIndex++] = EGL_CONTEXT_MINOR_VERSION;
-        contextAttribs[attribIndex++] = 5;
-    }
+    contextAttribs[attribIndex++] = EGL_CONTEXT_MAJOR_VERSION;
+    contextAttribs[attribIndex++] = eglOpenGLMajorVersion;
+    contextAttribs[attribIndex++] = EGL_CONTEXT_MINOR_VERSION;
+    contextAttribs[attribIndex++] = eglOpenGLMinorVersion;
+    contextAttribs[attribIndex++] = EGL_CONTEXT_OPENGL_PROFILE_MASK;
+    contextAttribs[attribIndex++] = EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT;
     contextAttribs[attribIndex] = EGL_NONE;
     egl->context = eglCreateContext(egl->display, egl->config, EGL_NO_CONTEXT, contextAttribs);
     if(egl->context == EGL_NO_CONTEXT) {

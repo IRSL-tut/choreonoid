@@ -11,7 +11,6 @@
 #include "Timer.h"
 #include "AppConfig.h"
 #include "QtEventUtil.h"
-#include <cnoid/GL1SceneRenderer>
 #include <cnoid/GLSLSceneRenderer>
 #include <cnoid/DisplayValueFormat>
 #include <cnoid/Selection>
@@ -166,7 +165,6 @@ public:
     SgPolygonDrawStylePtr polygonDrawStyle;
     GLSceneRenderer* renderer;
     GLSLSceneRenderer* glslRenderer;
-    GL1SceneRenderer* gl1Renderer;
     float lastDevicePixelRatio;
     GLuint prevDefaultFramebufferObject;
     bool isRendering;
@@ -524,11 +522,8 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     glslRenderer = dynamic_cast<GLSLSceneRenderer*>(renderer);
     if(glslRenderer){
         glslRenderer->setLowMemoryConsumptionMode(isLowMemoryConsumptionMode_);
-        gl1Renderer = nullptr;
-    } else {
-        gl1Renderer = dynamic_cast<GL1SceneRenderer*>(renderer);
     }
-        
+
     renderer->setOutputStream(MessageView::instance()->cout(false));
     renderer->enableUnusedResourceCheck(true);
     renderer->sigCurrentCameraSelectionChanged().connect([&](){ onCurrentCameraSelectionChanged(); });
@@ -2922,14 +2917,6 @@ void SceneWidget::setPointSize(double size)
 void SceneWidget::setHeadLightEnabled(bool on)
 {
     impl->renderer->headLight()->on(on);
-}
-
-
-void SceneWidget::setHeadLightLightingFromBack(bool on)
-{
-    if(impl->gl1Renderer){
-        impl->gl1Renderer->setHeadLightLightingFromBackEnabled(on);
-    }
 }
 
 

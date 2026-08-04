@@ -9,7 +9,6 @@
 #include <cnoid/RootItem>
 #include <cnoid/SceneWidget>
 #include <cnoid/SceneDragProjector>
-#include <cnoid/GLSceneRenderer>
 #include <cnoid/SceneEffects>
 #include <cnoid/SceneMarkers>
 #include <cnoid/SceneNodeClassRegistry>
@@ -1241,15 +1240,8 @@ void OperableSceneBody::Impl::updateMarkersAndManipulators(bool on)
 
 void OperableSceneBody::Impl::createPositionDragger()
 {
-    if(GLSceneRenderer::rendererType() == GLSceneRenderer::GL1_RENDERER){
-        /** GL1SceneRenderer does not support the overlay rendering with SgOverlay and use the
-            old type dragger to render it correctly. */
-        positionDragger = new PositionDragger(PositionDragger::AllAxes, PositionDragger::WideHandle);
-        positionDragger->setOverlayMode(false);
-    } else {
-        positionDragger = new PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle);
-        positionDragger->setOverlayMode(true);
-    }
+    positionDragger = new PositionDragger(PositionDragger::AllAxes, PositionDragger::PositiveOnlyHandle);
+    positionDragger->setOverlayMode(true);
     positionDragger->setDisplayMode(PositionDragger::DisplayAlways);
     positionDragger->sigDragStarted().connect([this](){ onDraggerDragStarted(); });
     positionDragger->sigPositionDragged().connect([this](){ onDraggerDragged(); });

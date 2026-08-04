@@ -248,17 +248,9 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
     // OpenGL settings
     QSurfaceFormat glFormat = QSurfaceFormat::defaultFormat();
 
-    char* CNOID_USE_GLSL = getenv("CNOID_USE_GLSL");
-    if(CNOID_USE_GLSL && strcmp(CNOID_USE_GLSL, "0") == 0){
-        // GL1 mode: OpenGL 1.5 fixed
-        glFormat.setVersion(1, 5);
-        GLSceneRenderer::setRendererType(GLSceneRenderer::GL1_RENDERER);
-    } else {
-        // GLSL mode: Request OpenGL 4.6 (Qt will fallback to the best available version)
-        glFormat.setVersion(4, 6);
-        glFormat.setProfile(QSurfaceFormat::CoreProfile);
-        GLSceneRenderer::setRendererType(GLSceneRenderer::GLSL_RENDERER);
-    }
+    // Request OpenGL 4.6 (Qt will fallback to the best available version)
+    glFormat.setVersion(4, 6);
+    glFormat.setProfile(QSurfaceFormat::CoreProfile);
     glFormat.setRenderableType(QSurfaceFormat::OpenGL);
 
     char* CNOID_DISABLE_REVERSED_DEPTH_BUFFER = getenv("CNOID_DISABLE_REVERSED_DEPTH_BUFFER");

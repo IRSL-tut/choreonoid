@@ -1,5 +1,4 @@
 #include "GLSceneRenderer.h"
-#include "GL1SceneRenderer.h"
 #include "GLSLSceneRenderer.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
@@ -10,7 +9,6 @@ using namespace cnoid;
 
 namespace {
 
-int rendererType_ = GLSceneRenderer::GLSL_RENDERER;
 bool isStandardDepthBufferForced_ = false;
 int transparentRenderingMode_ = GLSceneRenderer::DepthPeelingTransparentRendering;
 Signal<void()> sigTransparentRenderingModeChanged_;
@@ -42,25 +40,9 @@ public:
 }
 
 
-void GLSceneRenderer::setRendererType(int type)
-{
-    rendererType_ = type;
-}
-
-
-int GLSceneRenderer::rendererType()
-{
-    return rendererType_;
-}
-
-
 GLSceneRenderer* GLSceneRenderer::create(SgGroup* root)
 {
-    if(rendererType_ == GL1_RENDERER){
-        return new GL1SceneRenderer(root);
-    } else {
-        return new GLSLSceneRenderer(root);
-    }
+    return new GLSLSceneRenderer(root);
 }
 
 

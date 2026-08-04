@@ -125,7 +125,6 @@ public:
 
     void setHeadLightIntensity(double intensity);
     void setHeadLightEnabled(bool on);
-    void setHeadLightLightingFromBack(bool on);
     void setAdditionalLights(bool on);
 
     void setLineWidth(double width);

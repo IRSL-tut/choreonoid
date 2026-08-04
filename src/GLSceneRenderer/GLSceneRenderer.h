@@ -12,10 +12,6 @@ class Image;
 class CNOID_EXPORT GLSceneRenderer : public SceneRenderer
 {
 public:
-    static void setRendererType(int type);
-
-    enum RendererType { GL1_RENDERER, GLSL_RENDERER };
-    static int rendererType();
     static GLSceneRenderer* create(SgGroup* root = nullptr);
 
     /**
