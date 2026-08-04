@@ -13,7 +13,7 @@ namespace {
 class SmokeProgram : public ParticlesProgram
 {
 public:
-    SmokeProgram(GLSLSceneRenderer* renderer);
+    SmokeProgram(GLSceneRenderer* renderer);
     virtual bool initializeRendering(SceneParticles* particles) override;
     void updateParticleBuffers(SceneSmoke* smoke);
     void render(SceneSmoke* fountain);
@@ -64,7 +64,7 @@ ParticleSystem* SceneSmoke::getParticleSystem()
 }
 
 
-SmokeProgram::SmokeProgram(GLSLSceneRenderer* renderer)
+SmokeProgram::SmokeProgram(GLSceneRenderer* renderer)
     : ParticlesProgram(
         renderer,
         ":/SceneEffectsPlugin/shader/Smoke.vert",

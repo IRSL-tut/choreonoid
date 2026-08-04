@@ -11,12 +11,12 @@
 
 namespace cnoid {
 
-class GLSLSceneRenderer;
+class GLSceneRenderer;
 
 class ParticlesProgramBase
 {
 public:
-    ParticlesProgramBase(GLSLSceneRenderer* renderer);
+    ParticlesProgramBase(GLSceneRenderer* renderer);
     
     void requestRendering(SceneParticles* particles, const std::function<void()>& renderingFunction);
 
@@ -31,12 +31,12 @@ public:
 protected:
     virtual bool initializeRendering(SceneParticles* particles) = 0;
     virtual ShaderProgram* shaderProgram() = 0;
-    GLSLSceneRenderer* renderer() { return renderer_; }
+    GLSceneRenderer* renderer() { return renderer_; }
     const Matrix3f& globalAttitude() const { return globalAttitude_; }
 
 private:
     enum State { NOT_INITIALIZED, INITIALIZED, FAILED } initializationState;
-    GLSLSceneRenderer* renderer_;
+    GLSceneRenderer* renderer_;
     GLint modelViewMatrixLocation;
     GLint projectionMatrixLocation;
     GLint pointSizeLocation;
@@ -57,7 +57,7 @@ class ParticlesProgram : public BasicLightingProgram, public ParticlesProgramBas
 {
 public:
     ParticlesProgram(
-        GLSLSceneRenderer* renderer, const char* vertexShader, const char* fragmentShader);
+        GLSceneRenderer* renderer, const char* vertexShader, const char* fragmentShader);
 
 protected:
     virtual ShaderProgram* shaderProgram() { return this; }
@@ -68,7 +68,7 @@ class LuminousParticlesProgram : public ShaderProgram, public ParticlesProgramBa
 {
 public:
     LuminousParticlesProgram(
-        GLSLSceneRenderer* renderer, const char* vertexShader, const char* fragmentShader);
+        GLSceneRenderer* renderer, const char* vertexShader, const char* fragmentShader);
 
 protected:
     virtual ShaderProgram* shaderProgram() { return this; }

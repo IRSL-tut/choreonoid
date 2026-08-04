@@ -5,15 +5,15 @@
 #ifndef CNOID_SCENE_EFFECTS_PLUGIN_H
 #define CNOID_SCENE_EFFECTS_PLUGIN_H
 
-#include <cnoid/GLSLSceneRenderer>
+#include <cnoid/GLSceneRenderer>
 #include <memory>
 
 namespace cnoid {
 
 template<class SceneNode, class Program>
 static void registerSceneEffectType(){
-    GLSLSceneRenderer::addExtension(
-        [](GLSLSceneRenderer* renderer){
+    GLSceneRenderer::addExtension(
+        [](GLSceneRenderer* renderer){
             auto program = std::make_shared<Program>(renderer);
             renderer->renderingFunctions()->setFunction<SceneNode>(
                 [program](SceneNode* particles){

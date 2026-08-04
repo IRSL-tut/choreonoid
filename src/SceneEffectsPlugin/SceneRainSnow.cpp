@@ -18,7 +18,7 @@ namespace {
 class RainSnowProgram : public ParticlesProgram
 {
 public:
-    RainSnowProgram(GLSLSceneRenderer* renderer);
+    RainSnowProgram(GLSceneRenderer* renderer);
     virtual bool initializeRendering(SceneParticles* particles) override;
     void render(SceneRainSnowBase* particles);
 
@@ -104,7 +104,7 @@ Referenced* SceneSnow::doClone(CloneMap*) const
 
 
 
-RainSnowProgram::RainSnowProgram(GLSLSceneRenderer* renderer)
+RainSnowProgram::RainSnowProgram(GLSceneRenderer* renderer)
     : ParticlesProgram(
         renderer,
         ":/SceneEffectsPlugin/shader/RainSnow.vert",

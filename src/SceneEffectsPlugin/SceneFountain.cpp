@@ -18,7 +18,7 @@ namespace {
 class FountainProgram : public ParticlesProgram
 {
 public:
-    FountainProgram(GLSLSceneRenderer* renderer);
+    FountainProgram(GLSceneRenderer* renderer);
     virtual bool initializeRendering(SceneParticles* particles) override;
     void updateParticleBuffers(SceneFountain* fountain);
     void render(SceneFountain* fountain);
@@ -71,7 +71,7 @@ ParticleSystem* SceneFountain::getParticleSystem()
 }
 
 
-FountainProgram::FountainProgram(GLSLSceneRenderer* renderer)
+FountainProgram::FountainProgram(GLSceneRenderer* renderer)
     : ParticlesProgram(
         renderer,
         ":/SceneEffectsPlugin/shader/Fountain.vert",

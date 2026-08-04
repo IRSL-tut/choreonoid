@@ -18,7 +18,7 @@ namespace {
 class FireProgram : public LuminousParticlesProgram
 {
 public:
-    FireProgram(GLSLSceneRenderer* renderer);
+    FireProgram(GLSceneRenderer* renderer);
     virtual bool initializeRendering(SceneParticles* particles) override;
     void updateParticleBuffers(SceneFire* fire);
     void render(SceneFire* fountain);
@@ -70,7 +70,7 @@ ParticleSystem* SceneFire::getParticleSystem()
 }
 
 
-FireProgram::FireProgram(GLSLSceneRenderer* renderer)
+FireProgram::FireProgram(GLSceneRenderer* renderer)
     : LuminousParticlesProgram(
         renderer,
         ":/SceneEffectsPlugin/shader/Fire.vert",

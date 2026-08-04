@@ -1,25 +1,85 @@
-#ifndef CNOID_BASE_GLSL_SCENE_RENDERER_H
-#define CNOID_BASE_GLSL_SCENE_RENDERER_H
+#ifndef CNOID_BASE_GL_SCENE_RENDERER_H
+#define CNOID_BASE_GL_SCENE_RENDERER_H
 
-#include <cnoid/GLSceneRenderer>
+#include <cnoid/SceneRenderer>
+#include <cnoid/gl.h>
 #include "exportdecl.h"
 
 namespace cnoid {
 
+class Image;
 class ShaderProgram;
 class LightingProgram;
-    
-class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
-{
-  public:
-    GLSLSceneRenderer(SgGroup* root = nullptr);
-    virtual ~GLSLSceneRenderer();
 
-    static void addExtension(std::function<void(GLSLSceneRenderer* renderer)> func);
+/**
+   The scene renderer implemented with the OpenGL shading language.
+
+   Note that some of the members of this class are not specific to OpenGL and
+   would also be required by the renderers based on the other graphics APIs
+   such as Vulkan and Filament. Those members are marked with the comment
+   "API-independent" so that they can be moved up to the SceneRenderer class
+   when another renderer implementation is introduced. The actual interface
+   should be determined by the requirements of that implementation, so the
+   members are kept here until then.
+*/
+class CNOID_EXPORT GLSceneRenderer : public SceneRenderer
+{
+public:
+    static GLSceneRenderer* create(SgGroup* root = nullptr);
+
+    /**
+       The rendering mode of transparent objects. This is a system-wide setting
+       shared by all the renderer instances including the ones used for the
+       vision sensor simulation. In the sorted rendering mode, transparent
+       objects are rendered by the alpha blending in back-to-front sorted
+       order, which cannot correctly handle intersecting objects. In the depth
+       peeling mode, the overlaps of transparent objects are resolved pixel by
+       pixel, which gives the correct rendering result even for intersecting
+       objects. In the supersampled depth peeling mode, the transparent object
+       layers are additionally rendered at doubled resolution and downsampled
+       in the compositing so that the silhouettes of the transparent objects
+       are anti-aliased at the cost of the additional GPU memory and fill rate.
+
+       API-independent.
+    */
+    enum TransparentRenderingMode {
+        SortedTransparentRendering,
+        DepthPeelingTransparentRendering,
+        SupersampledDepthPeelingTransparentRendering,
+        NumTransparentRenderingModes
+    };
+    static void setTransparentRenderingMode(int mode);
+    static int transparentRenderingMode();
+    static SignalProxy<void()> sigTransparentRenderingModeChanged();
+
+    /**
+       The maximum number of the transparent object layers extracted by the depth
+       peeling. The transparent surfaces deeper than this number at a pixel are
+       not rendered. A larger number improves the rendering of the deeply
+       overlapped transparent objects at the cost of the rendering passes, each
+       of which renders all the transparent objects again. This is a system-wide
+       setting shared by all the renderer instances in the same way as the
+       transparent rendering mode. The value is clipped to the range between
+       MinNumDepthPeelingLayers and MaxNumDepthPeelingLayers.
+
+       API-independent.
+    */
+    enum { MinNumDepthPeelingLayers = 1, MaxNumDepthPeelingLayers = 8 };
+    static void setNumDepthPeelingLayers(int n);
+    static int numDepthPeelingLayers();
+    static SignalProxy<void()> sigNumDepthPeelingLayersChanged();
+
+    GLSceneRenderer(SgGroup* root = nullptr);
+    virtual ~GLSceneRenderer();
+
+    static void addExtension(std::function<void(GLSceneRenderer* renderer)> func);
     virtual void applyExtensions() override;
     virtual bool applyNewExtensions() override;
 
-    virtual void setOutputStream(std::ostream& os) override;
+    virtual void setOutputStream(std::ostream& os);
+
+    virtual SgGroup* sceneRoot() override;
+    virtual SgGroup* scene() override;
 
     virtual PolymorphicSceneNodeFunctionSet* renderingFunctions() override;
     virtual void renderCustomGroup(SgGroup* transform, const std::function<void()>& traverseFunction) override;
@@ -51,61 +111,151 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
         ReferencedPtr object, int id,
         const std::function<void(Referenced* object, const Affine3& modelTransform, int id)>& renderingFunction);
 
-    virtual bool initializeGL(GLADloadfunc getProcAddress) override;
-    virtual void flushGL() override;
-    virtual void clearGL() override;
-    virtual void setDefaultFramebufferObject(unsigned int id) override;
-    virtual const std::string& glVersionString() const override;
-    virtual const std::string& glslVersionString() const override;
-    virtual const std::string& glVendorString() const override;
-    virtual const std::string& glRendererString() const override;
-    virtual void setViewport(int x, int y, int width, int height) override;
-    virtual void updateViewportInformation() override;
-    virtual void updateViewportInformation(int x, int y, int width, int height) override;
+    virtual bool initializeGL(GLADloadfunc getProcAddress);
+    virtual void flushGL();
 
-    virtual const Vector3& pickedPoint() const override;
-    virtual const SgNodePath& pickedNodePath() const override;
-    virtual bool isRenderingPickingImage() const override;
-    
-    virtual void setLightingMode(LightingMode mode) override;
-    virtual LightingMode lightingMode() const override;
+    /**
+       This function clears all the OpenGL resourses used in the renderer.
+       The function should be called when the renderer is deleted.
+       The function must be called when the OpenGL context is changed, and
+       then the initializeGL function must be called again for the new OpenGL
+       context. Note that the corresponding OpenGL context must be made current
+       when the function is called.
+    */
+    virtual void clearGL();
 
-    virtual bool isShadowCastingAvailable() const override;
-    virtual void setWorldLightShadowEnabled(bool on = true) override;
-    virtual void setAdditionalLightShadowEnabled(int index, bool on = true) override;
-    virtual void clearAdditionalLightShadows() override;
-    virtual void setShadowAntiAliasingEnabled(bool on) override;
-    virtual void setShadowMapSize(int width, int height) override;
+    virtual void setDefaultFramebufferObject(unsigned int id);
 
-    virtual void setDefaultSmoothShading(bool on) override;
-    virtual SgMaterial* defaultMaterial() override;
-    virtual void enableTexture(bool on) override;
-    virtual void setMaterialAmbientNormalizationEnabled(bool on) override;
-    virtual void setDefaultPointSize(double size) override;
-    virtual void setDefaultLineWidth(double width) override;
-    virtual void setNormalVisualizationEnabled(bool on) override;
-    virtual void setNormalVisualizationLength(double length) override;
-    virtual void requestToClearResources() override;
-    virtual void enableUnusedResourceCheck(bool on) override;
-    virtual void setDefaultColor(const Vector3f& color) override;
-    virtual void setColor(const Vector3f& color) override;
-    virtual void setUpsideDown(bool on) override;
-    virtual void setMsaaLevel(int level) override;
-    virtual int msaaLevel() const override;
-    virtual void setDepthBufferUpdateEnabled(bool on) override;
-    virtual bool isDepthBufferUpdateEnabled() const override;
-    virtual void setBackFaceCullingMode(int mode) override;
-    virtual int backFaceCullingMode() const override;
-    virtual void setBoundingBoxRenderingForLightweightRenderingGroupEnabled(bool on) override;
-    virtual bool isReversedDepthBuffer() const override;
+    virtual const std::string& glVersionString() const;
+    virtual const std::string& glslVersionString() const;
+    virtual const std::string& glVendorString() const;
+    virtual const std::string& glRendererString() const;
+
+    virtual void setViewport(int x, int y, int width, int height);
+
+    //! Call this function when the OpenGL viewport is updated by the system.
+    virtual void updateViewportInformation();
+
+    //! Call this function instead of setViewport when the viewport is specified by the system.
+    virtual void updateViewportInformation(int x, int y, int width, int height);
+
+    //! API-independent.
+    struct Viewport {
+        int x;
+        int y;
+        int w;
+        int h;
+    };
+
+    //! API-independent.
+    const Viewport& viewport() const { return viewport_; }
+    virtual float devicePixelRatio() const override;
+    void setDevicePixelRatio(float r){ devicePixelRatio_ = r; }
+
+    /**
+       The following projection matrix functions are pure mathematics and are
+       API-independent.
+    */
+    void getPerspectiveProjectionMatrix(
+        double fovy, double aspect, double zNear, double zFar, Matrix4& out_matrix);
+    void getOrthographicProjectionMatrix(
+        double left,  double right,  double bottom,  double top,  double nearVal,  double farVal, Matrix4& out_matrix);
+    void getReversedPerspectiveProjectionMatrix(
+        double fovy, double aspect, double zNear, double zFar, Matrix4& out_matrix);
+    void getReversedInfinitePerspectiveProjectionMatrix(
+        double fovy, double aspect, double zNear, Matrix4& out_matrix);
+    void getReversedOrthographicProjectionMatrix(
+        double left,  double right,  double bottom,  double top,  double nearVal,  double farVal, Matrix4& out_matrix);
+
+    //! API-independent.
+    void getViewFrustum(const SgPerspectiveCamera* camera, double& left, double& right, double& bottom, double& top) const;
+    //! API-independent.
+    void getViewVolume(const SgOrthographicCamera* camera, float& out_left, float& out_right, float& out_bottom, float& out_top) const;
+
+    //! API-independent except for the NDC depth range switched by isReversedDepthBuffer.
+    virtual bool unproject(double x, double y, double z, Vector3& out_projected) const override;
     virtual bool getCameraRay(double x, double y, Vector3& out_origin, Vector3& out_direction) const override;
-    virtual void setInfiniteFarOverrideEnabled(bool on) override;
-    virtual bool isInfiniteFarOverrideEnabled() const override;
+
+    //! API-independent.
+    const Vector3f& backgroundColor() const;
+    //! API-independent.
+    void setBackgroundColor(const Vector3f& color);
+    //! API-independent.
+    const Vector3f& defaultColor() const;
+    virtual void setDefaultColor(const Vector3f& color);
+
+    //! API-independent.
+    enum LightingMode {
+        NormalLighting,
+        MinimumLighting,
+        SolidColorLighting,
+        NoLighting,
+        NumLightingModes
+    };
+    virtual void setLightingMode(LightingMode mode);
+    virtual LightingMode lightingMode() const;
+
+    virtual bool isShadowCastingAvailable() const;
+    virtual void setWorldLightShadowEnabled(bool on = true);
+    virtual void setAdditionalLightShadowEnabled(int index, bool on = true);
+    virtual void clearAdditionalLightShadows();
+    virtual void setShadowAntiAliasingEnabled(bool on);
+    virtual void setShadowMapSize(int width, int height);
+
+    virtual void setDefaultSmoothShading(bool on);
+    virtual SgMaterial* defaultMaterial();
+    virtual void enableTexture(bool on);
+    virtual void setMaterialAmbientNormalizationEnabled(bool on);
+    virtual void setDefaultPointSize(double size);
+    virtual void setDefaultLineWidth(double width);
+    virtual void setNormalVisualizationEnabled(bool on);
+    virtual void setNormalVisualizationLength(double length);
+    virtual void requestToClearResources();
+    virtual void enableUnusedResourceCheck(bool on);
+    virtual const Vector3& pickedPoint() const;
+    virtual const SgNodePath& pickedNodePath() const;
+    virtual bool isRenderingPickingImage() const override;
+    virtual void setColor(const Vector3f& color);
+    virtual void setUpsideDown(bool on);
+
+    virtual void setMsaaLevel(int level);
+    virtual int msaaLevel() const;
+    virtual void setDepthBufferUpdateEnabled(bool on);
+    virtual bool isDepthBufferUpdateEnabled() const;
+
+    //! API-independent.
+    enum CullingMode {
+        EnableBackFaceCulling,
+        DisableBackFaceCulling,
+        ForceBackfaceCulling,
+        NumCullingModes,
+
+        // deprecated
+        ENABLE_BACK_FACE_CULLING = EnableBackFaceCulling,
+        DISABLE_BACK_FACE_CULLING = DisableBackFaceCulling,
+        FORCE_BACK_FACE_CULLING = ForceBackfaceCulling,
+        N_CULLING_MODES = NumCullingModes
+    };
+
+    virtual void setBackFaceCullingMode(int mode);
+    virtual int backFaceCullingMode() const;
+
+    static void forceStandardDepthBuffer();
+    static bool isStandardDepthBufferForced();
+
+    virtual bool isReversedDepthBuffer() const;
+    virtual void setInfiniteFarOverrideEnabled(bool on);
+    virtual bool isInfiniteFarOverrideEnabled() const;
+
+    virtual void setBoundingBoxRenderingForLightweightRenderingGroupEnabled(bool on);
 
     void setLowMemoryConsumptionMode(bool on);
 
-    virtual void setPickingImageOutputEnabled(bool on) override;
-    virtual bool getPickingImage(Image& out_image) override;
+    virtual void setPickingImageOutputEnabled(bool on);
+    virtual bool getPickingImage(Image& out_image);
+
+    [[deprecated("Use setNormalVisualizationEnabled and setNormaliVisualizationLength.")]]
+    void showNormalVectors(double length);
 
     class Impl;
 
@@ -115,8 +265,25 @@ protected:
     virtual void onHighlightColorChanged() override;
 
 private:
+    /**
+       The base parts of the corresponding public functions. They are separated
+       so that the overriding implementations can call them without recursion.
+    */
+    void setOutputStreamBase(std::ostream& os);
+    void setDefaultColorBase(const Vector3f& color);
+    void updateViewportInformationBase(int x, int y, int width, int height);
+
+    Viewport viewport_;
+    float devicePixelRatio_;
+
     Impl* impl;
 };
+
+/**
+   \deprecated Use GLSceneRenderer. This alias is kept for the compatibility
+   with the existing code that refers to the renderer by this name.
+*/
+using GLSLSceneRenderer = GLSceneRenderer;
 
 }
 

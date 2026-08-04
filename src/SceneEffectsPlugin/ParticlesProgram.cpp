@@ -7,14 +7,14 @@
 #include <cnoid/EigenUtil>
 #include <cnoid/SceneCameras>
 #include <cnoid/GLSLProgram>
-#include <cnoid/GLSLSceneRenderer>
+#include <cnoid/GLSceneRenderer>
 #include <QImage>
 
 using namespace std;
 using namespace cnoid;
 
 
-ParticlesProgramBase::ParticlesProgramBase(GLSLSceneRenderer* renderer)
+ParticlesProgramBase::ParticlesProgramBase(GLSceneRenderer* renderer)
     : renderer_(renderer)
 {
     
@@ -134,7 +134,7 @@ void ParticlesProgramBase::render
 
 
 ParticlesProgram::ParticlesProgram
-(GLSLSceneRenderer* renderer, const char* vertexShader, const char* fragmentShader)
+(GLSceneRenderer* renderer, const char* vertexShader, const char* fragmentShader)
     : BasicLightingProgram(
         { { vertexShader, GL_VERTEX_SHADER },
           { fragmentShader, GL_FRAGMENT_SHADER } }),
@@ -145,7 +145,7 @@ ParticlesProgram::ParticlesProgram
 
 
 LuminousParticlesProgram::LuminousParticlesProgram
-(GLSLSceneRenderer* renderer, const char* vertexShader, const char* fragmentShader)
+(GLSceneRenderer* renderer, const char* vertexShader, const char* fragmentShader)
     : ShaderProgram(
         { { vertexShader, GL_VERTEX_SHADER },
           { fragmentShader, GL_FRAGMENT_SHADER } }),
