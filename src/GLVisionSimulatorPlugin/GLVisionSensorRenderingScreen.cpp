@@ -520,7 +520,7 @@ bool GLVisionSensorRenderingScreen::initializeGL()
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, egl->colorRenderbuffer);
 
         // Create depth-stencil renderbuffer
-        // This is needed as the blit destination when MSAA is enabled in GLSLSceneRenderer
+        // This is needed as the blit destination when MSAA is enabled in GLSceneRenderer
         glGenRenderbuffers(1, &egl->depthStencilRenderbuffer);
         glBindRenderbuffer(GL_RENDERBUFFER, egl->depthStencilRenderbuffer);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, resolutionX_, resolutionY_);

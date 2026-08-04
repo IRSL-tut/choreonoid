@@ -1,14 +1,14 @@
 set(sources
   GLSLProgram.cpp
   ShaderPrograms.cpp
-  GLSLSceneRenderer.cpp
+  GLSceneRenderer.cpp
   CnoidGLSceneRenderer.cpp # This file must be placed at the last position
   )
 
 set(headers
   GLSLProgram.h
   ShaderPrograms.h
-  GLSLSceneRenderer.h
+  GLSceneRenderer.h
   exportdecl.h
   )
 

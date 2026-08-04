@@ -11,7 +11,7 @@
 #include "Timer.h"
 #include "AppConfig.h"
 #include "QtEventUtil.h"
-#include <cnoid/GLSLSceneRenderer>
+#include <cnoid/GLSceneRenderer>
 #include <cnoid/DisplayValueFormat>
 #include <cnoid/Selection>
 #include <cnoid/EigenArchive>
@@ -164,7 +164,6 @@ public:
     SgGroupPtr scene;
     SgPolygonDrawStylePtr polygonDrawStyle;
     GLSceneRenderer* renderer;
-    GLSLSceneRenderer* glslRenderer;
     float lastDevicePixelRatio;
     GLuint prevDefaultFramebufferObject;
     bool isRendering;
@@ -519,10 +518,7 @@ SceneWidget::Impl::Impl(SceneWidget* self)
     self->setLayout(vbox);
 
     renderer = GLSceneRenderer::create(sceneRoot);
-    glslRenderer = dynamic_cast<GLSLSceneRenderer*>(renderer);
-    if(glslRenderer){
-        glslRenderer->setLowMemoryConsumptionMode(isLowMemoryConsumptionMode_);
-    }
+    renderer->setLowMemoryConsumptionMode(isLowMemoryConsumptionMode_);
 
     renderer->setOutputStream(MessageView::instance()->cout(false));
     renderer->enableUnusedResourceCheck(true);
@@ -700,10 +696,8 @@ void SceneWidget::Impl::setModeSyncEnabled(bool on)
 
 void SceneWidget::Impl::onLowMemoryConsumptionModeChanged(bool on)
 {
-    if(glslRenderer){
-        glslRenderer->setLowMemoryConsumptionMode(on);
-        update();
-    }
+    renderer->setLowMemoryConsumptionMode(on);
+    update();
 }
 
 
@@ -769,11 +763,9 @@ void SceneWidget::Impl::initializeGL()
 
     glContext = context();
     if(renderer->initializeGL((GLADloadfunc)getProcAddress)){
-        if(glslRenderer){
-            auto& vendor = glslRenderer->glVendorString();
-            if(vendor.find("NVIDIA Corporation") != string::npos){
-                needToClearGLOnFrameBufferChange = true;
-            }
+        auto& vendor = renderer->glVendorString();
+        if(vendor.find("NVIDIA Corporation") != string::npos){
+            needToClearGLOnFrameBufferChange = true;
         }
     } else {
         MessageView::instance()->putln(
@@ -839,7 +831,7 @@ void SceneWidget::Impl::paintGL()
     auto newFramebuffer = defaultFramebufferObject();
     if(newFramebuffer != prevDefaultFramebufferObject){
         /**
-           For NVIDIA GPUs, GLSLSceneRenderer may not be able to render properly
+           For NVIDIA GPUs, GLSceneRenderer may not be able to render properly
            when the placement or some other configurations of QOpenGLWidget used
            with the renderer change. To avoid the problem, the OpenGL resources
            used in the renderer should be cleared when the changes occur, and the
@@ -3577,11 +3569,9 @@ void SceneWidget::showPickingImageWindow()
 
 void SceneWidget::Impl::showPickingImageWindow()
 {
-    if(glslRenderer){
-        if(!pickingImageWindow){
-            auto& vp = renderer->viewport();
-            pickingImageWindow = new ImageWindow(vp.w, vp.h);
-        }
-        pickingImageWindow->show();
+    if(!pickingImageWindow){
+        auto& vp = renderer->viewport();
+        pickingImageWindow = new ImageWindow(vp.w, vp.h);
     }
+    pickingImageWindow->show();
 }

@@ -1,1 +1,2 @@
-#include "src/GLSceneRenderer/GLSLSceneRenderer.h"
+// Deprecated. Use cnoid/GLSceneRenderer.
+#include "src/GLSceneRenderer/GLSceneRenderer.h"

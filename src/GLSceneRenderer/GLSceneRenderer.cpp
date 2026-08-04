@@ -1,5 +1,5 @@
 #include <cnoid/Config>
-#include "GLSLSceneRenderer.h"
+#include "GLSceneRenderer.h"
 #include "ShaderPrograms.h"
 #include "GLSLProgram.h"
 

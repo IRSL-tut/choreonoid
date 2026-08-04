@@ -1,6 +1,6 @@
 #include "ShaderPrograms.h"
 #include "GLSLProgram.h"
-#include "GLSLSceneRenderer.h"
+#include "GLSceneRenderer.h"
 #include <cnoid/SceneDrawables>
 #include <cnoid/SceneCameras>
 #include <cnoid/SceneLights>
