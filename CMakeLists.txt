@@ -452,11 +452,11 @@ endif()
 
 option(USE_BUNDLED_PYBIND11 "Use the Pybind11 library bundled with Choreonoid" ON)
 
-# Selects which Python binding implementation is built. The pybind11 backend
-# builds the existing "src/*/pybind11" bindings, while the nanobind backend
-# builds the new "src/*/python" bindings. This is a transitional option; the
-# pybind11 backend will be removed once the migration to nanobind is complete.
-set(CHOREONOID_PYTHON_BINDING_BACKEND "pybind11" CACHE STRING
+# Selects which Python binding implementation is built. The nanobind backend
+# builds the "src/*/python" bindings, while the pybind11 backend builds the
+# legacy "src/*/pybind11" bindings. This is a transitional option; the pybind11
+# backend will be removed once the migration to nanobind is complete.
+set(CHOREONOID_PYTHON_BINDING_BACKEND "nanobind" CACHE STRING
   "Python binding backend to build (pybind11 or nanobind)")
 set_property(CACHE CHOREONOID_PYTHON_BINDING_BACKEND PROPERTY STRINGS pybind11 nanobind)
 
