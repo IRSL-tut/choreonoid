@@ -2,8 +2,10 @@
 #define CNOID_UTIL_PYTHON_PYSIGNAL_H
 
 #include "../Signal.h"
+#include "../MessageOut.h"
 #include <nanobind/nanobind.h>
 #include <functional>
+#include <string>
 #include <utility>
 
 /*
@@ -14,8 +16,8 @@
    exception propagates into the C++ caller. In Choreonoid a Python slot is
    called from C++ signal emission, where an uncaught C++ exception would crash
    the process. The modified call operator below catches the Python error,
-   reports it through sys.unraisablehook, and returns a default-constructed
-   value so that signal emission can continue safely.
+   reports it as an error message, and returns a default-constructed value so
+   that signal emission can continue safely.
 
    Because this redefines type_caster<std::function<...>>, a translation unit
    that uses PySignal must not also include <nanobind/stl/function.h>.
@@ -82,7 +84,18 @@ struct type_caster<std::function<Return(Args...)>> {
                     return cast<Return>(func((forward_t<Args>) args...));
                 }
             } catch (python_error &e) {
-                e.discard_as_unraisable("Choreonoid signal slot");
+                /*
+                   The exception cannot be propagated to the C++ code emitting the
+                   signal, so it is reported as an error message instead of being
+                   discarded through sys.unraisablehook. Reporting it as an error
+                   makes the failure visible in the message view, sets the return
+                   code of the application to a non-zero value, and terminates the
+                   application in the test mode. Otherwise a script whose slot is
+                   broken would silently keep running.
+                */
+                cnoid::MessageOut::master()->putErrorln(
+                    std::string("A Python slot connected to a Choreonoid signal raised an "
+                                "exception.\n") + e.what());
             }
             if constexpr (!std::is_void_v<Return>) {
                 return Return();

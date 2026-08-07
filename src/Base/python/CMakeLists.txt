@@ -25,12 +25,12 @@ choreonoid_add_python_module(PyQtCore
   PyQtCore.cpp
   PyQtCoreQtNamespace.cpp
   )
-target_link_libraries(PyQtCore PRIVATE ${CHOREONOID_QT_LIBRARIES})
+target_link_libraries(PyQtCore PRIVATE CnoidUtil ${CHOREONOID_QT_LIBRARIES})
 
 choreonoid_add_python_module(PyQtGui
   PyQtGui.cpp
   )
-target_link_libraries(PyQtGui PRIVATE ${CHOREONOID_QT_LIBRARIES})
+target_link_libraries(PyQtGui PRIVATE CnoidUtil ${CHOREONOID_QT_LIBRARIES})
 
 choreonoid_add_python_module(PyQtWidgets
   PyQtWidgets.cpp
@@ -38,7 +38,7 @@ choreonoid_add_python_module(PyQtWidgets
   PyQtLayoutClasses.cpp
   PyQtModelViewClasses.cpp
   )
-target_link_libraries(PyQtWidgets PRIVATE ${CHOREONOID_QT_LIBRARIES})
+target_link_libraries(PyQtWidgets PRIVATE CnoidUtil ${CHOREONOID_QT_LIBRARIES})
 
 choreonoid_add_python_module(PyBase
   PyBaseModule.cpp

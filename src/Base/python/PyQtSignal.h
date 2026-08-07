@@ -8,8 +8,10 @@
    The std::function type caster used for connecting a Python callable as a Qt
    slot is the exception-safe one defined in the Util binding's PySignal.h
    (included via <cnoid/PySignal>). It reports an error raised on the Python
-   side through sys.unraisablehook instead of letting the C++ exception escape
-   into the Qt event loop, where it would crash the process.
+   side as an error message instead of letting the C++ exception escape into
+   the Qt event loop, where it would crash the process. Note that a module
+   using this header must link to CnoidUtil because the caster outputs the
+   message with MessageOut.
 */
 
 namespace cnoid {
