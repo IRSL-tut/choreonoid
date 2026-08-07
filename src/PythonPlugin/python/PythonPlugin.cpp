@@ -304,8 +304,6 @@ void PythonPlugin::Impl::executeScriptFileOnStartup(const string& scriptFile)
         GilScopedAcquire lock;
         MessageView::instance()->put(executor().exceptionText());
     }
-
-    AppUtil::checkErrorAndExitIfTestMode();
 }
 
 

@@ -6,6 +6,7 @@
 #include "PythonPlugin.h"
 #include <cnoid/PyUtil>
 #include <cnoid/LazyCaller>
+#include <cnoid/AppUtil>
 #include <cnoid/UTF8>
 #include <cnoid/FileUtil>
 #include <filesystem>
@@ -14,6 +15,7 @@
 #include <QWaitCondition>
 #include <pybind11/eval.h>
 #include <map>
+#include "gettext.h"
 
 using namespace std;
 using namespace cnoid;
@@ -42,6 +44,7 @@ public:
     QWaitCondition stateCondition;
     python::object returnValue;
     Signal<void()> sigFinished;
+    AppUtil::OngoingProcessHandle backgroundProcess;
 
     string scriptDirectory;
     PathRefMap::iterator pathRefIter;
@@ -273,6 +276,8 @@ bool PythonExecutor::Impl::exec(std::function<python::object()> execScript, cons
         }
     }
     if(isBackgroundMode){
+        // The batch mode must not exit the application while the script is running
+        backgroundProcess = AppUtil::beginOngoingProcess(_("background python script"));
         stateMutex.lock();
         isRunningForeground = false;
         start();
@@ -390,6 +395,7 @@ python::object PythonExecutor::returnValue()
 
 void PythonExecutor::Impl::onBackgroundExecutionFinished()
 {
+    backgroundProcess.reset();
     sigFinished();
 }
 

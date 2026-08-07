@@ -114,3 +114,6 @@ msgstr "バックグラウンド実行"
 
 msgid "Individual namespace"
 msgstr "独立名前空間"
+
+msgid "background python script"
+msgstr "バックグラウンドのPythonスクリプト"

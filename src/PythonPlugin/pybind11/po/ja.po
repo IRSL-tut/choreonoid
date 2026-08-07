@@ -111,3 +111,6 @@ msgstr ""
 
 msgid "Background execution"
 msgstr "バックグラウンド実行"
+
+msgid "background python script"
+msgstr "バックグラウンドのPythonスクリプト"

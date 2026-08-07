@@ -31,8 +31,23 @@ msgstr "タイムステップ"
 msgid "Num parts"
 msgstr "パート数"
 
-msgid "No window system is available. Choreonoid has been switched to no-window mode."
-msgstr "ウィンドウシステムが利用できません．Choreonoidはノーウィンドウモードに切り替わりました．"
+msgid "No window system is available. Choreonoid has been switched to headless mode."
+msgstr "ウィンドウシステムが利用できません．Choreonoidはヘッドレスモードに切り替わりました．"
+
+msgid "The {0} option has been removed. Use the --batch option instead."
+msgstr "{0} オプションは廃止されました．代わりに --batch オプションを使用してください．"
+
+msgid "The batch mode was waiting for the following processes: {0}"
+msgstr "バッチモードは以下の処理の終了を待っていました：{0}"
+
+msgid "startup processing"
+msgstr "起動時処理"
+
+msgid "continuous update of items"
+msgstr "アイテムの連続更新"
+
+msgid "playback"
+msgstr "再生"
 
 msgid "The Eigen library version {0}.{1}.{2} is used (SIMD intruction sets in use: {3})."
 msgstr ""

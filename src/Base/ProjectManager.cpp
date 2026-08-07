@@ -532,7 +532,7 @@ void ProjectManager::Impl::confirmToRemoveUnpackedProjectPack
     auto packName = toUTF8(filesystem::path(fromUTF8(loadedProjectPackFile)).filename().string());
     auto dirString = toUTF8(unpackedProjectPackDirPath.string());
 
-    if(!doConfirmDialog || AppUtil::isNoWindowMode() || AppUtil::isTestMode()){
+    if(!doConfirmDialog || AppUtil::isNonInteractiveMode()){
         // The directory is kept because the confirmation dialog cannot be used
         mout->putln(
             formatR(_("The files in the directory \"{0}\" extracted from the project pack \"{1}\" "
@@ -742,7 +742,7 @@ ItemList<> ProjectManager::Impl::loadProject
                 if(isBuiltinProject || ::isLayoutInclusionMode){
                     mainWindow->setInitialLayout(archive);
                 }
-                if(!isBuiltinProject && !AppUtil::isNoWindowMode()){
+                if(!isBuiltinProject && !AppUtil::isHeadlessMode()){
                     mainWindow->show();
                 }
             } else {

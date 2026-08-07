@@ -68,6 +68,7 @@
 #include "MovieRecorderBar.h"
 #include "LazyCaller.h"
 #include <cnoid/GLSceneRenderer>
+#include <cnoid/ConnectionSet>
 #include <cnoid/MessageOut>
 #include <cnoid/Config>
 #include <cnoid/ValueTree>
@@ -85,6 +86,7 @@
 #include <QLibrary>
 #include <regex>
 #include <iostream>
+#include <algorithm>
 #include <csignal>
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -111,22 +113,81 @@ Signal<void()> sigAboutToQuit_;
 bool isDoingInitialization_ = true;
 int nestedEventLoopCounter = 0;
 Signal<void()> sigNestedEventLoopExited_;
-bool isTestMode = false;
-bool isNoWindowMode = false;
+bool isNonInteractiveMode = false;
+bool isBatchMode = false;
+bool isHeadlessMode = false;
 bool isWindowSystemAvailable = true;
 bool isOffscreenMode = false;
-bool isNoWindowModeAutoEnabled = false;
+bool isHeadlessModeAutoEnabled = false;
 bool ctrl_c_pressed = false;
 bool exitRequested = false;
+bool isStartupProcessingFinished = false;
+bool isQuitOptionSpecified = false;
+bool isTestModeOptionSpecified = false;
 vector<string> additionalPathVariables;
 vector<string> pluginDirsAsPrefix;
+
+class OngoingProcessImpl : public AppUtil::OngoingProcess
+{
+public:
+    string name_;
+    bool isFinished;
+
+    OngoingProcessImpl(std::string_view name) : name_(name), isFinished(false) { }
+    virtual ~OngoingProcessImpl() { finish(); }
+    virtual const std::string& name() const override { return name_; }
+    virtual void finish() override;
+};
+
+vector<OngoingProcessImpl*> ongoingProcesses;
+
+void checkBatchModeExitCondition()
+{
+    if(isBatchMode && isStartupProcessingFinished && ongoingProcesses.empty()){
+        /*
+          The check is deferred so that a process finished immediately before another
+          one begins does not terminate the application. The condition is checked again
+          because it may have been changed after this function was called.
+        */
+        callLater(
+            [](){
+                if(isBatchMode && isStartupProcessingFinished && ongoingProcesses.empty()){
+                    App::exit();
+                }
+            });
+    }
+}
+
+void OngoingProcessImpl::finish()
+{
+    if(!isFinished){
+        isFinished = true;
+        auto p = std::find(ongoingProcesses.begin(), ongoingProcesses.end(), this);
+        if(p != ongoingProcesses.end()){
+            ongoingProcesses.erase(p);
+        }
+        checkBatchModeExitCondition();
+    }
+}
 
 void onCtrl_C_Input(int)
 {
     callLater(
         [](){
             ctrl_c_pressed = true;
-            if(isNoWindowMode){
+            if(isBatchMode && !ongoingProcesses.empty()){
+                // Report what the batch mode was waiting for
+                string names;
+                for(auto& process : ongoingProcesses){
+                    if(!names.empty()){
+                        names += ", ";
+                    }
+                    names += process->name_;
+                }
+                MessageOut::master()->putln(
+                    formatR(_("The batch mode was waiting for the following processes: {0}"), names));
+            }
+            if(isHeadlessMode){
                 App::exit();
             } else {
                 MainWindow::instance()->close();
@@ -190,10 +251,15 @@ public:
     bool doCloseMainWindowAfterShutdown;
     bool doStoreWindowStateOnShutdown;
 
+    ScopedConnectionSet ongoingProcessConnections;
+    AppUtil::OngoingProcessHandle continuousUpdateProcess;
+    AppUtil::OngoingProcessHandle playbackProcess;
+
     Impl(App* self, int& argc, char** argv, const std::string& appName, const std::string& organization);
     ~Impl();
     void initialize();
     int exec();
+    void initializeOngoingProcessDetection();
     void requestShutdown(bool doCloseMainWindow, bool doStoreWindowState);
     void performShutdown(bool areGuiUpdatesAvailable);
     void closeTopLevelWidgetsExceptMainWindow();
@@ -289,14 +355,14 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
 #endif
 
     // Decide the headless/offscreen execution mode based on the available
-    // window system and the --no-window option.
+    // window system and the --headless option.
     //
     // - If neither DISPLAY nor WAYLAND_DISPLAY is set, no window system is
-    //   available, so the application is forced into no-window mode and the
+    //   available, so the application is forced into headless mode and the
     //   Qt offscreen platform plugin is used. In that case the vision
     //   simulator switches its OpenGL backend to EGL (see
     //   GLVisionSensorRenderingScreen::initializeGL).
-    // - If --no-window is given on a system with a window system, the GUI is
+    // - If --headless is given on a system with a window system, the GUI is
     //   simply not shown but Qt keeps using the regular platform (xcb /
     //   wayland) and the vision simulator keeps using the Qt OpenGL (GLX)
     //   backend. This avoids the "QOpenGLWidget is not supported on this
@@ -311,22 +377,23 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
         (getenv("DISPLAY") != nullptr) || (getenv("WAYLAND_DISPLAY") != nullptr);
     bool noWindowRequested = false;
     for(int i = 1; i < argc; ++i){
-        if(strcmp(argv[i], "--no-window") == 0){
+        // Note that --no-window is the old name of the --headless option
+        if(strcmp(argv[i], "--headless") == 0 || strcmp(argv[i], "--no-window") == 0){
             noWindowRequested = true;
             break;
         }
     }
     if(!isWindowSystemAvailable && !noWindowRequested){
-        isNoWindowModeAutoEnabled = true;
+        isHeadlessModeAutoEnabled = true;
     }
-    isNoWindowMode = noWindowRequested || !isWindowSystemAvailable;
-    isOffscreenMode = isNoWindowMode && !isWindowSystemAvailable;
+    isHeadlessMode = noWindowRequested || !isWindowSystemAvailable;
+    isOffscreenMode = isHeadlessMode && !isWindowSystemAvailable;
     if(isOffscreenMode){
         qputenv("QT_QPA_PLATFORM", "offscreen");
     }
-    if(isNoWindowModeAutoEnabled){
+    if(isHeadlessModeAutoEnabled){
         mout->putln(
-            _("No window system is available. Choreonoid has been switched to no-window mode."));
+            _("No window system is available. Choreonoid has been switched to headless mode."));
     }
 #endif
 
@@ -437,32 +504,46 @@ void App::Impl::initialize()
     optionManager = new OptionManager(appName);
 
     optionManager->add_flag(
-        "--quit", doQuit,
-        "stop the application without showing the main window");
-    
+        "--batch", isBatchMode,
+        "run in the non-interactive mode and exit when all the automatic processing has finished");
+
     optionManager->add_flag(
-        "--test-mode", isTestMode,
-        "exit the application when an error occurs and put MessageView text to the standard output");
-    
-    // The --no-window option is registered here only so that it appears in
+        "--non-interactive", isNonInteractiveMode,
+        "do not expect any user interaction: put MessageView text to the standard output "
+        "and do not show any dialog");
+
+    /*
+      The following options have been removed. They are still registered as hidden
+      options so that a clear message can be given instead of the generic parse error
+      of the option parser.
+    */
+    optionManager->add_flag("--quit", isQuitOptionSpecified)->group("");
+    optionManager->add_flag("--test-mode", isTestModeOptionSpecified)->group("");
+
+    // The --headless option is registered here only so that it appears in
     // the help message and is accepted as a valid command-line option by the
-    // option parser. The actual value of isNoWindowMode has already been
+    // option parser. The actual value of isHeadlessMode has already been
     // determined before QApplication construction (see App::Impl::Impl),
     // because the Qt platform plugin (offscreen vs. xcb / wayland) must be
     // selected at that point, which is earlier than when OptionManager
     // parses the command line.
     //
-    // To prevent OptionManager from overwriting the value of isNoWindowMode
+    // To prevent OptionManager from overwriting the value of isHeadlessMode
     // that has already been determined, a dummy variable is bound here
-    // instead of isNoWindowMode itself. This also avoids the situation where
-    // isNoWindowMode was set to true automatically due to the absence of a
+    // instead of isHeadlessMode itself. This also avoids the situation where
+    // isHeadlessMode was set to true automatically due to the absence of a
     // window system but the option parser would otherwise leave it
     // unchanged.
-    static bool noWindowOptionDummy = false;
+    //
+    // The --no-window option is the old name of --headless. It is still
+    // accepted but is hidden from the help message.
+    static bool headlessOptionDummy = false;
     optionManager->add_flag(
-        "--no-window", noWindowOptionDummy,
-        "Do not show the application window and put MessageView text to the standard output");
-    
+        "--headless", headlessOptionDummy,
+        "do not show the application window. This includes --non-interactive");
+    static bool noWindowOptionDummy = false;
+    optionManager->add_flag("--no-window", noWindowOptionDummy)->group("");
+
     optionManager->add_flag(
         "--list-qt-styles", doListQtStyles,
         "list all the available qt styles");
@@ -648,7 +729,35 @@ int App::Impl::exec()
 #endif
         optionManager->parse(argc, argv);
 
-        if(isNoWindowMode){
+        if(isQuitOptionSpecified || isTestModeOptionSpecified){
+            /*
+              The message is put to the standard error output because the removed
+              options are command line errors and the message view is not available
+              when the application does not run in the non-interactive mode.
+            */
+            auto putRemovedOptionMessage =
+                [](const char* option){
+                    cerr << fromUTF8(
+                        formatR(_("The {0} option has been removed. Use the --batch option instead."),
+                                option))
+                         << endl;
+                };
+            if(isQuitOptionSpecified){
+                putRemovedOptionMessage("--quit");
+            }
+            if(isTestModeOptionSpecified){
+                putRemovedOptionMessage("--test-mode");
+            }
+            returnCode = 1;
+            doQuit = true;
+        }
+        if(isBatchMode){
+            isNonInteractiveMode = true;
+        }
+        if(isHeadlessMode){
+            isNonInteractiveMode = true;
+        }
+        if(isNonInteractiveMode){
             enableMessageViewRedirectToStdOut();
         }
         if(!additionalPathVariables.empty()){
@@ -663,13 +772,9 @@ int App::Impl::exec()
                 }
             }
         }
-        if(!doQuit){
-            if(isTestMode){
-                enableMessageViewRedirectToStdOut();
-            } else if(doListQtStyles){
-                cout << QStyleFactory::keys().join(" ").toStdString() << endl;
-                doQuit = true;
-            }
+        if(!doQuit && doListQtStyles){
+            cout << QStyleFactory::keys().join(" ").toStdString() << endl;
+            doQuit = true;
         }
 
         for(auto& prefix : pluginDirsAsPrefix){
@@ -684,20 +789,26 @@ int App::Impl::exec()
     }
 
     if(!doQuit){
+        if(isBatchMode){
+            initializeOngoingProcessDetection();
+        }
         if(mainWindow->isVisible()){
             AppUtil::updateGui();
         } else {
-            if(!isNoWindowMode){
+            if(!isHeadlessMode){
                 mainWindow->show();
                 mainWindow->waitForWindowSystemToActivate();
             }
         }
         callLater(
             [this](){
+                auto process = AppUtil::beginOngoingProcess(_("startup processing"));
                 optionManager->processOptionsPhase2();
                 sigExecutionStarted_();
+                isStartupProcessingFinished = true;
+                process->finish();
             });
-        
+
         isEventLoopRunning = true;
         int result = qapplication->exec();
         isEventLoopRunning = false;
@@ -708,10 +819,10 @@ int App::Impl::exec()
     }
 
     if(shutdownState != ShutdownCompleted){
-        // This is a fallback for the no-window and --quit modes and for an
-        // event-loop exit that does not originate from the main-window close
-        // sequence. No widget update is allowed here because a native window
-        // may already have been destroyed.
+        // This is a fallback for the headless mode, for the case where the event
+        // loop is not executed at all, and for an event-loop exit that does not
+        // originate from the main-window close sequence. No widget update is
+        // allowed here because a native window may already have been destroyed.
         performShutdown(false);
     }
 
@@ -793,6 +904,43 @@ bool App::Impl::eventFilter(QObject* watched, QEvent* event)
         return true;
     }
     return false;
+}
+
+
+/**
+   This function sets up the detection of the processes that must keep the application
+   running in the batch mode. Note that an item in the continuous update state is handled
+   as an ongoing process here, and it covers most of the automatic processing including
+   the simulation, so that each class does not have to register its own process.
+*/
+void App::Impl::initializeOngoingProcessDetection()
+{
+    ongoingProcessConnections.add(
+        RootItem::instance()->sigTreeContinuousUpdateStateExistenceChanged().connect(
+            [this](bool on){
+                if(on){
+                    if(!continuousUpdateProcess){
+                        continuousUpdateProcess =
+                            AppUtil::beginOngoingProcess(_("continuous update of items"));
+                    }
+                } else {
+                    continuousUpdateProcess.reset();
+                }
+            }));
+
+    auto timeBar = TimeBar::instance();
+
+    ongoingProcessConnections.add(
+        timeBar->sigPlaybackStarted().connect(
+            [this](double){
+                if(!playbackProcess){
+                    playbackProcess = AppUtil::beginOngoingProcess(_("playback"));
+                }
+            }));
+
+    ongoingProcessConnections.add(
+        timeBar->sigPlaybackStopped().connect(
+            [this](double, bool){ playbackProcess.reset(); }));
 }
 
 
@@ -940,7 +1088,7 @@ void App::exit(int returnCode)
         auto impl = instance_->impl;
         impl->returnCode = returnCode;
         exitRequested = true;
-        if(isNoWindowMode){
+        if(isHeadlessMode){
             impl->requestShutdown(false, false);
         } else if(impl->mainWindow){
             impl->mainWindow->close();
@@ -967,18 +1115,6 @@ void App::Impl::enableMessageViewRedirectToStdOut()
 }
 
 
-void App::checkErrorAndExitIfTestMode()
-{
-    if(isTestMode){
-        auto impl = instance_->impl;
-        if(impl->messageView->hasErrorMessages()){
-            AppUtil::updateGui();
-            exit(1);
-        }
-    }
-}
-
-
 SignalProxy<void()> App::sigExecutionStarted()
 {
     return sigExecutionStarted_;
@@ -997,21 +1133,34 @@ SignalProxy<void()> AppUtil::sigAppExecutionStarted()
 }
 
 
-bool AppUtil::isTestMode()
+bool AppUtil::isNonInteractiveMode()
 {
-    return ::isTestMode;
+    return ::isNonInteractiveMode;
 }
 
 
-void AppUtil::checkErrorAndExitIfTestMode()
+bool AppUtil::isBatchMode()
 {
-    if(::isTestMode){
-        auto impl = instance_->impl;
-        if(impl->messageView->hasErrorMessages()){
-            AppUtil::updateGui();
-            App::exit(1);
-        }
+    return ::isBatchMode;
+}
+
+
+AppUtil::OngoingProcessHandle AppUtil::beginOngoingProcess(std::string_view name)
+{
+    auto process = new OngoingProcessImpl(name);
+    ongoingProcesses.push_back(process);
+    return process;
+}
+
+
+std::vector<std::string> AppUtil::ongoingProcessNames()
+{
+    std::vector<std::string> names;
+    names.reserve(ongoingProcesses.size());
+    for(auto& process : ongoingProcesses){
+        names.push_back(process->name_);
     }
+    return names;
 }
 
 
@@ -1118,9 +1267,9 @@ SignalProxy<void()> AppUtil::sigNestedEventLoopExited()
 }
 
 
-bool AppUtil::isNoWindowMode()
+bool AppUtil::isHeadlessMode()
 {
-    return ::isNoWindowMode;
+    return ::isHeadlessMode;
 }
 
 

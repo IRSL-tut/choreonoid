@@ -48,8 +48,6 @@ public:
     static bool isDoingInitialization();
     [[deprecated("Use AppUtil::updateGui")]]
     static void updateGui(bool allEvents = false);
-    [[deprecated("Use AppUtil::checkErrorAndExitIfTestMode")]]
-    static void checkErrorAndExitIfTestMode();
     [[deprecated("Use AppUtil::sigAppExecutionStarted")]]
     static SignalProxy<void()> sigExecutionStarted();
     [[deprecated("Use AppUtil::sigAboutToQuit")]]
