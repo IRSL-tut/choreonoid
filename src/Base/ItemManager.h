@@ -65,6 +65,15 @@ class CNOID_EXPORT ItemManager
 public:
     static void initializeClass(ExtensionManager* ext);
 
+    /**
+       This function releases the singleton item instances kept by the item class
+       registry. It must be called on the application shutdown before the Python
+       interpreter is finalized, because the extension manager of the base module
+       is not deleted and the registry would otherwise keep the instances alive
+       longer than the interpreter that owns their wrapper objects.
+    */
+    static void finalizeClass();
+
     ItemManager(const std::string& moduleName);
     ~ItemManager();
 

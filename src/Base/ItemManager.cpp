@@ -172,6 +172,14 @@ void ItemManager::initializeClass(ExtensionManager* ext)
 }
 
 
+void ItemManager::finalizeClass()
+{
+    for(auto& kv : itemClassIdToInfoMap){
+        kv.second->singletonInstance.reset();
+    }
+}
+
+
 ItemManager::ItemManager(const std::string& moduleName)
 {
     impl = new Impl(moduleName);

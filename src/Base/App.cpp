@@ -862,6 +862,23 @@ void App::Impl::performShutdown(bool areGuiUpdatesAvailable)
     pluginManager->finalizePlugins();
     ext->deleteManagedObjects();
 
+    // The item class registry keeps the singleton item instances such as RootItem.
+    // They must be released here because the extension manager of the base module
+    // is not deleted on shutdown and the instances would otherwise outlive the
+    // Python interpreter that owns their wrapper objects.
+    ItemManager::finalizeClass();
+
+    // The views must be deleted here because a view can keep references to items
+    // and other objects whose wrapper objects are owned by the Python interpreter.
+    // The views would otherwise be deleted together with the main window, which is
+    // deleted after the interpreter has been finalized. The message view is kept
+    // alive because the remaining shutdown code still uses it.
+    for(auto& view : ViewManager::allViews()){
+        if(view != messageView){
+            ViewManager::deleteView(view);
+        }
+    }
+
     // Finalize the embedded Python interpreter after all plugins have been
     // finalized and the item tree has been released. Under the nanobind
     // backend this is when Python wrappers that still own Referenced-derived
