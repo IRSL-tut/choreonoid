@@ -150,6 +150,18 @@ PythonExecutor::Impl::~Impl()
             wait();
         }
     }
+
+    /*
+      The Python objects held by this object must be released with the GIL acquired.
+      They are explicitly released here because the GIL acquired in this function is
+      released before the member objects are destructed.
+    */
+    GilScopedAcquire lock;
+    individualNamespace.reset();
+    returnValue.reset();
+    exceptionType.reset();
+    exceptionValue.reset();
+    resetLastResultObjects();
 }
 
 

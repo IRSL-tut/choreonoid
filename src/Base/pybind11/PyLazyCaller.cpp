@@ -16,6 +16,26 @@ struct PyFunc
 
     PyFunc(py::function f) : func(f) { }
 
+    /*
+       The GIL must be acquired when the reference count of the held Python object
+       is changed. Note that this object is copied and destroyed on the C++ side
+       where the GIL is not necessarily held. In particular, a pending call event
+       can be destroyed during the application shutdown.
+    */
+    PyFunc(const PyFunc& org) {
+        py::gil_scoped_acquire lock;
+        func = org.func;
+    }
+
+    PyFunc(PyFunc&& org) noexcept : func(std::move(org.func)) { }
+
+    ~PyFunc() {
+        if(func){
+            py::gil_scoped_acquire lock;
+            func = py::function();
+        }
+    }
+
     void operator()() {
         py::gil_scoped_acquire lock;
         try {
