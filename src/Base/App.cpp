@@ -818,6 +818,21 @@ void App::Impl::performShutdown(bool areGuiUpdatesAvailable)
         return;
     }
 
+    /*
+      The shutdown must not be performed from a nested event loop such as the one
+      processed by AppUtil::updateGui. A typical case is a Python script that calls
+      App::exit and then outputs a message, because flushing the message processes
+      the pending Qt events and the shutdown would destroy the plugins and finalize
+      the Python interpreter while the script frame is still alive on the stack.
+      In that case the shutdown is put back into the event queue so that it is
+      performed after the stack has returned to the main event loop.
+    */
+    if(AppUtil::isNestedEventLoopActive()){
+        callLater(
+            [this, areGuiUpdatesAvailable](){ performShutdown(areGuiUpdatesAvailable); });
+        return;
+    }
+
     shutdownState = ShutdownInProgress;
 
     // Prevent message flushing from processing pending Qt events while plugin
