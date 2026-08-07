@@ -852,12 +852,38 @@ void App::Impl::performShutdown(bool areGuiUpdatesAvailable)
         mainWindow->storeWindowStateConfig();
     }
 
+    if(mainWindow){
+        /*
+          Disable the repainting of the widgets before the teardown begins. The
+          following operations destroy widgets including the QOpenGLWidget-based
+          views, and repainting the window while it is being done can access an
+          already destroyed platform window. Note that the native window itself
+          is kept alive here so that the direct MessageView updates remain safe.
+        */
+        mainWindow->setUpdatesEnabled(false);
+    }
+
     UnifiedEditHistory::instance()->terminateRecording();
     RootItem::instance()->clearChildren();
 
     // The removal must be done after the item tree is cleared so that the files
     // in the extracted directory are not locked by the items using them
     ProjectManager::instance()->removeUnpackedProjectPackIfDecided();
+
+    /*
+      The views must be deleted here because a view can keep references to items
+      and other objects whose wrapper objects are owned by the Python interpreter.
+      The views would otherwise be deleted together with the main window, which is
+      deleted after the interpreter has been finalized. Note that this must be done
+      before the plugins and the managed objects are finalized because deactivating
+      a view can access a tool bar managed by them. The message view is kept alive
+      because the remaining shutdown code still uses it.
+    */
+    for(auto& view : ViewManager::allViews()){
+        if(view != messageView){
+            ViewManager::deleteView(view);
+        }
+    }
 
     pluginManager->finalizePlugins();
     ext->deleteManagedObjects();
@@ -867,17 +893,6 @@ void App::Impl::performShutdown(bool areGuiUpdatesAvailable)
     // is not deleted on shutdown and the instances would otherwise outlive the
     // Python interpreter that owns their wrapper objects.
     ItemManager::finalizeClass();
-
-    // The views must be deleted here because a view can keep references to items
-    // and other objects whose wrapper objects are owned by the Python interpreter.
-    // The views would otherwise be deleted together with the main window, which is
-    // deleted after the interpreter has been finalized. The message view is kept
-    // alive because the remaining shutdown code still uses it.
-    for(auto& view : ViewManager::allViews()){
-        if(view != messageView){
-            ViewManager::deleteView(view);
-        }
-    }
 
     // Finalize the embedded Python interpreter after all plugins have been
     // finalized and the item tree has been released. Under the nanobind
