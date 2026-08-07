@@ -5,6 +5,7 @@
 #include <cnoid/PyBase>
 #include <cnoid/SceneCameras>
 #include <cnoid/MaterialTable>
+#include <nanobind/stl/shared_ptr.h>
 
 using namespace cnoid;
 namespace nb = nanobind;
