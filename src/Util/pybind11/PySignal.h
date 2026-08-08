@@ -74,7 +74,18 @@ public:
                 gil_scoped_acquire acq;
                 f = f_.f;
             }
+            /*
+               Note that a slot can be destroyed after the interpreter has been
+               finalized. A typical case is a slot connected to a signal object with
+               static storage duration, which is destroyed in the static destructors
+               of the library. Touching the finalized runtime would crash, so the
+               held function is released only while the interpreter is available.
+            */
             ~func_handle() {
+                if(!Py_IsInitialized()){
+                    f.release();
+                    return;
+                }
                 gil_scoped_acquire acq;
                 try {
                     function kill_f(std::move(f));

@@ -50,8 +50,16 @@ struct cnoid_pyfunc_wrapper {
         }
     }
 
+    /*
+       Note that a slot can be destroyed after the interpreter has been finalized.
+       A typical case is a slot connected to a signal object with static storage
+       duration, which is destroyed in the static destructors of the library. The
+       decref must be skipped in that case because touching the finalized runtime
+       would crash. The object then leaks, which is the same trade-off as the one
+       taken in referencedDecref (see src/Util/python/PyReferenced.cpp).
+    */
     ~cnoid_pyfunc_wrapper() {
-        if (f) {
+        if (f && is_alive()) {
             gil_scoped_acquire acq;
             Py_DECREF(f);
         }
