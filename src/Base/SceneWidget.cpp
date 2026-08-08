@@ -262,6 +262,7 @@ public:
     GridInfo gridInfos[3];
 
     LazyCaller updateGridsLater;
+    LazyCaller pruneManagedEditablesLater;
 
     double fps;
     Timer fpsTimer;
@@ -293,6 +294,9 @@ public:
 
     void onSceneGraphUpdated(const SgUpdate& update);
     void advertiseModeChangeToNewEditables(SgNode* node);
+    bool checkManagedEditableInSubTree(SgNode* node);
+    void collectExistingEditablesInSubTree(SgNode* node, unordered_set<EditableNodeInfo>& editables);
+    void pruneManagedEditables();
     
     virtual void initializeGL() override;
     virtual void paintGL() override;
@@ -508,7 +512,8 @@ SceneWidget::Impl::Impl(SceneWidget* self)
       sceneRoot(new SceneWidgetRoot(self)),
       systemGroup(sceneRoot->systemGroup),
       emitSigStateChangedLater(std::ref(sigStateChanged)),
-      updateGridsLater([this](){ updateGrids(); })
+      updateGridsLater([this](){ updateGrids(); }),
+      pruneManagedEditablesLater([this](){ pruneManagedEditables(); })
 {
     setFocusPolicy(Qt::WheelFocus);
     
@@ -688,6 +693,10 @@ void SceneWidget::Impl::setModeSyncEnabled(bool on)
             if(it != modeSyncWidgets.end()){
                 modeSyncWidgets.erase(it);
             }
+            if(modeSyncWidgets.empty() && sharedManagedEditables){
+                // Release the nodes kept by the shared set when it is no longer used
+                sharedManagedEditables->clear();
+            }
             managedEditables = make_shared<unordered_set<EditableNodeInfo>>();
         }
     }
@@ -793,7 +802,21 @@ void SceneWidget::Impl::onSceneGraphUpdated(const SgUpdate& sgUpdate)
         }
         needToUpdatePreprocessedNodeTree = true;        
     } else if(sgUpdate.hasAction(SgUpdate::Removed)){
-        needToUpdatePreprocessedNodeTree = true;        
+        needToUpdatePreprocessedNodeTree = true;
+        /*
+          The removed node may be kept in the managed editable node set, which must
+          not keep a node that no longer exists in any scene. The pruning is done
+          later so that successive removals are processed at once. Note that the
+          pruning is omitted when the application is shutting down because the whole
+          scene is going to be released and the mode change is never advertised again.
+        */
+        if(!pruneManagedEditablesLater.isPending() && !AppUtil::isAppShuttingDown()){
+            if(auto node = sgUpdate.path().front()->toNode()){
+                if(checkManagedEditableInSubTree(node)){
+                    pruneManagedEditablesLater();
+                }
+            }
+        }
     }
     if(!isRendering){
         QOpenGLWidget::update();
@@ -816,6 +839,71 @@ void SceneWidget::Impl::advertiseModeChangeToNewEditables(SgNode* node)
     if(auto group = node->toGroupNode()){
         for(auto& child : *group){
             advertiseModeChangeToNewEditables(child);
+        }
+    }
+}
+
+
+bool SceneWidget::Impl::checkManagedEditableInSubTree(SgNode* node)
+{
+    if(node->hasAttribute(SgObject::Operable)){
+        if(auto handler = dynamic_cast<SceneWidgetEventHandler*>(node)){
+            if(managedEditables->find(EditableNodeInfo(node, handler)) != managedEditables->end()){
+                return true;
+            }
+        }
+    }
+    if(auto group = node->toGroupNode()){
+        for(auto& child : *group){
+            if(checkManagedEditableInSubTree(child)){
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+void SceneWidget::Impl::collectExistingEditablesInSubTree
+(SgNode* node, unordered_set<EditableNodeInfo>& editables)
+{
+    if(node->hasAttribute(SgObject::Operable)){
+        if(auto handler = dynamic_cast<SceneWidgetEventHandler*>(node)){
+            editables.emplace(node, handler);
+        }
+    }
+    if(auto group = node->toGroupNode()){
+        for(auto& child : *group){
+            collectExistingEditablesInSubTree(child, editables);
+        }
+    }
+}
+
+
+/**
+   This function removes the nodes that no longer exist in any scene from the managed
+   editable node set. Note that the set may be shared by the mode synchronized widgets,
+   so the scenes of all of them must be checked.
+*/
+void SceneWidget::Impl::pruneManagedEditables()
+{
+    unordered_set<EditableNodeInfo> existingEditables;
+
+    if(isModeSyncEnabled){
+        for(auto& widget : modeSyncWidgets){
+            widget->impl->collectExistingEditablesInSubTree(
+                widget->impl->sceneRoot, existingEditables);
+        }
+    } else {
+        collectExistingEditablesInSubTree(sceneRoot, existingEditables);
+    }
+
+    auto it = managedEditables->begin();
+    while(it != managedEditables->end()){
+        if(existingEditables.find(*it) == existingEditables.end()){
+            it = managedEditables->erase(it);
+        } else {
+            ++it;
         }
     }
 }

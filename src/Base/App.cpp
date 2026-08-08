@@ -1149,6 +1149,15 @@ bool AppUtil::isAppInitializing()
 }
 
 
+bool AppUtil::isAppShuttingDown()
+{
+    if(instance_){
+        return instance_->impl->shutdownState != App::Impl::ShutdownNotStarted;
+    }
+    return false;
+}
+
+
 SignalProxy<void()> AppUtil::sigAppExecutionStarted()
 {
     return sigExecutionStarted_;

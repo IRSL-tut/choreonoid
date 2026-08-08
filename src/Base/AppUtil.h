@@ -15,6 +15,14 @@ class CNOID_EXPORT AppUtil
 {
 public:
     static bool isAppInitializing();
+
+    /**
+       This function returns true after the shutdown of the application has been
+       requested. It can be used to omit the processing that is not necessary when
+       the application is going to exit.
+    */
+    static bool isAppShuttingDown();
+
     static SignalProxy<void()> sigAppExecutionStarted();
     static SignalProxy<void()> sigAboutToQuit();
     static void updateGui(bool allEvents = false);
