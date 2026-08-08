@@ -846,6 +846,14 @@ int App::Impl::exec()
     MessageView::unblockFlush();
 
     /*
+      The singleton instances of MessageOut are released here because they are owned
+      by their Python wrapper objects once they have been exposed to Python, and the
+      references kept by the MessageOut class would otherwise make the wrappers
+      outlive the interpreter. Note that MessageOut must not be used after this.
+    */
+    MessageOut::releaseSingletons();
+
+    /*
       Finalize the embedded Python interpreter as the very last step of the shutdown.
       Under the nanobind backend this is when the Python wrappers that still own
       Referenced-derived C++ objects are destroyed, so it must run after all the

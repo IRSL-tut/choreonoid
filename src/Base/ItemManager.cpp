@@ -174,8 +174,17 @@ void ItemManager::initializeClass(ExtensionManager* ext)
 
 void ItemManager::finalizeClass()
 {
+    /*
+      The objects kept by the class registry are released here. Note that the file IO
+      objects must also be released because they keep a reference to the master
+      MessageOut, which must not be alive when the Python interpreter is finalized.
+    */
     for(auto& kv : itemClassIdToInfoMap){
         kv.second->singletonInstance.reset();
+        kv.second->fileIOs.clear();
+    }
+    for(auto& kv : moduleNameToItemManagerImplMap){
+        kv.second->registeredFileIOs.clear();
     }
 }
 

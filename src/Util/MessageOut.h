@@ -14,6 +14,17 @@ public:
     static MessageOut* interactive();
     static MessageOut* nullout();
 
+    /**
+       This function releases the references to the singleton instances that are kept
+       by this class. It must be called on the application shutdown just before the
+       Python interpreter is finalized, because a singleton exposed to Python is owned
+       by its wrapper object and the references kept here would otherwise make the
+       wrapper outlive the interpreter.
+
+       \note The singletons must not be used after calling this function.
+    */
+    static void releaseSingletons();
+
     MessageOut();
     MessageOut(
         std::function<void(const std::string& message, int type)> messageFunc,

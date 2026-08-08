@@ -113,24 +113,68 @@ int MessageOutStreamBuf::sync()
 }
 
 
+namespace {
+
+/*
+  The references to the singleton instances are kept in these variables so that they
+  can be released by MessageOut::releaseSingletons. Note that the raw pointer of each
+  instance is kept in a function local static variable to make the initialization
+  thread safe and to keep the instance accessible while it is alive.
+*/
+MessageOutPtr masterInstance;
+MessageOutPtr interactiveInstance;
+MessageOutPtr nulloutInstance;
+
+}
+
+
 MessageOut* MessageOut::master()
 {
-    static MessageOutPtr instance = new MessageOut;
+    static MessageOut* instance = (masterInstance = new MessageOut).get();
     return instance;
 }
 
 
 MessageOut* MessageOut::interactive()
 {
-    static MessageOutPtr instance = new MessageOut;
+    static MessageOut* instance = (interactiveInstance = new MessageOut).get();
     return instance;
 }
 
 
 MessageOut* MessageOut::nullout()
 {
-    static MessageOutPtr instance = new MessageOut;
+    static MessageOut* instance = (nulloutInstance = new MessageOut).get();
     return instance;
+}
+
+
+/*
+  Note on why this function is necessary.
+
+  The singleton instances are permanent objects that live until the process exits, so
+  they would not have to be released explicitly if only their own lifetime mattered.
+  The reason for this function is that MessageOut is derived from Referenced: once an
+  instance is exposed to Python, its ownership moves to the Python wrapper object, and
+  every reference kept on the C++ side is then delegated to the reference count of the
+  wrapper. As a result, the references kept here would make the wrapper outlive the
+  Python interpreter, which is reported as a leak by the binding library.
+
+  For the same reason, the objects that keep a reference to a singleton must also be
+  released before the interpreter is finalized. A ItemFileIO object is such an object;
+  it keeps its MessageOut with a smart pointer because the instance can be replaced
+  with a temporary one by ItemFileIO::setMessageOut, so the reference cannot simply be
+  changed to a raw pointer. See ItemManager::finalizeClass for how they are released.
+
+  These explicit releases would become unnecessary if a permanent singleton could be
+  excluded from the reference counting of Referenced, which is a possible improvement
+  to consider.
+*/
+void MessageOut::releaseSingletons()
+{
+    masterInstance.reset();
+    interactiveInstance.reset();
+    nulloutInstance.reset();
 }
 
 
