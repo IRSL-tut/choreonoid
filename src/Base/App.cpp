@@ -391,10 +391,11 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
     if(isOffscreenMode){
         qputenv("QT_QPA_PLATFORM", "offscreen");
     }
-    if(isHeadlessModeAutoEnabled){
-        mout->putln(
-            _("No window system is available. Choreonoid has been switched to headless mode."));
-    }
+    /*
+      Note that the message on this mode is not output here but in the initialize
+      function, because the text domain of this module has not been bound yet at
+      this point and the message would not be translated.
+    */
 #endif
 
     qapplication = new QApplication(argc, argv);
@@ -497,9 +498,18 @@ void App::Impl::initialize()
     fpvp->restoreUserVariables(AppConfig::archive()->findMapping({ "path_variables", "pathVariables" }));
     FilePathVariableProcessor::setCurrentInstance(fpvp);
 
+    // The text domain of this module is bound in the ExtensionManager constructor
     ext = new ExtensionManager("Base", false);
 
     setUTF8ToModuleTextDomain("Util");
+
+    // The message output is deferred to here so that the message can be translated.
+    // Note that the message is not lost because MessageOut is in the pending mode
+    // until the message view is created.
+    if(isHeadlessModeAutoEnabled){
+        mout->putln(
+            _("No window system is available. Choreonoid has been switched to headless mode."));
+    }
 
     optionManager = new OptionManager(appName);
 
