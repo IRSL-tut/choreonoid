@@ -54,7 +54,8 @@ void Imu::copyStateFrom(const DeviceState& other)
 }
 
 
-DeviceState* Imu::cloneState(DeviceState* /* existingClone */) const
+DeviceState* Imu::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new Imu(*this, true);
 }

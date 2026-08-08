@@ -49,7 +49,8 @@ void FireDevice::copyStateFrom(const DeviceState& other)
 }
 
 
-DeviceState* FireDevice::cloneState(DeviceState* /* existingClone */) const
+DeviceState* FireDevice::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new FireDevice(*this, true);
 }

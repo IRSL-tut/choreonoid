@@ -20,7 +20,9 @@ public:
     virtual const char* typeName() const override;
     void copyStateFrom(const PiecewiseRigidContinuousTrack& other);
     virtual void copyStateFrom(const DeviceState& other) override;
-    virtual DeviceState* cloneState(DeviceState* existingClone) const override;
+    virtual DeviceState* cloneState(
+        DeviceState* existingClone,
+        std::vector<std::function<void()>>* completionFunctions) const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
     virtual void clearState() override;
     virtual int stateSize() const override;

@@ -48,7 +48,8 @@ void ZmpDevice::copyStateFrom(const DeviceState& other)
 }
     
 
-DeviceState* ZmpDevice::cloneState(DeviceState* /* existingClone */) const
+DeviceState* ZmpDevice::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new ZmpDevice(*this, true, nullptr);
 

@@ -47,7 +47,8 @@ void FountainDevice::copyStateFrom(const DeviceState& other)
 }
 
 
-DeviceState* FountainDevice::cloneState(DeviceState* /* existingClone */) const
+DeviceState* FountainDevice::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new FountainDevice(*this, true);
 }

@@ -31,7 +31,9 @@ public:
     virtual const char* typeName() const override;
     void copyStateFrom(const AGXBreakableJointDevice& other);
     virtual void copyStateFrom(const DeviceState& other) override;
-    virtual DeviceState* cloneState(DeviceState* existingClone) const override;
+    virtual DeviceState* cloneState(
+        DeviceState* existingClone,
+        std::vector<std::function<void()>>* completionFunctions) const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
     virtual int stateSize() const override;
     virtual const double* readState(const double* buf, int size) override;
@@ -100,7 +102,8 @@ void AGXBreakableJointDevice::copyStateFrom(const DeviceState&other)
     copyStateFrom(static_cast<const AGXBreakableJointDevice&>(other));
 }
 
-DeviceState* AGXBreakableJointDevice::cloneState(DeviceState* /* existingClone */) const
+DeviceState* AGXBreakableJointDevice::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new AGXBreakableJointDevice(*this, false);
 }

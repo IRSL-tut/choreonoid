@@ -134,7 +134,8 @@ void MarkerDevice::copyStateFrom(const DeviceState& other)
 }
 
 
-DeviceState* MarkerDevice::cloneState(DeviceState* /* existingClone */) const
+DeviceState* MarkerDevice::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new MarkerDevice(*this, true);
 }

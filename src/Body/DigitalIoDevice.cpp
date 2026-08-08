@@ -98,7 +98,8 @@ void DigitalIoDevice::copyStateFrom(const DeviceState& other)
 }
     
 
-DeviceState* DigitalIoDevice::cloneState(DeviceState* /* existingClone */) const
+DeviceState* DigitalIoDevice::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new DigitalIoDevice(*this, true, nullptr);
 }

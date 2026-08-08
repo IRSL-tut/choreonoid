@@ -99,7 +99,8 @@ void HolderDevice::copyStateFrom(const DeviceState& other)
 }
     
 
-DeviceState* HolderDevice::cloneState(DeviceState* /* existingClone */) const
+DeviceState* HolderDevice::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new HolderDevice(*this, true, nullptr);
 

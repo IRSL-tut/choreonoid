@@ -48,7 +48,9 @@ public:
     virtual const char* typeName() const override;
     void copyStateFrom(const AGXWireDevice& other);
     virtual void copyStateFrom(const DeviceState& other) override;
-    virtual DeviceState* cloneState(DeviceState* existingClone) const override;
+    virtual DeviceState* cloneState(
+        DeviceState* existingClone,
+        std::vector<std::function<void()>>* completionFunctions) const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
     virtual int stateSize() const override;
     virtual const double* readState(const double* buf, int size) override;
@@ -134,7 +136,8 @@ void AGXWireDevice::copyStateFrom(const DeviceState& other)
     copyStateFrom(dynamic_cast<const AGXWireDevice&>(other));
 }
 
-DeviceState* AGXWireDevice::cloneState(DeviceState* /* existingClone */) const
+DeviceState* AGXWireDevice::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new AGXWireDevice(*this, true);
 }

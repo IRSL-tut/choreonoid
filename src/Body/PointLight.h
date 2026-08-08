@@ -17,7 +17,9 @@ public:
     virtual const char* typeName() const override;
     void copyStateFrom(const PointLight& other, bool doCopyLightState = true);
     virtual void copyStateFrom(const DeviceState& other) override;
-    virtual DeviceState* cloneState(DeviceState* existingClone) const override;
+    virtual DeviceState* cloneState(
+        DeviceState* existingClone,
+        std::vector<std::function<void()>>* completionFunctions) const override;
     virtual void forEachActualType(std::function<bool(const std::type_info& type)> func) override;
 
     static int pointLightStateSize();

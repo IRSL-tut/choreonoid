@@ -83,7 +83,8 @@ Referenced* RangeCamera::doClone(CloneMap*) const
 }
 
 
-DeviceState* RangeCamera::cloneState(DeviceState* /* existingClone */) const
+DeviceState* RangeCamera::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new RangeCamera(*this, true);
 }

@@ -50,7 +50,8 @@ ForceSensor::ForceSensor(const ForceSensor& org, bool copyStateOnly)
 }
 
 
-DeviceState* ForceSensor::cloneState(DeviceState* /* existingClone */) const
+DeviceState* ForceSensor::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new ForceSensor(*this, true);
 }

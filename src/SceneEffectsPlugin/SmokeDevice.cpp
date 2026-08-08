@@ -48,7 +48,8 @@ void SmokeDevice::copyStateFrom(const DeviceState& other)
 }
 
 
-DeviceState* SmokeDevice::cloneState(DeviceState* /* existingClone */) const
+DeviceState* SmokeDevice::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new SmokeDevice(*this, true);
 }

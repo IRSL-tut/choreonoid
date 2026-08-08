@@ -52,7 +52,8 @@ PointLight::PointLight(const PointLight& org, bool copyStateOnly)
 }
 
 
-DeviceState* PointLight::cloneState(DeviceState* /* existingClone */) const
+DeviceState* PointLight::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new PointLight(*this, true);
 }

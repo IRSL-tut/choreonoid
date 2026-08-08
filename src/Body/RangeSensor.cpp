@@ -119,7 +119,8 @@ Referenced* RangeSensor::doClone(CloneMap*) const
 }
 
 
-DeviceState* RangeSensor::cloneState(DeviceState* /* existingClone */) const
+DeviceState* RangeSensor::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new RangeSensor(*this, true);
 }

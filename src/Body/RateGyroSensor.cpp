@@ -50,7 +50,8 @@ RateGyroSensor::RateGyroSensor(const RateGyroSensor& org, bool copyStateOnly)
 }
 
 
-DeviceState* RateGyroSensor::cloneState(DeviceState* /* existingClone */) const
+DeviceState* RateGyroSensor::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new RateGyroSensor(*this, true);
 }

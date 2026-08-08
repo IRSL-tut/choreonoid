@@ -486,7 +486,8 @@ void PiecewiseRigidContinuousTrack::copyStateFrom(const DeviceState& other)
 }
 
 
-DeviceState* PiecewiseRigidContinuousTrack::cloneState(DeviceState* /* existingClone */) const
+DeviceState* PiecewiseRigidContinuousTrack::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new PiecewiseRigidContinuousTrack(*this, true);
 }

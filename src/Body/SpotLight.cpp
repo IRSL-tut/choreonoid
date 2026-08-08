@@ -52,7 +52,8 @@ SpotLight::SpotLight(const SpotLight& org, bool copyStateOnly)
 }
 
 
-DeviceState* SpotLight::cloneState(DeviceState* /* existingClone */) const
+DeviceState* SpotLight::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new SpotLight(*this, true);
 }

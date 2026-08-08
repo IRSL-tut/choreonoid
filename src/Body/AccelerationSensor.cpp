@@ -50,7 +50,8 @@ AccelerationSensor::AccelerationSensor(const AccelerationSensor& org, bool copyS
 }
 
 
-DeviceState* AccelerationSensor::cloneState(DeviceState* /* existingClone */) const
+DeviceState* AccelerationSensor::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new AccelerationSensor(*this, true);
 }

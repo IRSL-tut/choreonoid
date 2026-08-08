@@ -64,7 +64,8 @@ void AttachmentDevice::copyStateFrom(const DeviceState& other)
 }
     
 
-DeviceState* AttachmentDevice::cloneState(DeviceState* /* existingClone */) const
+DeviceState* AttachmentDevice::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new AttachmentDevice(*this, true, nullptr);
 

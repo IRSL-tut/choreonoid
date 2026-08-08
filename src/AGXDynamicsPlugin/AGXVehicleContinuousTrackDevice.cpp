@@ -261,7 +261,8 @@ void AGXVehicleContinuousTrackDevice::copyStateFrom(const DeviceState& other)
 }
 
 
-DeviceState* AGXVehicleContinuousTrackDevice::cloneState(DeviceState* /* existingClone */) const
+DeviceState* AGXVehicleContinuousTrackDevice::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new AGXVehicleContinuousTrackDevice(*this, true);
 }

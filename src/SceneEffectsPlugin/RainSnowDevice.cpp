@@ -97,7 +97,8 @@ void RainDevice::copyStateFrom(const DeviceState& other)
 }
 
 
-DeviceState* RainDevice::cloneState(DeviceState* /* existingClone */) const
+DeviceState* RainDevice::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new RainDevice(*this, true);
 }
@@ -145,7 +146,8 @@ void SnowDevice::copyStateFrom(const DeviceState& other)
 }
 
 
-DeviceState* SnowDevice::cloneState(DeviceState* /* existingClone */) const
+DeviceState* SnowDevice::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new SnowDevice(*this, false);
 }

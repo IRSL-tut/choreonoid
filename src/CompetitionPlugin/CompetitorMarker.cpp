@@ -42,7 +42,8 @@ CompetitorMarker::CompetitorMarker(const CompetitorMarker& org, bool copyStateOn
 }
 
 
-DeviceState* CompetitorMarker::cloneState(DeviceState* /* existingClone */) const
+DeviceState* CompetitorMarker::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new CompetitorMarker(*this, true);
 }

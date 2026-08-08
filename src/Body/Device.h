@@ -6,6 +6,8 @@
 #include <cnoid/Signal>
 #include <cnoid/ValueTree>
 #include <string>
+#include <vector>
+#include <functional>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -35,9 +37,25 @@ public:
 
        \param existingClone The previously cloned state to share data with, or nullptr
        when no previous clone exists (e.g. the first frame).
-       \return A newly created clone of the current state.
+
+       \param completionFunctions When this is not null, the clone is going to be
+       handed over to another thread, and the caller executes the functions stored
+       here on that thread before the clone is used by anyone. An implementation
+       that has to modify data shared with \a existingClone must not do it directly
+       in this function, because \a existingClone may already be owned by the
+       destination thread. It must store a function that does the modification into
+       this container instead. Such a function must hold the data it needs by value,
+       because the live data of the device keeps changing in the calling thread and
+       may be relocated in memory. When this argument is null, the clone stays in
+       the calling thread and everything can be done immediately.
+
+       \return A newly created clone of the current state. When
+       \a completionFunctions is given, the clone is only complete after those
+       functions have been executed.
     */
-    virtual DeviceState* cloneState(DeviceState* existingClone = nullptr) const = 0;
+    virtual DeviceState* cloneState(
+        DeviceState* existingClone = nullptr,
+        std::vector<std::function<void()>>* completionFunctions = nullptr) const = 0;
 
     /**
        Size of the double-precision floating numbers for representing the state.

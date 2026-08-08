@@ -313,7 +313,8 @@ RotorDevice::RotorDevice(const RotorDevice& org, bool copyStateOnly)
     copyStateFrom(org);
 }
 
-DeviceState* RotorDevice::cloneState(DeviceState* /* existingClone */) const
+DeviceState* RotorDevice::cloneState
+(DeviceState* /* existingClone */, std::vector<std::function<void()>>* /* completionFunctions */) const
 {
     return new RotorDevice(*this, false);
 }
