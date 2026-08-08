@@ -305,6 +305,13 @@ public:
 
     TimeBar* timeBar;
     QMutex recordBufMutex;
+
+    /**
+       Functions given by the device states cloned in the simulation thread.
+       They complete those clones and must be executed in the main thread
+       before the clones are used by anyone. Guarded by recordBufMutex.
+    */
+    vector<std::function<void()>> deviceStateCompletionFunctions;
     double actualSimulationTime;
     double finishTime;
     MessageOut* mout;
@@ -1085,9 +1092,11 @@ void SimulationBody::Impl::bufferBodyKinematicState(Body* body, BodyStateBlock& 
 
 void SimulationBody::Impl::bufferBodyDeviceState(Body* body, BodyStateBlock& stateBlock, BodyStateBlock& prevStateBlock)
 {
+    auto completionFunctions = &simImpl->deviceStateCompletionFunctions;
     for(int i=0; i < numDevicesToRecord; ++i){
         if(deviceStateChangeFlag[i]){
-            stateBlock.setDeviceState(i, body->device(i)->cloneState(prevStateBlock.deviceState(i)));
+            stateBlock.setDeviceState(
+                i, body->device(i)->cloneState(prevStateBlock.deviceState(i), completionFunctions));
             deviceStateChangeFlag[i] = false;
         } else {
             stateBlock.setDeviceState(i, prevStateBlock.deviceState(i));
@@ -1098,8 +1107,9 @@ void SimulationBody::Impl::bufferBodyDeviceState(Body* body, BodyStateBlock& sta
 
 void SimulationBody::Impl::bufferBodyDeviceState(Body* body, BodyStateBlock& stateBlock)
 {
+    auto completionFunctions = &simImpl->deviceStateCompletionFunctions;
     for(int i=0; i < numDevicesToRecord; ++i){
-        stateBlock.setDeviceState(i, body->device(i)->cloneState());
+        stateBlock.setDeviceState(i, body->device(i)->cloneState(nullptr, completionFunctions));
         deviceStateChangeFlag[i] = false;
     }
 }
@@ -1864,6 +1874,7 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
     // Initialize recording
     numBufferedFrames = 0;
     frameAtLastBufferWriting = 0;
+    deviceStateCompletionFunctions.clear();
     for(auto& simBody : activeSimBodies){
         if(simBody->body()){
             simBody->impl->initializeRecording();
@@ -2374,6 +2385,15 @@ void SimulatorItem::Impl::flushRecords()
 int SimulatorItem::Impl::flushMainRecords()
 {
     recordBufMutex.lock();
+
+    // Complete the device state clones that the simulation thread has created.
+    // This has to be done here because some of them extend data shared with
+    // the states that have already been handed over to this thread, which the
+    // simulation thread must not touch.
+    for(auto& function : deviceStateCompletionFunctions){
+        function();
+    }
+    deviceStateCompletionFunctions.clear();
 
     if(worldLogFileItem){
         if(numBufferedFrames > 0){
