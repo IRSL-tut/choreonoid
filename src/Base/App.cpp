@@ -845,6 +845,19 @@ int App::Impl::exec()
     messageView = nullptr;
     MessageView::unblockFlush();
 
+    /*
+      Finalize the embedded Python interpreter as the very last step of the shutdown.
+      Under the nanobind backend this is when the Python wrappers that still own
+      Referenced-derived C++ objects are destroyed, so it must run after all the
+      plugins have been finalized and the item tree has been released. It must also
+      run after the widgets have been destroyed, because a widget can hold a Python
+      callback whose release requires a valid interpreter.
+    */
+    if(finalizePythonInterpreter){
+        finalizePythonInterpreter();
+        finalizePythonInterpreter = nullptr;
+    }
+
     // Note that the application must be terminated without deleting
     // the base extension manager pointed by the 'ext' variable
     // to avoid crashes due to destructors accessing invalid objects.
@@ -1051,15 +1064,6 @@ void App::Impl::performShutdown(bool areGuiUpdatesAvailable)
     // is not deleted on shutdown and the instances would otherwise outlive the
     // Python interpreter that owns their wrapper objects.
     ItemManager::finalizeClass();
-
-    // Finalize the embedded Python interpreter after all plugins have been
-    // finalized and the item tree has been released. Under the nanobind
-    // backend this is when Python wrappers that still own Referenced-derived
-    // C++ objects are destroyed (see src/Python/PythonInterpreter.cpp).
-    if(finalizePythonInterpreter){
-        finalizePythonInterpreter();
-        finalizePythonInterpreter = nullptr;
-    }
 
     // Any message arriving after this point may still be forwarded to a
     // non-GUI sink, but it must not touch widgets while the windows are closed.
