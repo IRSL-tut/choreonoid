@@ -88,6 +88,11 @@
 #include <iostream>
 #include <algorithm>
 #include <csignal>
+#include <cstring>
+#include <cstdio>
+#include <mutex>
+#include <condition_variable>
+#include <chrono>
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <QTextCodec>
@@ -126,6 +131,25 @@ bool isQuitOptionSpecified = false;
 bool isTestModeOptionSpecified = false;
 vector<string> additionalPathVariables;
 vector<string> pluginDirsAsPrefix;
+
+/*
+  These objects are used to notify the completion of the shutdown to a thread that
+  requests the termination of the application and has to wait for the finalization
+  before the process is killed. See consoleCtrlHandler, which is executed in a thread
+  created by the operating system on Windows.
+*/
+std::mutex shutdownCompletionMutex;
+std::condition_variable shutdownCompletionCondition;
+bool isShutdownCompleted = false;
+
+void notifyShutdownCompletion()
+{
+    {
+        std::lock_guard<std::mutex> lock(shutdownCompletionMutex);
+        isShutdownCompleted = true;
+    }
+    shutdownCompletionCondition.notify_all();
+}
 
 class OngoingProcessImpl : public AppUtil::OngoingProcess
 {
@@ -170,7 +194,12 @@ void OngoingProcessImpl::finish()
     }
 }
 
-void onCtrl_C_Input(int)
+/**
+   This function requests the termination of the application on an interruption such as
+   the Ctrl+C input. Note that it may be called from a thread other than the main thread,
+   so that the actual processing is deferred to the main thread.
+*/
+void requestInterruption()
 {
     callLater(
         [](){
@@ -195,12 +224,96 @@ void onCtrl_C_Input(int)
         });
 }
 
-#ifdef Q_OS_WIN32
-BOOL WINAPI consoleCtrlHandler(DWORD ctrlChar)
+void onCtrl_C_Input(int)
 {
-    callLater([](){ MainWindow::instance()->close(); });
+    requestInterruption();
+}
+
+#ifdef Q_OS_WIN32
+
+bool waitForShutdownCompletion(std::chrono::milliseconds timeout)
+{
+    std::unique_lock<std::mutex> lock(shutdownCompletionMutex);
+    return shutdownCompletionCondition.wait_for(lock, timeout, [](){ return isShutdownCompleted; });
+}
+
+BOOL WINAPI consoleCtrlHandler(DWORD ctrlType)
+{
+    switch(ctrlType){
+
+    case CTRL_C_EVENT:
+    case CTRL_BREAK_EVENT:
+        /*
+          These events are just interruption requests and the process keeps running when
+          TRUE is returned, so that the shutdown can be performed asynchronously in the
+          main thread. Note that returning TRUE also prevents the handler of the C
+          runtime, which raises SIGINT, from being executed. A SIGINT handler installed
+          by a plugin therefore cannot block the termination.
+        */
+        requestInterruption();
+        return TRUE;
+
+    case CTRL_CLOSE_EVENT:
+    case CTRL_LOGOFF_EVENT:
+    case CTRL_SHUTDOWN_EVENT:
+        /*
+          These events notify that the process is going to be terminated. The termination
+          cannot be canceled by the return value, and the process is killed as soon as
+          this handler returns. The completion of the shutdown is therefore awaited here
+          so that the finalization is performed before the process is killed. Note that
+          the operating system kills the process anyway when the grace period, which is
+          about five seconds for CTRL_CLOSE_EVENT, has elapsed. The timeout must be
+          shorter than it.
+        */
+        requestInterruption();
+        waitForShutdownCompletion(std::chrono::milliseconds(3500));
+        return TRUE;
+
+    default:
+        break;
+    }
+
     return FALSE;
 }
+
+/**
+   A Windows process built for the GUI subsystem is not attached to the console of the
+   process that launched it, and its standard output is not available by default. The
+   messages of the headless mode would be lost in that case, so the console of the parent
+   process is attached here to make them visible.
+
+   Note that the standard output is valid even for a GUI subsystem process when the shell
+   redirects it to a file or a pipe. The redirection must not be overwritten with the
+   console, so the console is attached only when the standard output is not available.
+   Nothing is done either when the process already has its own console, which is the case
+   for a build with the USE_SUBSYSTEM_CONSOLE option.
+
+   \return True if the standard output is available after this function.
+*/
+bool attachParentConsoleIfNecessary()
+{
+    auto handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    if(handle && handle != INVALID_HANDLE_VALUE){
+        return true;
+    }
+    if(!AttachConsole(ATTACH_PARENT_PROCESS)){
+        // The parent process does not have a console. This is the case when the
+        // application is launched from the Explorer.
+        return false;
+    }
+    freopen("CONOUT$", "w", stdout);
+    freopen("CONOUT$", "w", stderr);
+
+    /*
+      The stream objects may have been put into the error state when the standard output
+      was not available, and the state must be cleared to make them usable.
+    */
+    std::cout.clear();
+    std::cerr.clear();
+
+    return true;
+}
+
 #endif
 
 }
@@ -354,27 +467,29 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
     QCoreApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
 #endif
 
-    // Decide the headless/offscreen execution mode based on the available
-    // window system and the --headless option.
+    // Decide the headless/offscreen execution mode based on the --headless option and
+    // the available window system. This must be done here because the Qt platform
+    // plugin (offscreen vs. xcb / wayland) must be selected before the QApplication
+    // instance is created, which is earlier than when OptionManager parses the command
+    // line. The option is therefore detected by scanning argv directly.
     //
-    // - If neither DISPLAY nor WAYLAND_DISPLAY is set, no window system is
-    //   available, so the application is forced into headless mode and the
-    //   Qt offscreen platform plugin is used. In that case the vision
-    //   simulator switches its OpenGL backend to EGL (see
-    //   GLVisionSensorRenderingScreen::initializeGL).
-    // - If --headless is given on a system with a window system, the GUI is
-    //   simply not shown but Qt keeps using the regular platform (xcb /
-    //   wayland) and the vision simulator keeps using the Qt OpenGL (GLX)
-    //   backend. This avoids the "QOpenGLWidget is not supported on this
-    //   platform" warning that would otherwise be emitted by the offscreen
-    //   platform plugin when SceneWidget (a QOpenGLWidget) is constructed.
+    // - If --headless is given on a system with a window system, the GUI is simply not
+    //   shown but Qt keeps using the regular platform (windows / xcb / wayland) and the
+    //   vision simulator keeps using the Qt OpenGL (WGL / GLX) backend. This avoids the
+    //   "QOpenGLWidget is not supported on this platform" warning that would otherwise
+    //   be emitted by the offscreen platform plugin when SceneWidget (a QOpenGLWidget)
+    //   is constructed.
+    // - If neither DISPLAY nor WAYLAND_DISPLAY is set, no window system is available,
+    //   so the application is forced into headless mode and the Qt offscreen platform
+    //   plugin is used. In that case the vision simulator switches its OpenGL backend
+    //   to EGL (see GLVisionSensorRenderingScreen::initializeGL).
     //
-    // Note: this auto-detection is only meaningful on Unix-like systems.
-    // Windows does not support OpenGL context creation with the offscreen
-    // platform plugin.
-#ifdef Q_OS_UNIX
-    isWindowSystemAvailable =
-        (getenv("DISPLAY") != nullptr) || (getenv("WAYLAND_DISPLAY") != nullptr);
+    // Note that only the auto-detection of the window system is specific to Unix-like
+    // systems. A Windows desktop session always has a window system, and Windows does
+    // not support OpenGL context creation with the offscreen platform plugin, so
+    // isWindowSystemAvailable is kept true and the offscreen mode is never enabled
+    // there. Do not put the detection of the option itself into the following
+    // conditional compilation, or the option would be ignored on Windows.
     bool noWindowRequested = false;
     for(int i = 1; i < argc; ++i){
         // Note that --no-window is the old name of the --headless option
@@ -383,9 +498,13 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
             break;
         }
     }
+#ifdef Q_OS_UNIX
+    isWindowSystemAvailable =
+        (getenv("DISPLAY") != nullptr) || (getenv("WAYLAND_DISPLAY") != nullptr);
     if(!isWindowSystemAvailable && !noWindowRequested){
         isHeadlessModeAutoEnabled = true;
     }
+#endif
     isHeadlessMode = noWindowRequested || !isWindowSystemAvailable;
     isOffscreenMode = isHeadlessMode && !isWindowSystemAvailable;
     if(isOffscreenMode){
@@ -396,6 +515,11 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
       function, because the text domain of this module has not been bound yet at
       this point and the message would not be translated.
     */
+
+#ifdef Q_OS_WIN32
+    if(isHeadlessMode){
+        attachParentConsoleIfNecessary();
+    }
 #endif
 
     qapplication = new QApplication(argc, argv);
@@ -686,12 +810,15 @@ void App::Impl::initialize()
 
 #ifdef Q_OS_WIN32
     /*
-      The above SIGINT handler seems to work even on Windows
-      when Choreonoid is compiled as a console-program,
-      and the following handler only works for a console-program, too.
-      Hence the folloing handler for Windows is currently disabled.
+      Windows does not deliver SIGTERM from another process, and the console control
+      events are the only way to be notified of the interruption and the termination
+      requests. The following handler covers both of them. Note that it takes precedence
+      over the SIGINT handler installed above because it is registered later and the
+      handlers are called in the reverse order of the registration. The handler is
+      effective only when the process has a console, which is the case when the
+      application is executed from a shell in the headless mode.
     */
-    // SetConsoleCtrlHandler(consoleCtrlHandler, TRUE);
+    SetConsoleCtrlHandler(consoleCtrlHandler, TRUE);
 #endif
 
     if(builtinProjectFile.empty()){
@@ -1089,6 +1216,13 @@ void App::Impl::performShutdown(bool areGuiUpdatesAvailable)
     if(isEventLoopRunning){
         qapplication->exit(returnCode);
     }
+
+    /*
+      Notify a thread waiting for the finalization. Note that the remaining shutdown
+      code executed after the event loop exits only releases the resources of the
+      process itself, so that it is not necessary to wait for it.
+    */
+    notifyShutdownCompletion();
 }
 
 
