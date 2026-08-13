@@ -7,6 +7,7 @@
 #define CNOID_BODY_CONTACT_MATERIAL_H
 
 #include "Material.h"
+#include <initializer_list>
 #include "exportdecl.h"
 
 namespace cnoid {
@@ -34,6 +35,9 @@ class CNOID_EXPORT ContactMaterial : public Referenced
     Mapping* info() { return info_; }
     const Mapping* info() const { return info_; }
     template<typename T> T info(const std::string& key, const T& defaultValue) const;
+    // The first key is the current one and the remaining keys are the older
+    // ones kept for backward compatibility.
+    template<typename T> T info(std::initializer_list<const char*> keys, const T& defaultValue) const;
 
   private:
     double staticFriction_;
@@ -47,6 +51,13 @@ class CNOID_EXPORT ContactMaterial : public Referenced
 template<> CNOID_EXPORT bool ContactMaterial::info(const std::string& key, const bool& defaultValue) const;
 template<> CNOID_EXPORT int ContactMaterial::info(const std::string& key, const int& defaultValue) const;
 template<> CNOID_EXPORT double ContactMaterial::info(const std::string& key, const double& defaultValue) const;
+
+template<> CNOID_EXPORT bool ContactMaterial::info(
+    std::initializer_list<const char*> keys, const bool& defaultValue) const;
+template<> CNOID_EXPORT int ContactMaterial::info(
+    std::initializer_list<const char*> keys, const int& defaultValue) const;
+template<> CNOID_EXPORT double ContactMaterial::info(
+    std::initializer_list<const char*> keys, const double& defaultValue) const;
 
 typedef ref_ptr<ContactMaterial> ContactMaterialPtr;
 

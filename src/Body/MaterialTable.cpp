@@ -304,11 +304,9 @@ void MaterialTable::Impl::loadContactMaterials(Mapping* topNode, std::ostream& o
 {
     vector<int> materialIndices;
     
-    auto contactList = topNode->findListing("contact_materials");
-    if(!contactList->isValid()){
-        contactList = topNode->findListing("contactMaterials");
-    }
-        
+    auto contactList = topNode->findListing({ "contact_materials", "contactMaterials" });
+
+
     if(contactList->isValid()){
         for(int i=0; i < contactList->size(); ++i){
             Mapping* info = (*contactList)[i].toMapping();

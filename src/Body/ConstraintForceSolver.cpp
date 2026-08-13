@@ -835,11 +835,13 @@ void ConstraintForceSolver::Impl::initializeContactMaterials()
                 cloneMap,
                 [&](const ContactMaterial* org){
                     auto cm = new ContactMaterialEx(*org);
-                    cm->cullingDistance = cm->info("cullingDistance", defaultContactCullingDistance);
-                    cm->cullingDepth = cm->info("cullingDepth", defaultContactCullingDepth);
+                    cm->cullingDistance = cm->info(
+                        { "culling_distance", "cullingDistance" }, defaultContactCullingDistance);
+                    cm->cullingDepth = cm->info(
+                        { "culling_depth", "cullingDepth" }, defaultContactCullingDepth);
                     cm->maxNumContactPoints = cm->info("max_num_contact_points", defaultMaxNumContactPoints);
 
-                    if(cm->info()->read("collisionHandler", collisionHandlerName)){
+                    if(cm->info()->read("collision_handler", collisionHandlerName)){
                         auto iter = collisionHandlerMap.find(collisionHandlerName);
                         if(iter != collisionHandlerMap.end()){
                             auto& info = iter->second;

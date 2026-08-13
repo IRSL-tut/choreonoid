@@ -34,11 +34,11 @@ ContactMaterial::ContactMaterial(const Mapping* info)
     if(info_->extract("friction", mu)){
         setFriction(mu);
     }
-    if(!info_->extract("static_friction", staticFriction_)){
-        info_->extract("staticFriction", staticFriction_);
+    if(auto node = info_->extract({ "static_friction", "staticFriction" })){
+        staticFriction_ = node->toDouble();
     }
-    if(!info_->extract("dynamic_friction", dynamicFriction_)){
-        info_->extract("dynamicFriction", dynamicFriction_);
+    if(auto node = info_->extract({ "dynamic_friction", "dynamicFriction" })){
+        dynamicFriction_ = node->toDouble();
     }
     info_->extract("restitution", restitution_);
 }
@@ -81,6 +81,36 @@ template<> double ContactMaterial::info(const std::string& key, const double& de
 {
     double value;
     if(info_->read(key, value)){
+        return value;
+    }
+    return defaultValue;
+}
+
+
+template<> bool ContactMaterial::info(std::initializer_list<const char*> keys, const bool& defaultValue) const
+{
+    bool value;
+    if(info_->read(keys, value)){
+        return value;
+    }
+    return defaultValue;
+}
+
+
+template<> int ContactMaterial::info(std::initializer_list<const char*> keys, const int& defaultValue) const
+{
+    int value;
+    if(info_->read(keys, value)){
+        return value;
+    }
+    return defaultValue;
+}
+
+
+template<> double ContactMaterial::info(std::initializer_list<const char*> keys, const double& defaultValue) const
+{
+    double value;
+    if(info_->read(keys, value)){
         return value;
     }
     return defaultValue;

@@ -11,7 +11,7 @@ contactMaterials:
   -
     materials: [ Foot, Floor ]
     friction: 0.5
-    collisionHandler: SpringDamperContact
+    collision_handler: SpringDamperContact
   -
     materials: [ Default, Floor ]
     friction: 0.5
