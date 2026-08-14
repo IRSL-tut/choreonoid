@@ -129,7 +129,7 @@ void calcCMJacobian(Body* body, Link* base, Eigen::MatrixXd& J)
             const SubMass& sub = subMasses[joint->index()];
             const Vector3 arm = (sub.mwc - sub.m * joint->p()) / body->mass();
             const Vector3 dp = omega.cross(arm);
-            J.col(joint->jointId()) = dp;
+            J.block<3, 1>(0, joint->jointId()) = dp;
         } else {
             std::cerr << "calcCMJacobian() : unsupported jointType("
                       << joint->jointType() << std::endl;
@@ -218,7 +218,7 @@ void calcAngularMomentumJacobian(Body* body, Link* base, Eigen::MatrixXd& H)
             } else {
                 dp = sub.Iw * omega;
             }
-            H.col(joint->jointId()) = dp;
+            H.block<3, 1>(0, joint->jointId()) = dp;
         } else {
             std::cerr << "calcAngularMomentumJacobian() : unsupported jointType("
                       << joint->jointType() << std::endl;
