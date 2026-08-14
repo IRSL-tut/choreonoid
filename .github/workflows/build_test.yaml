@@ -7,6 +7,20 @@ on:
       - 'master'
   pull_request:
 
+# Stop the running workflow of a branch when a new commit is pushed to it
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# The install scripts pass these variables to apt-get with the sudo
+# --preserve-env option so that no installation step asks anything interactively
+env:
+  DEBIAN_FRONTEND: noninteractive
+  TZ: Asia/Tokyo
+
 jobs:
   build:
     name: build
@@ -14,22 +28,97 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ubuntu : [ubuntu-20.04, ubuntu-22.04]
+        ubuntu: [ubuntu-22.04, ubuntu-24.04, ubuntu-26.04]
+        compiler: [gcc, clang]
+        # The command names of each compiler are given as matrix values so that
+        # the build step does not have to branch on the compiler
+        include:
+          - compiler: gcc
+            cc: gcc
+            cxx: g++
+          - compiler: clang
+            cc: clang
+            cxx: clang++
     runs-on: ${{ matrix.ubuntu }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@v7
 
-      - name: Update and upgrade
-        run: sudo apt-get update && sudo apt-get -y upgrade
+      - name: Update the package lists
+        run: sudo apt-get update
 
-      - name: Install dependencies of choreonoid (only necessary for Ubuntu on Github actions)
-        run: sh .github/script/install-requisites-${{ matrix.ubuntu }}-for-github-actions.sh
+      # Clang is not installed by the install scripts because Choreonoid is
+      # built with GCC by default on Ubuntu, and the runner images do not
+      # necessarily provide it either
+      - name: Install Clang
+        if: matrix.compiler == 'clang'
+        run: sudo apt-get install -y clang
 
-      - name: Install dependencies of choreonoid
+      # Some runner images lack a package that the ordinary install script
+      # assumes to be present. The additional script exists only for them.
+      - name: Install the dependencies only necessary on the GitHub Actions runner
+        run: |
+          script=.github/script/install-requisites-${{ matrix.ubuntu }}-for-github-actions.sh
+          if [ -f "$script" ]; then sh "$script"; fi
+
+      - name: Install the dependencies of Choreonoid
         run: sh misc/script/install-requisites-${{ matrix.ubuntu }}.sh
 
-      - name: Build choreonoid
-        run: cmake . && make -j4
+      # The optional components that the dependencies of Choreonoid are
+      # sufficient to build are enabled so that the workflow covers as much of
+      # the code base as possible. This affects the build of this workflow only
+      # and does not change the default value of any option.
+      # CHECK_UNRESOLVED_SYMBOLS only adds a linker flag that warns about
+      # unresolved symbols. It does not make the build fail by itself.
+      - name: Build Choreonoid
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_C_COMPILER=${{ matrix.cc }} \
+            -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
+            -DBUILD_MEDIA_PLUGIN=ON \
+            -DBUILD_FCL_PLUGIN=ON \
+            -DBUILD_POSE_SEQ_PLUGIN=ON \
+            -DBUILD_BALANCER_PLUGIN=ON \
+            -DBUILD_BODY_MOTION_FILTER_PLUGIN=ON \
+            -DBUILD_MANIPULATOR_PLUGIN=ON \
+            -DBUILD_SCENE_EFFECTS_PLUGIN=ON \
+            -DBUILD_MOCAP_PLUGIN=ON \
+            -DBUILD_MULTICOPTER_PLUGIN=ON \
+            -DBUILD_GL_CAMERA_EFFECT_PLUGIN=ON \
+            -DBUILD_LIVOX_MID360_PLUGIN=ON \
+            -DBUILD_TRAFFIC_CONTROL_PLUGIN=ON \
+            -DBUILD_COLLISION_HANDLER_SAMPLE=ON \
+            -DBUILD_SUBMERSIBLE_SAMPLE=ON \
+            -DBUILD_HRP4C_HANDLER=ON \
+            -DBUILD_CHOREONOID_INFO_COMMAND=ON \
+            -DINSTALL_SYNC_LOGFILE_COMMAND=ON \
+            -DCHECK_UNRESOLVED_SYMBOLS=ON
+          cmake --build build --parallel $(nproc)
+
+      # Installing Choreonoid detects a missing or wrong install rule, which the
+      # build alone cannot detect
+      - name: Install Choreonoid
+        run: |
+          sudo cmake --install build
+          sudo ldconfig
+
+      # MediaPlugin connects to a PulseAudio server when it is initialized, but
+      # the runner has no sound server running. A server with a virtual output
+      # device is started here so that the audio initialization is actually
+      # tested instead of just being skipped. The pactl command at the end
+      # confirms that the server is really reachable.
+      - name: Start a PulseAudio server with a virtual output device
+        run: |
+          sudo apt-get install -y pulseaudio pulseaudio-utils
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=choreonoid_test_sink
+          pactl info
+
+      # The batch mode makes Choreonoid exit as soon as all the automatic
+      # processing has finished, and its return code becomes non-zero if any
+      # error message has been output. This detects a failure in the start-up
+      # process, which the build and the installation cannot detect. No window
+      # system is available on the runner, so Choreonoid runs in the no-window
+      # mode. The timeout is a safeguard against an unexpected hang.
+      - name: Check that the installed Choreonoid starts up
+        run: timeout 60 choreonoid --batch
