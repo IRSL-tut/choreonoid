@@ -770,7 +770,7 @@ void App::Impl::initialize()
     CaptureBar::initialize(ext);
     
     messageView->putln(
-        formatR(_("The Eigen library version {0}.{1}.{2} is used (SIMD intruction sets in use: {3})."),
+        formatR(_("The Eigen library version {0}.{1}.{2} is used (SIMD instruction sets in use: {3})."),
                 EIGEN_WORLD_VERSION, EIGEN_MAJOR_VERSION, EIGEN_MINOR_VERSION,
                 Eigen::SimdInstructionSetsInUse()));
 

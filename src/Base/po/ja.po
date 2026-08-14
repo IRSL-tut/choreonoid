@@ -49,7 +49,7 @@ msgstr "アイテムの連続更新"
 msgid "playback"
 msgstr "再生"
 
-msgid "The Eigen library version {0}.{1}.{2} is used (SIMD intruction sets in use: {3})."
+msgid "The Eigen library version {0}.{1}.{2} is used (SIMD instruction sets in use: {3})."
 msgstr ""
 "Eigenライブラリバージョン{0}.{1}.{2}が使用されています．( 使用されているSIMD命令セット: {3} )"
 
