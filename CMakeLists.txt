@@ -154,10 +154,10 @@ if(UNIX)
     set(compiler_general_options "${compiler_general_options} -march=x86-64-v3")
   endif()
 
+  # The linker flags of this option are not added here but just before the
+  # subdirectories that contain the libraries to check are added, so that the
+  # nanobind runtime library can be left out. See the comment there.
   option(CHECK_UNRESOLVED_SYMBOLS "check unresolved symbols in the object files when creating shared libraries" OFF)
-  if(CHECK_UNRESOLVED_SYMBOLS)
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--unresolved-symbols=ignore-in-shared-libs -Wl,--warn-unresolved-symbols")
-  endif()
 
   option(PUT_EXTRA_WARNINGS "Put extra warnings in compile" OFF)
   if(PUT_EXTRA_WARNINGS)
@@ -1051,6 +1051,22 @@ if(ENABLE_PYTHON AND CHOREONOID_PYTHON_BINDING_BACKEND STREQUAL "nanobind")
   install(TARGETS ${_nanobind_runtime}
     RUNTIME DESTINATION ${CHOREONOID_BIN_SUBDIR}
     LIBRARY DESTINATION ${CHOREONOID_LIB_SUBDIR})
+endif()
+
+# Enable the unresolved symbol check from here on. Unlike CMAKE_SHARED_LINKER_FLAGS,
+# which CMake applies to every shared library of a directory no matter where the
+# variable is set, add_link_options() only affects the targets created after it.
+# The nanobind runtime library created above is thereby left out, which is
+# necessary because it refers to the CPython API without being linked against the
+# Python library. Those symbols are supplied by the interpreter that loads the
+# extension modules, so leaving them unresolved is intentional. It is the same
+# reason why the extension modules themselves are not linked with --no-undefined
+# (see cmake/ChoreonoidPythonBuildFunctions.cmake). All the libraries to check
+# are in the subdirectories added below. The generator expression restricts the
+# options to shared libraries, which is the range CMAKE_SHARED_LINKER_FLAGS had.
+if(CHECK_UNRESOLVED_SYMBOLS)
+  add_link_options(
+    "$<$<STREQUAL:$<TARGET_PROPERTY:TYPE>,SHARED_LIBRARY>:-Wl,--unresolved-symbols=ignore-in-shared-libs;-Wl,--warn-unresolved-symbols>")
 endif()
 
 add_subdirectory(src)
