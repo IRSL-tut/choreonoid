@@ -61,6 +61,7 @@ set(sources
   MeshFilter.cpp
   MeshUtil.cpp
   MeshExtractor.cpp
+  MeshDistanceQuery.cpp
   SceneNodeExtractor.cpp
   PolygonMeshTriangulator.cpp
   Image.cpp
@@ -185,6 +186,7 @@ set(headers
   MeshFilter.h
   MeshUtil.h
   MeshExtractor.h
+  MeshDistanceQuery.h
   SceneNodeExtractor.h
   Triangulator.h
   PolygonMeshTriangulator.h
