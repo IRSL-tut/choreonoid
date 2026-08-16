@@ -298,6 +298,12 @@ void SceneBar::Impl::onCustomModeButtonToggled(int mode, bool on)
 }
 
 
+SceneView* SceneBar::currentSceneView()
+{
+    return impl->currentSceneView;
+}
+
+
 SceneWidget* SceneBar::targetSceneWidget()
 {
     return impl->currentSceneView->sceneWidget();
