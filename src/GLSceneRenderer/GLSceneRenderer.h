@@ -111,6 +111,49 @@ public:
         ReferencedPtr object, int id,
         const std::function<void(Referenced* object, const Affine3& modelTransform, int id)>& renderingFunction);
 
+    /**
+       The base class of the GPU resources managed by the renderer.
+
+       A resource is released in one of the two following ways, and the
+       subclasses must implement both:
+
+       - The destructor is called when the renderer releases the resource in
+         the normal way, that is at the end of a rendering pass in which the
+         resource was not used, or when the resource map is explicitly
+         cleared. The corresponding GL context is current then, so the
+         destructor should delete the GL objects the resource owns.
+
+       - discard() is called when the GL context has been lost or cannot be
+         made current. The implementation must just forget the GL object
+         handles without deleting them, so that the destructor called
+         afterwards does not touch the invalid handles.
+    */
+    class CNOID_EXPORT GLResource : public Referenced
+    {
+    public:
+        virtual void discard() = 0;
+    };
+
+    typedef ref_ptr<GLResource> GLResourcePtr;
+
+    /**
+       Returns the GPU resource associated with the given key object, or
+       creates it with the given factory function when the association does
+       not exist yet. The resource is managed by the renderer: it is released
+       at the end of a rendering pass in which it was not used, and it is
+       correctly discarded when the GL context is cleared. An extension that
+       keeps GPU resources per scene object in its custom rendering function
+       can use this instead of managing the resource lifetimes by itself.
+
+       This function is only valid during rendering; call it from a rendering
+       function. Note that the standard rendering associates its own resource
+       with the drawable scene objects using the same map, so the key must be
+       a dedicated object that the standard rendering never keys, such as a
+       proxy object held by the node for this purpose.
+    */
+    GLResource* getOrCreateGLResource(
+        SgObject* key, const std::function<GLResourcePtr()>& factory);
+
     virtual bool initializeGL(GLADloadfunc getProcAddress);
     virtual void flushGL();
 

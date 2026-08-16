@@ -93,13 +93,9 @@ struct LockVertexArrayAPI
     }
 };
         
-class GLResource : public Referenced
-{
-public:
-    virtual void discard() = 0;
-};
-
-typedef ref_ptr<GLResource> GLResourcePtr;
+// The GLResource base class is defined as an inner class of GLSceneRenderer
+typedef GLSceneRenderer::GLResource GLResource;
+typedef GLSceneRenderer::GLResourcePtr GLResourcePtr;
 
 struct SgObjectPtrHash {
     std::hash<SgObject*> hash;
@@ -2682,6 +2678,25 @@ void GLSceneRenderer::dispatchToTransparentPhase
             [this, renderingFunction, object, matrixIndex, id](){
                 renderingFunction(object, impl->modelMatrixBuffer[matrixIndex], id); });
     }
+}
+
+
+GLSceneRenderer::GLResource* GLSceneRenderer::getOrCreateGLResource
+(SgObject* key, const std::function<GLResourcePtr()>& factory)
+{
+    auto& resourceMap = *impl->currentResourceMap;
+    auto p = resourceMap.find(key);
+    if(p == resourceMap.end()){
+        GLResourcePtr resource = factory();
+        if(!resource){
+            return nullptr;
+        }
+        p = resourceMap.insert(GLResourceMap::value_type(key, std::move(resource))).first;
+    }
+    if(impl->isCheckingUnusedResources){
+        impl->nextResourceMap->insert(*p);
+    }
+    return p->second.get();
 }
 
 
