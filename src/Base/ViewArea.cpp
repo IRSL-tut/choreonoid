@@ -15,6 +15,13 @@
 #include <QMouseEvent>
 #include <QScreen>
 #include <QLabel>
+#include <QDrag>
+#include <QMimeData>
+#include <QPainter>
+#include <QCursor>
+#include <QGuiApplication>
+#include <QWindow>
+#include <QPointer>
 
 #if (QT_VERSION < QT_VERSION_CHECK(5, 10, 0))
 #include <QDesktopWidget>
@@ -31,9 +38,33 @@ namespace {
 
 enum DropArea { OVER = -1, LEFT = 0, TOP, RIGHT, BOTTOM, NUM_DROP_AREAS };
 const int SPLIT_DISTANCE_THRESHOLD = 35;
+const int OUTER_EDGE_DISTANCE_THRESHOLD = 8;
+const int OUTSIDE_RUBBER_BAND_OFFSET = 8;
+
+/**
+   The MIME type used to identify the drag operation of a view tab. The drag operation is
+   processed by the ViewArea objects themselves and the MIME data is not actually used, so
+   the data attached to this type is always empty.
+*/
+const char* viewDragMimeType = "application/x-choreonoid-view";
 
 vector<ViewArea*> viewAreas;
 bool isBeforeDoingInitialLayout = true;
+
+/**
+   Wayland does not tell a client application where its windows are located on the screen,
+   and the functions that return global positions such as QWidget::mapToGlobal and
+   QCursor::pos just return meaningless values on it. The view drag operation itself is
+   implemented without using global positions so that it works on any platform, but the
+   preview of a window created by dropping a view outside the existing windows can only be
+   displayed on the platforms where the global positions are available.
+*/
+bool isGlobalPositionAvailable()
+{
+    static const bool available =
+        !QGuiApplication::platformName().startsWith(QLatin1String("wayland"));
+    return available;
+}
 
 class TabWidget : public QTabWidget
 {
@@ -131,6 +162,8 @@ public:
 
     QPoint tabDragStartPosition;
     bool isViewDragging;
+    bool isViewDropAccepted;
+    bool isViewDragCanceled;
     View* draggedView;
     QSize draggedViewWindowSize;
     ViewArea* dragDestViewArea;
@@ -139,6 +172,8 @@ public:
     bool isViewDraggingOnOuterEdge;
     int dropEdge;
     QRubberBand* rubberBand;
+    QRubberBand* outsideRubberBand;
+    Timer outsideRubberBandTimer;
 
     vector<QLabel*> viewSizeLabels;
     Timer viewSizeLabelTimer;
@@ -167,16 +202,24 @@ public:
     
     bool viewTabMousePressEvent(ViewPane* pane, QMouseEvent* event);
     bool viewTabMouseMoveEvent(ViewPane* pane, QMouseEvent* event);
-    bool viewTabMouseReleaseEvent(QMouseEvent *event);
+
+    void startViewDrag(ViewPane* pane, View* view);
+    QPixmap createViewDragPixmap(View* view);
+    ViewArea* findDragDestViewArea(QWindow* window, const QPoint& posInWindow, QPoint& out_posInViewArea);
+    void updateDragDestination(ViewArea* viewArea, const QPoint& posInViewArea);
+    bool onViewDragMoveEvent(QWindow* window, QDragMoveEvent* event);
+    bool onViewDragLeaveEvent();
+    bool onViewDropEvent(QWindow* window, QDropEvent* event);
+    void updateOutsideRubberBand();
+    void finishViewDrag();
 
     void showRectangle(QRect r);
-    void dragView(QMouseEvent* event);
+    void dragView(const QPoint& posInDestViewArea);
     void dragViewInsidePane(const QPoint& posInDestPane);
     void dropViewInsidePane(ViewPane* pane, View* view, int dropEdge);
     void dragViewOnOuterEdge();
     void dropViewToOuterEdge(View* view);
-    void dragViewOutside(const QPoint& pos);
-    void dropViewOutside(const QPoint& pos);
+    void dropViewOutside();
     void separateView(View* view);
     void separateView(View* view, const QPoint& pos, const QSize& size);
     void clearAllPanes();
@@ -441,8 +484,6 @@ bool ViewPane::eventFilter(QObject* object, QEvent* event)
             return viewAreaImpl->viewTabMousePressEvent(this, static_cast<QMouseEvent*>(event));
         case QEvent::MouseButtonDblClick:
             break;
-        case QEvent::MouseButtonRelease:
-            return viewAreaImpl->viewTabMouseReleaseEvent(static_cast<QMouseEvent*>(event));
         case QEvent::MouseMove:
             return viewAreaImpl->viewTabMouseMoveEvent(this, static_cast<QMouseEvent*>(event));
         default:
@@ -463,7 +504,10 @@ ViewArea::ViewArea(QWidget* parent)
         //setWindowFlags(Qt::Tool);
         setAttribute(Qt::WA_DeleteOnClose);
     }
-    
+
+    // This is necessary to receive the drag events of a view tab dragged from any view area
+    setAcceptDrops(true);
+
     impl = new Impl(this);
 }
 
@@ -475,10 +519,14 @@ ViewArea::Impl::Impl(ViewArea* self)
     viewTabsVisible = true;
     isMaximizedBeforeFullScreen = false;
     isViewDragging = false;
+    isViewDropAccepted = false;
+    isViewDragCanceled = false;
     draggedView = nullptr;
     dragSrcPane = nullptr;
     dragDestViewArea = nullptr;
     dragDestPane = nullptr;
+    isViewDraggingOnOuterEdge = false;
+    dropEdge = OVER;
 
     vbox = new QVBoxLayout(self);
     vbox->setSpacing(0);
@@ -486,6 +534,24 @@ ViewArea::Impl::Impl(ViewArea* self)
 
     rubberBand = new QRubberBand(QRubberBand::Rectangle, self);
     rubberBand->hide();
+
+    // The outside rubber band is a top level window that must be placed at the global
+    // position of the pointer, so that it cannot be used on the platforms that do not
+    // provide the global positions such as Wayland. It is not created at all on such a
+    // platform, and the null pointer means that the outline of a separated window is not
+    // displayed during a drag operation.
+    if(!isGlobalPositionAvailable()){
+        outsideRubberBand = nullptr;
+    } else {
+        outsideRubberBand = new QRubberBand(QRubberBand::Rectangle);
+        outsideRubberBand->setWindowFlags(
+            Qt::ToolTip | Qt::FramelessWindowHint | Qt::WindowTransparentForInput |
+            Qt::WindowDoesNotAcceptFocus);
+        outsideRubberBand->hide();
+
+        outsideRubberBandTimer.setInterval(30);
+        outsideRubberBandTimer.sigTimeout().connect([this](){ updateOutsideRubberBand(); });
+    }
 
     viewSizeLabelTimer.setSingleShot(true);
     viewSizeLabelTimer.setInterval(1000);
@@ -509,6 +575,7 @@ ViewArea::Impl::~Impl()
 {
     clearAllPanes();
     delete rubberBand;
+    delete outsideRubberBand;
 }
 
 
@@ -986,6 +1053,55 @@ void ViewArea::Impl::hideViewSizeLabels()
     for(size_t i=0; i < viewSizeLabels.size(); ++i){
         viewSizeLabels[i]->hide();
     }
+}
+
+
+/**
+   This event filter is installed on the application object while a view is being dragged.
+   The drag events are processed here before they are dispatched to the widgets in the
+   window so that the widgets accepting drops for their own purposes do not intercept the
+   events of the view drag operation.
+*/
+bool ViewArea::eventFilter(QObject* object, QEvent* event)
+{
+    QWindow* window = nullptr;
+
+    switch(event->type()){
+
+    case QEvent::DragEnter:
+    case QEvent::DragMove:
+        window = qobject_cast<QWindow*>(object);
+        if(window && impl->onViewDragMoveEvent(window, static_cast<QDragMoveEvent*>(event))){
+            return true;
+        }
+        break;
+
+    case QEvent::DragLeave:
+        if(qobject_cast<QWindow*>(object) && impl->onViewDragLeaveEvent()){
+            return true;
+        }
+        break;
+
+    case QEvent::Drop:
+        window = qobject_cast<QWindow*>(object);
+        if(window && impl->onViewDropEvent(window, static_cast<QDropEvent*>(event))){
+            return true;
+        }
+        break;
+
+    case QEvent::KeyPress:
+        // The event itself is not consumed here to let the drag and drop framework cancel
+        // the operation
+        if(impl->isViewDragging && static_cast<QKeyEvent*>(event)->key() == Qt::Key_Escape){
+            impl->isViewDragCanceled = true;
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    return QWidget::eventFilter(object, event);
 }
 
 
@@ -1495,111 +1611,320 @@ bool ViewArea::Impl::viewTabMousePressEvent(ViewPane* pane, QMouseEvent* event)
 
 bool ViewArea::Impl::viewTabMouseMoveEvent(ViewPane* pane, QMouseEvent* event)
 {
-    if(!isViewDragging){
-        if(event->buttons() & Qt::LeftButton){
-            QPoint pos = getPosition(event);
-            if((pos - tabDragStartPosition).manhattanLength() > QApplication::startDragDistance()){
-                if(!pane->tabBar()->geometry().contains(pos)){
-                    draggedView = pane->currentView();
-                    if(draggedView){
-                        isViewDragging = true;
-                        dragSrcPane = pane;
-
-                        QWidget* toplevel = pane;
-                        while(toplevel->parentWidget()){
-                            toplevel = toplevel->parentWidget();
-                        }
-                        QSize s = toplevel->frameGeometry().size();
-                        draggedViewWindowSize.setWidth(draggedView->width() + s.width() - toplevel->width());
-                        draggedViewWindowSize.setHeight(draggedView->height() + s.height() - toplevel->height());
-                        
-                        QApplication::setOverrideCursor(Qt::ClosedHandCursor);
-                    }
-                }
-            }
-        }
-    } else {
-        ViewArea* prevViewArea = dragDestViewArea;
-        dragDestViewArea = nullptr;
-        dragDestPane = nullptr;
-
-        // find a window other than the rubber band
-        const QPoint globalPosition = getGlobalPosition(event);
-        QWidget* window = nullptr;
-        QPoint p = globalPosition;
-        for(int i=0; i < 3; ++i){
-            window = QApplication::topLevelAt(p);
-            if(window && !dynamic_cast<QRubberBand*>(window)){
-                break;
-            }
-            p += QPoint(-1, -1);
-        }
-        if(window){
-            dragDestViewArea = dynamic_cast<ViewArea*>(window);
-            if(!dragDestViewArea){
-                if(MainWindow* mainWindow = dynamic_cast<MainWindow*>(window)){
-                    ViewArea* viewArea = mainWindow->viewArea();
-                    if(viewArea->rect().contains(viewArea->mapFromGlobal(globalPosition))){
-                        dragDestViewArea = viewArea;
-                    }
-                }
-            }
-        }
-        if(dragDestViewArea){
-            QWidget* pointed = dragDestViewArea->childAt(dragDestViewArea->mapFromGlobal(globalPosition));
-            while(pointed){
-                dragDestPane = dynamic_cast<ViewPane*>(pointed);
-                if(dragDestPane){
-                    dragView(event);
-                    break;
-                }
-                pointed = pointed->parentWidget();
-            }
-        } else {
-            dragViewOutside(globalPosition);
-        }
-        if(prevViewArea != dragDestViewArea){
-            if(prevViewArea){
-                prevViewArea->impl->rubberBand->hide();
-            } else {
-                rubberBand->hide();
-            }
-        }
+    if(isViewDragging || !(event->buttons() & Qt::LeftButton)){
+        return false;
+    }
+    QPoint pos = getPosition(event);
+    if((pos - tabDragStartPosition).manhattanLength() <= QApplication::startDragDistance()){
+        return false;
+    }
+    if(pane->tabBar()->rect().contains(pos)){
+        // The tab is being moved inside the tab bar to change the order of the tabs
+        return false;
+    }
+    if(View* view = pane->currentView()){
+        startViewDrag(pane, view);
+        return true;
     }
     return false;
 }
 
 
-bool ViewArea::Impl::viewTabMouseReleaseEvent(QMouseEvent *event)
+/**
+   The drag operation of a view is implemented with the drag and drop framework of Qt
+   instead of directly processing the mouse events during the operation. The framework is
+   necessary because the destination of the operation must be detected with the global
+   positions if the mouse events are directly processed, but the global positions are not
+   available on Wayland. The framework makes the compositor deliver the positions of the
+   pointer to each window in its own local coordinate system, and no global position is
+   required to detect the destination.
+*/
+void ViewArea::Impl::startViewDrag(ViewPane* pane, View* view)
 {
-    if(isViewDragging){
+    isViewDragging = true;
+    isViewDropAccepted = false;
+    isViewDragCanceled = false;
+    draggedView = view;
+    dragSrcPane = pane;
+    dragDestViewArea = nullptr;
+    dragDestPane = nullptr;
+    isViewDraggingOnOuterEdge = false;
+    dropEdge = OVER;
+
+    // Size of the window created when the view is dropped outside the existing windows
+    QWidget* topLevelWidget = pane->window();
+    QSize frameSize = topLevelWidget->frameGeometry().size();
+    draggedViewWindowSize.setWidth(view->width() + frameSize.width() - topLevelWidget->width());
+    draggedViewWindowSize.setHeight(view->height() + frameSize.height() - topLevelWidget->height());
+
+    // The tab bar cannot detect the end of its own tab moving operation because the mouse
+    // release event is consumed by the drag operation started below. Send a pseudo release
+    // event to make the tab bar finish the operation in advance.
+    QTabBar* tabBar = pane->tabBar();
+    QMouseEvent releaseEvent(
+        QEvent::MouseButtonRelease, tabDragStartPosition, tabDragStartPosition, tabDragStartPosition,
+        Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+    QApplication::sendEvent(tabBar, &releaseEvent);
+
+    if(outsideRubberBand){
+        outsideRubberBandTimer.start();
+    }
+
+    auto mimeData = new QMimeData;
+    mimeData->setData(viewDragMimeType, QByteArray());
+    auto drag = new QDrag(tabBar);
+    drag->setMimeData(mimeData);
+    // Note that the drag pixmap is not displayed on Wayland as of Qt 6.10 due to a problem
+    // of the Qt Wayland plugin. The plugin attaches and commits the buffer of the drag icon
+    // surface before wl_data_device.start_drag assigns the drag-and-drop role to the surface,
+    // and the surface is never committed again after that. A surface is displayed only when
+    // it is committed after its role is assigned, so the icon never appears. This cannot be
+    // worked around by the application side because the surface is completely hidden in the
+    // framework. The pixmap is displayed as expected on the other platforms.
+    QPixmap pixmap = createViewDragPixmap(view);
+    qreal r = pixmap.devicePixelRatio();
+    drag->setPixmap(pixmap);
+    drag->setHotSpot(
+        QPoint(static_cast<int>(pixmap.width() / (2 * r)), static_cast<int>(pixmap.height() / (2 * r))));
+
+    qApp->installEventFilter(self);
+
+    // The event filter is installed again in the event loop of the drag operation so that it
+    // precedes the internal event filter of the drag and drop framework. The internal filter
+    // consumes the key press event of the escape key, and the cancel operation with the key
+    // cannot be detected without preceding it. Note that the key event is not delivered to
+    // the application at all on the platforms where the system processes the drag operation
+    // by itself, and the cancel operation cannot be detected on such platforms.
+    QMetaObject::invokeMethod(
+        self,
+        [this](){
+            if(isViewDragging){
+                qApp->installEventFilter(self);
+            }
+        },
+        Qt::QueuedConnection);
+
+    // The drag object is not destroyed by the drag and drop framework and it must be
+    // destroyed here. QPointer is used just in case the framework destroys it in the future.
+    QPointer<QDrag> dragHolder(drag);
+
+    drag->exec(Qt::MoveAction);
+
+    if(dragHolder){
+        dragHolder->deleteLater();
+    }
+
+    isViewDragging = false;
+    qApp->removeEventFilter(self);
+
+    finishViewDrag();
+}
+
+
+QPixmap ViewArea::Impl::createViewDragPixmap(View* view)
+{
+    const int hMargin = 8;
+    const int vMargin = 4;
+
+    QString title = view->windowTitle();
+    QFont font = view->font();
+    QFontMetrics metrics(font);
+    QSize size(metrics.horizontalAdvance(title) + hMargin * 2, metrics.height() + vMargin * 2);
+
+    qreal r = self->devicePixelRatioF();
+    QPixmap pixmap(size * r);
+    pixmap.setDevicePixelRatio(r);
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPalette palette = view->palette();
+    painter.setPen(palette.color(QPalette::WindowText));
+    painter.setBrush(palette.color(QPalette::Button));
+    painter.setOpacity(0.9);
+    painter.drawRoundedRect(QRectF(0.5, 0.5, size.width() - 1.0, size.height() - 1.0), 3.0, 3.0);
+    painter.setOpacity(1.0);
+    painter.setFont(font);
+    painter.drawText(QRect(QPoint(0, 0), size), Qt::AlignCenter, title);
+
+    return pixmap;
+}
+
+
+/**
+   This function detects the view area at the given position of the given window. Note that
+   the position is converted only with the local coordinate systems of the window and the
+   widgets in it so that the detection also works on Wayland.
+*/
+ViewArea* ViewArea::Impl::findDragDestViewArea(QWindow* window, const QPoint& posInWindow, QPoint& out_posInViewArea)
+{
+    for(auto& viewArea : viewAreas){
+        QWidget* topLevelWidget = viewArea->window();
+        if(topLevelWidget->windowHandle() != window){
+            continue;
+        }
+        // The coordinate system of a window is the same as that of its top level widget
+        QPoint pos = viewArea->mapFrom(topLevelWidget, posInWindow);
+        if(viewArea->rect().contains(pos)){
+            out_posInViewArea = pos;
+            return viewArea;
+        }
+    }
+    return nullptr;
+}
+
+
+void ViewArea::Impl::updateDragDestination(ViewArea* viewArea, const QPoint& posInViewArea)
+{
+    if(dragDestViewArea && dragDestViewArea != viewArea){
+        dragDestViewArea->impl->rubberBand->hide();
+        dragDestPane = nullptr;
+    }
+    dragDestViewArea = viewArea;
+
+    if(!viewArea){
+        dragDestPane = nullptr;
+        return;
+    }
+
+    QWidget* pointed = viewArea->childAt(posInViewArea);
+    while(pointed){
+        if(auto pane = dynamic_cast<ViewPane*>(pointed)){
+            dragDestPane = pane;
+            break;
+        }
+        pointed = pointed->parentWidget();
+    }
+    // Note that the previous destination pane is kept if there is no pane at the position.
+    // The position is on a splitter handle in that case, and keeping the pane is consistent
+    // with the rubber band that is still displayed for the pane.
+    if(dragDestPane){
+        dragView(posInViewArea);
+    }
+}
+
+
+bool ViewArea::Impl::onViewDragMoveEvent(QWindow* window, QDragMoveEvent* event)
+{
+    if(!isViewDragging || !event->mimeData()->hasFormat(viewDragMimeType)){
+        return false;
+    }
+    if(isViewDropAccepted){
+        // The destination has already been fixed by a drop event
+        event->ignore();
+        return true;
+    }
+    QPoint posInViewArea;
+    ViewArea* viewArea = findDragDestViewArea(window, getPosition(event), posInViewArea);
+    updateDragDestination(viewArea, posInViewArea);
+
+    if(dragDestPane){
+        event->setDropAction(Qt::MoveAction);
+        event->accept();
+    } else {
+        event->ignore();
+    }
+    return true;
+}
+
+
+/**
+   Note that a drag leave event may be delivered after a drop event on some platforms
+   including Wayland. The destination must not be cleared in that case.
+*/
+bool ViewArea::Impl::onViewDragLeaveEvent()
+{
+    if(!isViewDragging){
+        return false;
+    }
+    if(!isViewDropAccepted){
+        if(dragDestViewArea){
+            dragDestViewArea->impl->rubberBand->hide();
+        }
+        dragDestViewArea = nullptr;
+        dragDestPane = nullptr;
+    }
+    return true;
+}
+
+
+bool ViewArea::Impl::onViewDropEvent(QWindow* window, QDropEvent* event)
+{
+    if(!isViewDragging || !event->mimeData()->hasFormat(viewDragMimeType)){
+        return false;
+    }
+    QPoint posInViewArea;
+    ViewArea* viewArea = findDragDestViewArea(window, getPosition(event), posInViewArea);
+    updateDragDestination(viewArea, posInViewArea);
+
+    if(dragDestPane){
+        isViewDropAccepted = true;
+        event->setDropAction(Qt::MoveAction);
+        event->accept();
+    } else {
+        event->ignore();
+    }
+    return true;
+}
+
+
+/**
+   This function displays the outline of the window created when the view is dropped at the
+   current position. The outline is displayed only when the pointer is outside the view
+   areas, but the drag events are not delivered in that case and the position must be
+   obtained with a timer. Note that this function is only called by the timer, which is
+   started only when the outside rubber band exists.
+*/
+void ViewArea::Impl::updateOutsideRubberBand()
+{
+    if(!isViewDragging || dragDestPane){
+        if(outsideRubberBand->isVisible()){
+            outsideRubberBand->hide();
+        }
+    } else {
+        // The outline is shifted so that the pointer is not on the rubber band window. If the
+        // pointer is on it, the window under it cannot be detected as the drop destination.
+        QPoint pos = QCursor::pos() + QPoint(OUTSIDE_RUBBER_BAND_OFFSET, OUTSIDE_RUBBER_BAND_OFFSET);
+        outsideRubberBand->setGeometry(QRect(pos, draggedViewWindowSize));
+        if(!outsideRubberBand->isVisible()){
+            outsideRubberBand->show();
+        }
+    }
+}
+
+
+void ViewArea::Impl::finishViewDrag()
+{
+    outsideRubberBandTimer.stop();
+    if(outsideRubberBand){
+        outsideRubberBand->hide();
+    }
+    if(dragDestViewArea){
+        dragDestViewArea->impl->rubberBand->hide();
+    }
+
+    if(isViewDropAccepted && dragDestPane){
         bool isMovingInViewArea = (self == dragDestViewArea);
         removeView(dragSrcPane, draggedView, isMovingInViewArea);
-        if(!dragDestPane){
-            rubberBand->hide();
-            dropViewOutside(getGlobalPosition(event));
+        Impl* destImpl = dragDestViewArea->impl;
+        destImpl->needToUpdateDefaultPaneAreas = true;
+        if(isViewDraggingOnOuterEdge){
+            destImpl->dropViewToOuterEdge(draggedView);
         } else {
-            Impl* destImpl = dragDestViewArea->impl;
-            destImpl->rubberBand->hide();
-            destImpl->needToUpdateDefaultPaneAreas = true;
-            if(isViewDraggingOnOuterEdge){
-                destImpl->dropViewToOuterEdge(draggedView);
-            } else {
-                destImpl->dropViewInsidePane(dragDestPane, draggedView, dropEdge);
-            }
+            destImpl->dropViewInsidePane(dragDestPane, draggedView, dropEdge);
         }
         if(isMovingInViewArea){
             removePaneIfEmpty(dragSrcPane);
         }
-        
-        QApplication::restoreOverrideCursor();
+    } else if(!isViewDragCanceled){
+        removeView(dragSrcPane, draggedView, false);
+        dropViewOutside();
     }
-    isViewDragging = false;
+
     draggedView = nullptr;
+    dragSrcPane = nullptr;
     dragDestViewArea = nullptr;
     dragDestPane = nullptr;
-    
-    return false;
 }
 
 
@@ -1611,33 +1936,32 @@ void ViewArea::Impl::showRectangle(QRect r)
 }
 
 
-void ViewArea::Impl::dragView(QMouseEvent* event)
+void ViewArea::Impl::dragView(const QPoint& posInDestViewArea)
 {
     dropEdge = LEFT;
 
-    const QPoint globalPosition = getGlobalPosition(event);
-    const QPoint p = dragDestViewArea->mapFromGlobal(globalPosition);
+    const QPoint& p = posInDestViewArea;
     const int w = dragDestViewArea->width();
     const int h = dragDestViewArea->height();
-    
+
     int distance[4];
     distance[LEFT] = p.x();
     distance[TOP] = p.y();
     distance[RIGHT] = w - p.x();
     distance[BOTTOM] = h - p.y();
-        
+
     for(int i=TOP; i <= BOTTOM; ++i){
         if(distance[dropEdge] > distance[i]){
             dropEdge = i;
         }
     }
 
-    if(distance[dropEdge] < 8){
+    if(distance[dropEdge] < OUTER_EDGE_DISTANCE_THRESHOLD){
         isViewDraggingOnOuterEdge = true;
         dragViewOnOuterEdge();
     } else {
         isViewDraggingOnOuterEdge = false;
-        dragViewInsidePane(dragDestPane->mapFromGlobal(globalPosition));
+        dragViewInsidePane(dragDestPane->mapFrom(dragDestViewArea, posInDestViewArea));
     }
 }
 
@@ -1675,7 +1999,7 @@ void ViewArea::Impl::dragViewInsidePane(const QPoint& posInDestPane)
         r.setRect(0, h / 2, w, h / 2);
     }
 
-    r.translate(dragDestViewArea->mapFromGlobal(dragDestPane->mapToGlobal(QPoint(0, 0))));
+    r.translate(dragDestPane->mapTo(dragDestViewArea, QPoint(0, 0)));
     dragDestViewArea->impl->showRectangle(r);
 }
 
@@ -1786,17 +2110,9 @@ void ViewArea::Impl::dropViewToOuterEdge(View* view)
 }
 
 
-void ViewArea::Impl::dragViewOutside(const QPoint& pos)
+void ViewArea::Impl::dropViewOutside()
 {
-    rubberBand->setParent(0);
-    rubberBand->setGeometry(QRect(pos, draggedViewWindowSize));
-    rubberBand->show();
-}
-
-
-void ViewArea::Impl::dropViewOutside(const QPoint& pos)
-{
-    separateView(draggedView, pos, draggedViewWindowSize);
+    separateView(draggedView, QCursor::pos(), draggedViewWindowSize);
 }
 
 
@@ -1820,7 +2136,12 @@ void ViewArea::Impl::separateView(View* view, const QPoint& pos, const QSize& si
     viewWindow->setWindowFlags(Qt::Window);
 #endif
     
-    viewWindow->setGeometry(pos.x(), pos.y(), size.width(), size.height());
+    if(isGlobalPositionAvailable()){
+        viewWindow->setGeometry(pos.x(), pos.y(), size.width(), size.height());
+    } else {
+        // The position of a window cannot be specified by a client application on Wayland
+        viewWindow->resize(size);
+    }
     viewWindow->show();
 }
 

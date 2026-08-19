@@ -37,6 +37,7 @@ public:
     class Impl;
 
 protected:
+    virtual bool eventFilter(QObject* object, QEvent* event) override;
     virtual void keyPressEvent(QKeyEvent* event);
  
 private:
