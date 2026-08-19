@@ -23,10 +23,6 @@
 #include <QWindow>
 #include <QPointer>
 
-#if (QT_VERSION < QT_VERSION_CHECK(5, 10, 0))
-#include <QDesktopWidget>
-#endif
-
 #include <memory>
 #include <bitset>
 #include "gettext.h"
@@ -51,6 +47,13 @@ const char* viewDragMimeType = "application/x-choreonoid-view";
 vector<ViewArea*> viewAreas;
 bool isBeforeDoingInitialLayout = true;
 
+bool isWaylandPlatform()
+{
+    static const bool isWayland =
+        QGuiApplication::platformName().startsWith(QLatin1String("wayland"));
+    return isWayland;
+}
+
 /**
    Wayland does not tell a client application where its windows are located on the screen,
    and the functions that return global positions such as QWidget::mapToGlobal and
@@ -61,9 +64,43 @@ bool isBeforeDoingInitialLayout = true;
 */
 bool isGlobalPositionAvailable()
 {
-    static const bool available =
-        !QGuiApplication::platformName().startsWith(QLatin1String("wayland"));
-    return available;
+    return !isWaylandPlatform();
+}
+
+/**
+   Wayland does not have the concept of a primary output. QGuiApplication::primaryScreen
+   just returns one of the outputs regardless of the primary display specified in the
+   desktop environment, and the returned screen is not meaningful on it.
+*/
+bool isPrimaryScreenAvailable()
+{
+    return !isWaylandPlatform();
+}
+
+
+/**
+   This function returns the screen that is assumed to be the screen of an independent view
+   area window when the window does not have its own screen information in a project. The
+   screen of such a window is stored in a project only when it is different from this screen,
+   so that a layout in which all the windows are on the same screen does not depend on the
+   screen configuration.
+
+   The primary screen is used for this purpose as long as it is available. On Wayland, where
+   the primary screen does not correspond to the primary display of the desktop environment,
+   the screen of the main window is used instead.
+*/
+QScreen* referenceScreen()
+{
+    if(!isPrimaryScreenAvailable()){
+        if(auto mainWindow = MainWindow::instance()){
+            if(auto windowHandle = mainWindow->windowHandle()){
+                if(auto screen = windowHandle->screen()){
+                    return screen;
+                }
+            }
+        }
+    }
+    return QGuiApplication::primaryScreen();
 }
 
 class TabWidget : public QTabWidget
@@ -1136,7 +1173,7 @@ void ViewArea::restoreAllViewAreaLayouts(ArchivePtr archive)
         Listing& layouts = *archive->findListing({ "view_areas", "viewAreas" });
         if(layouts.isValid()){
             auto screens = QGuiApplication::screens();
-            auto primaryScreen = QGuiApplication::primaryScreen();
+            auto defaultScreen = referenceScreen();
             for(int i=0; i < layouts.size(); ++i){
                 Mapping& layout = *layouts[i].toMapping();
                 auto contentsNode = layout.findMapping("contents");
@@ -1160,15 +1197,40 @@ void ViewArea::restoreAllViewAreaLayouts(ArchivePtr archive)
                         if(viewWindow->impl->numViews == 0){
                             delete viewWindow;
                         } else {
-                            const Listing& geo = *layout.findListing("geometry");
-                            if(geo.isValid() && geo.size() == 4){
-                                QScreen* screen = primaryScreen;
-                                int screenNumber;
-                                if(layout.read("screen", screenNumber)){
-                                    if(screenNumber >= 0 && screenNumber < screens.size()){
-                                        screen = screens[screenNumber];
+                            // The screen is first identified by its name. The index is
+                            // used when the name is not available or the screen of the name
+                            // does not exist in the current screen configuration.
+                            QScreen* screen = nullptr;
+                            string screenName;
+                            if(layout.read("screen_name", screenName)){
+                                for(auto& candidate : screens){
+                                    if(candidate->name().toStdString() == screenName){
+                                        screen = candidate;
+                                        break;
                                     }
                                 }
+                            }
+                            if(!screen){
+                                int screenIndex;
+                                if(layout.read("screen", screenIndex)){
+                                    if(screenIndex >= 0 && screenIndex < screens.size()){
+                                        screen = screens[screenIndex];
+                                    }
+                                }
+                            }
+                            if(!screen){
+                                screen = defaultScreen;
+                            }
+                            // The screen is explicitly specified for the window handle because
+                            // the position given to setGeometry is ignored on Wayland and the
+                            // window is not restored on the intended screen without this.
+                            // Note that specifying the screen is only effective for a full
+                            // screen window on Wayland.
+                            viewWindow->createWinId();
+                            viewWindow->windowHandle()->setScreen(screen);
+
+                            const Listing& geo = *layout.findListing("geometry");
+                            if(geo.isValid() && geo.size() == 4){
                                 const QRect s = screen->geometry();
                                 const QRect r(geo[0].toInt(), geo[1].toInt(), geo[2].toInt(), geo[3].toInt());
                                 viewWindow->setGeometry(r.translated(s.x(), s.y()));
@@ -1427,35 +1489,31 @@ void ViewArea::Impl::storeLayout(Archive* archive)
             } else {
                 archive->write("type", "independent");
 
+                // The screen is obtained from the window handle because it is the screen the
+                // window is actually displayed on. Note that the screen cannot be detected
+                // from the window position on Wayland, where the position is not available.
                 QScreen* screen = nullptr;
-
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
-                screen = QGuiApplication::screenAt(self->pos());
-                if(screen && screen != QGuiApplication::primaryScreen()){
-                    // Currently the index of the screen array is used as the identifier of the screen,
-                    // but it may be better to use Screen::name() or Screen::serialNumber() as the identifier.
-                    auto screens = QGuiApplication::screens();
-                    for(int i=0; i < screens.size(); ++i){
-                        if(screen == screens[i]){
-                            archive->write("screen", i);
-                            break;
-                        }
-                    }
+                if(QWindow* windowHandle = self->windowHandle()){
+                    screen = windowHandle->screen();
                 }
-#else
-                auto screenNumber = QApplication::desktop()->screenNumber(self->pos());
-                if(screenNumber >= 0){
-                    auto screens = QGuiApplication::screens();
-                    if(screenNumber < screens.size()){
-                        screen = screens[screenNumber];
-                        if(screen != QGuiApplication::primaryScreen()){
-                            archive->write("screen", screenNumber);
-                        }
-                    }
-                }
-#endif
 
                 if(screen){
+                    if(screen != referenceScreen()){
+                        // The name of the screen is used as the primary identifier of the
+                        // screen because the index of the screen array depends on the order
+                        // in which the screens are detected and it may change. The index is
+                        // also stored so that the layout can be restored on a different
+                        // system with a similar screen configuration, and for the projects
+                        // read by the older versions that do not support the name.
+                        archive->write("screen_name", screen->name().toStdString(), DOUBLE_QUOTED);
+                        auto screens = QGuiApplication::screens();
+                        for(int i=0; i < screens.size(); ++i){
+                            if(screen == screens[i]){
+                                archive->write("screen", i);
+                                break;
+                            }
+                        }
+                    }
                     const QRect s = screen->geometry();
                     const QRect r = self->geometry().translated(-s.x(), -s.y());
                     Listing* geometry = archive->createFlowStyleListing("geometry");
