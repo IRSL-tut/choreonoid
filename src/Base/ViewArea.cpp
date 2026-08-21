@@ -1745,6 +1745,21 @@ void ViewArea::Impl::startViewDrag(ViewPane* pane, View* view)
     drag->setHotSpot(
         QPoint(static_cast<int>(pixmap.width() / (2 * r)), static_cast<int>(pixmap.height() / (2 * r))));
 
+    // The drag and drop framework displays the cursor that indicates the operation is not
+    // allowed when the pointer is not on a drop destination accepting the operation. The
+    // cursor is misleading for this operation because dropping a view where no view area
+    // accepts it is a valid operation that creates an independent window for the view, and
+    // the outline of the window is displayed at the same time. The cursor is replaced with a
+    // transparent pixmap to suppress the mark. The position of the pointer is still
+    // indicated by the drag pixmap. Note that the documentation of QDrag::setDragCursor says
+    // that setting the cursor of Qt::IgnoreAction is not supported on Windows, but it
+    // actually works there as long as the drag pixmap is set. The cursor cannot be
+    // suppressed on Wayland, where the cursor of a drag operation is drawn by the compositor
+    // and a client application cannot control it.
+    QPixmap ignoreActionCursorPixmap(1, 1);
+    ignoreActionCursorPixmap.fill(Qt::transparent);
+    drag->setDragCursor(ignoreActionCursorPixmap, Qt::IgnoreAction);
+
     qApp->installEventFilter(self);
 
     // The event filter is installed again in the event loop of the drag operation so that it
