@@ -130,7 +130,18 @@ bool BodyMotionControllerItemImpl::initialize(ControllerIO* io)
     }
     body->calcForwardKinematics();
 
-    currentFrame = 0;
+    /*
+       The first frame is consumed by the initial state set above, so the output
+       function must continue from the second frame. A joint displacement written
+       by the output function is reflected in the body at the end of the frame,
+       and the state of a frame is recorded at its beginning. Hence the reference
+       value of a frame must be written one frame earlier to make the recorded
+       motion coincide with the reference motion. With a kinematic simulation the
+       recorded motion is then identical to the reference motion including its
+       number of frames. With a dynamic simulation the difference from the
+       reference motion is the actual tracking error of the simulated control.
+    */
+    currentFrame = 1;
 
     return true;
 }
