@@ -48,7 +48,30 @@ void exportPyReferenced(nb::module_& m)
         m, "Referenced",
         nb::intrusive_ptr<Referenced>(
             [](Referenced* p, PyObject* self) noexcept {
-                p->setSelfPython(self);
+                void* primary = p->selfPython();
+                if(!primary){
+                    p->setSelfPython(self);
+                } else if(primary != self){
+                    /*
+                      nanobind has created a second wrapper for an object that is
+                      already owned by another wrapper. This happens when the two
+                      exposures use different static types neither of which is a
+                      Python subtype of the other, e.g. an item whose dynamic type
+                      is not bound is first exposed as Item (via an ItemList) and
+                      later returned as SimulatorItem*; nb_type_put() then cannot
+                      reuse the Item wrapper. The new wrapper was created with
+                      take_ownership (destruct/cpp_delete set) but setSelfPython()
+                      cannot accept it - the object can delegate its reference
+                      count to only one wrapper - so if left as is, both wrappers
+                      would destroy the C++ object, and this one without holding
+                      the C++-side reference count (a use-after-free / double
+                      free). Demote it to a non-owning alias: clear its ownership
+                      flags and pin the primary wrapper for the alias's lifetime
+                      so the C++ object cannot die under it.
+                    */
+                    nb::inst_set_state(self, true, false);
+                    nb::detail::keep_alive(self, static_cast<PyObject*>(primary));
+                }
             }));
 }
 
