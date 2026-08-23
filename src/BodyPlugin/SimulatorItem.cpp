@@ -381,6 +381,7 @@ public:
     void resumeSimulation();
     void pauseControllers();
     void resumeControllers();
+    void finalizeSimulation();
     void onSimulationLoopStopped(bool isForced);
     bool isActive() const;
     void setExternalForce(BodyItem* bodyItem, Link* link, const Vector3& point, const Vector3& f, double time);
@@ -1943,11 +1944,13 @@ bool SimulatorItem::Impl::initializeSimulation(bool doReset)
 
     if(doStopSimulationWhenNoActiveControllers && activeControllerInfos.empty()){
         mout->putErrorln(_("The simulation cannot be started because all the controllers are inactive."));
+        finalizeSimulation();
         clearSimulation();
         return false;
     }
 
     if(!self->completeInitializationOfSimulation()){
+        finalizeSimulation();
         clearSimulation();
         return false;
     }
@@ -2550,10 +2553,17 @@ void SimulatorItem::finalizeSimulation()
 }
 
 
-void SimulatorItem::Impl::onSimulationLoopStopped(bool isForced)
+/**
+   Finalize the objects initialized for a simulation. This function must also be
+   called when the initialization of a simulation is aborted after the objects
+   have been initialized, so that they are not left in the initialized state.
+
+   Note that the stop function is only called for the controllers that have been
+   started successfully, because the controller infos of the controllers whose
+   start function returned false are removed in the initialization process.
+*/
+void SimulatorItem::Impl::finalizeSimulation()
 {
-    flushTimer.stop();
-    
     for(auto& simBody : allSimBodies){
         for(auto& info : simBody->impl->controllerInfos){
             info->controllerItem->stop();
@@ -2564,6 +2574,14 @@ void SimulatorItem::Impl::onSimulationLoopStopped(bool isForced)
     for(auto& subSimulator : subSimulatorItems){
         subSimulator->finalizeSimulation();
     }
+}
+
+
+void SimulatorItem::Impl::onSimulationLoopStopped(bool isForced)
+{
+    flushTimer.stop();
+
+    finalizeSimulation();
 
     // Record the final state after processing the last frame
     bufferRecords();
