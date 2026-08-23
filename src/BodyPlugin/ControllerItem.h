@@ -48,6 +48,11 @@ public:
 
     /**
        This function is called after the simulation world is initialized.
+
+       \return False to exclude this controller from the simulation. Note that
+       the stop function is not called for a controller that returns false here,
+       so this function itself must release everything it has acquired before
+       returning false.
     */
     virtual bool start();
 
