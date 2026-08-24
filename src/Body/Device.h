@@ -63,13 +63,14 @@ public:
     virtual int stateSize() const = 0;
 
     /**
+       @param size The number of the elements available in buf. The value can be
+       smaller than stateSize() when the state was recorded by an older version of
+       the device. An implementation must check the value to keep the compatibility
+       with such data.
        @return The position in the buf after reading.
        The value is used when the super class's readState is called by the inherited class.
     */
-    virtual const double* readState(const double* buf, int size);
-
-    // Deprecated.
-    virtual const double* readState(const double* buf);
+    virtual const double* readState(const double* buf, int size) = 0;
 
     /**
        @return The position in the buf after reading.

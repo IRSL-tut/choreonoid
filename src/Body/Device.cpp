@@ -4,23 +4,6 @@
 using namespace cnoid;
 
 
-// Implementation for backward compatibility
-const double* DeviceState::readState(const double* buf, int size)
-{
-    if(stateSize() <= size){
-        return readState(buf);
-    } else {
-        return buf;
-    }
-}
-
-
-const double* DeviceState::readState(const double* buf)
-{
-    return buf;
-}
-
-
 Device::Device()
 {
     ns = new NonState;
