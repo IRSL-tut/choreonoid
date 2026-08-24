@@ -50,6 +50,11 @@ enum DataTypeID {
     DEVICE_STATES
 };
 
+// A device state block begins with a 16-bit size header. A state with this
+// many elements or more does not fit in it; the header is then written as
+// this escape value followed by the actual size as a 32-bit integer.
+constexpr int largeDeviceStateHeader = 0x7fff;
+
 struct CorruptLogException { };
 
 class ReadBuf
@@ -162,6 +167,22 @@ public:
             throw CorruptLogException();
         }            
         return offset;
+    }
+
+    /**
+       Reads the size header of a device state block.
+       @return A negative value if the state is the same as the previous one.
+       The seek position of the previous state follows in that case.
+    */
+    int readDeviceStateSizeHeader(){
+        int size = readShort();
+        if(size == largeDeviceStateHeader){
+            size = readInt();
+            if(size < 0){
+                throw CorruptLogException();
+            }
+        }
+        return size;
     }
 
     float readFloat(){
@@ -287,6 +308,20 @@ public:
     void writeSeekOffset(int pos, int offset){
         writeInt(pos, offset);
     }
+
+    /**
+       Writes the size header of a device state block. A size that does not fit
+       in the 16-bit header is written as an escape value followed by the actual
+       size as a 32-bit integer.
+    */
+    void writeDeviceStateSizeHeader(int size){
+        if(size >= largeDeviceStateHeader){
+            writeShort(largeDeviceStateHeader);
+            writeInt(size);
+        } else {
+            writeShort(size);
+        }
+    }
     
     void writeFloat(float value){
         char* p = (char*)&value;
@@ -310,8 +345,8 @@ public:
 
     void writeString(const std::string& str){
         const int size = str.size();
-        data.reserve(data.size() + size + 1);
-        writeShort((unsigned char)size);
+        data.reserve(data.size() + size + sizeof(short));
+        writeShort(size);
         for(int i=0; i < size; ++i){
             writeOctet(str[i]);
         }
@@ -323,9 +358,11 @@ class DeviceInfo {
 public:
     size_t lastStateSeekPos;
     vector<double> lastState;
+    int lastStateSize;  // recorded size; lastState may be padded beyond it
     bool isConsistent;
     DeviceInfo() {
         lastStateSeekPos = 0;
+        lastStateSize = 0;
         isConsistent = false;
     }
 };
@@ -1015,11 +1052,10 @@ void WorldLogFileItem::Impl::readDeviceStates(BodyInfo* bodyInfo, double time)
     while(readBuf.pos < endPos && deviceIndex < numDevices){
         DeviceInfo& devInfo = bodyInfo->deviceInfo(deviceIndex);
         Device* device = bodyInfo->body->device(deviceIndex);
-        const int header = readBuf.readShort();
-        if(header < 0){
+        const int size = readBuf.readDeviceStateSizeHeader();
+        if(size < 0){
             readLastDeviceState(devInfo, device);
         } else {
-            const int size = header;
             int nextPos = readBuf.pos + sizeof(float) * size;
             readDeviceState(devInfo, device, readBuf, size);
             readBuf.seek(nextPos);
@@ -1033,12 +1069,15 @@ void WorldLogFileItem::Impl::readDeviceStates(BodyInfo* bodyInfo, double time)
 
 void WorldLogFileItem::Impl::readDeviceState(DeviceInfo& devInfo, Device* device, ReadBuf& buf, int size)
 {
-    const int stateSize = device->stateSize();
+    // Read exactly the recorded number of elements. The buffer passed to
+    // Device::readState is zero-padded up to the current state size in case
+    // the recorded state is smaller and the device ignores the size argument.
     vector<double>& state = devInfo.lastState;
-    state.resize(stateSize);
-    for(int i=0; i < stateSize; ++i){
+    state.assign(std::max(size, device->stateSize()), 0.0);
+    for(int i=0; i < size; ++i){
         state[i] = buf.readFloat();
     }
+    devInfo.lastStateSize = size;
     device->readState(&state.front(), size);
     device->notifyStateChange();
     devInfo.isConsistent = true;
@@ -1051,7 +1090,7 @@ void WorldLogFileItem::Impl::readLastDeviceState(DeviceInfo& devInfo, Device* de
     if(pos == devInfo.lastStateSeekPos){
         if(!devInfo.isConsistent){
             auto& lastState = devInfo.lastState;
-            device->readState(lastState.data(), lastState.size());
+            device->readState(lastState.data(), devInfo.lastStateSize);
             device->notifyStateChange();
             devInfo.isConsistent = true;
         }
@@ -1059,7 +1098,7 @@ void WorldLogFileItem::Impl::readLastDeviceState(DeviceInfo& devInfo, Device* de
         ifs.seekg(pos);
         devInfo.lastStateSeekPos = pos;
         readBuf2.clear();
-        int size = readBuf2.readShort();
+        int size = readBuf2.readDeviceStateSizeHeader();
         if(size > 0){
             readDeviceState(devInfo, device, readBuf2, size);
         }
@@ -1257,7 +1296,7 @@ void WorldLogFileItem::Impl::outputDeviceState(DeviceState* state)
         writeBuf.writeShort(0);
     } else {
         int size = state->stateSize();
-        writeBuf.writeShort(size);
+        writeBuf.writeDeviceStateSizeHeader(size);
         doubleWriteBuf.resize(size);
         state->writeState(&doubleWriteBuf.front());
         for(int i=0; i < size; ++i){
