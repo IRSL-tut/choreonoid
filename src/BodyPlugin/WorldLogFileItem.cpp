@@ -55,6 +55,11 @@ enum DataTypeID {
 // this escape value followed by the actual size as a 32-bit integer.
 constexpr int largeDeviceStateHeader = 0x7fff;
 
+// The seek position of a cached device state is stored as a 32-bit signed
+// integer in the log file. A state located beyond this position cannot be
+// referred to, and it is written inline instead of being referred to.
+constexpr size_t maxDeviceStateSeekPos = 0x7fffffff;
+
 struct CorruptLogException { };
 
 class ReadBuf
@@ -465,9 +470,9 @@ public:
     // for device state recording and playback
     struct DeviceStateCache : public Referenced {
         DeviceStatePtr state;
-        // This position is stored as a 4-byte int in the log file for format compatibility,
-        // so cached device state references may overflow for files exceeding 2GB.
-        // This is not a problem for devices whose state changes every frame (no cache hit).
+        // This position is stored as a 4-byte int in the log file for format compatibility.
+        // A state located beyond maxDeviceStateSeekPos cannot be referred to, and it is
+        // written inline instead so that a file exceeding 2GB is still valid.
         size_t seekPos;
     };
     typedef ref_ptr<DeviceStateCache> DeviceStateCachePtr;
@@ -1284,9 +1289,9 @@ void WorldLogFileItem::Impl::outputDeviceState(DeviceState* state)
         cache = new DeviceStateCache;
     } else {
         cache = (*pLastDeviceStateCacheArray)[deviceIndex];
-        if(state == cache->state){
+        if(state == cache->state && cache->seekPos <= maxDeviceStateSeekPos){
             writeBuf.writeShort(-1);
-            writeBuf.writeSeekOffset(cache->seekPos);
+            writeBuf.writeSeekOffset(static_cast<int>(cache->seekPos));
             goto endOutputDeviceState;
         }
     }
