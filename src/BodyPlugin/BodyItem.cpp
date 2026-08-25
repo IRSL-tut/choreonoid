@@ -2518,7 +2518,10 @@ void BodyItem::Impl::restoreDeviceStates(const Archive& archive)
                 auto stateListing = node->findListing("state");
                 if(stateListing->isValid()){
                     int size = stateListing->size();
-                    buf.resize(size);
+                    // The buffer is zero-padded up to the current state size in
+                    // case the stored state is smaller and the device ignores
+                    // the size argument
+                    buf.assign(std::max(size, device->stateSize()), 0.0);
                     for(int j = 0; j < size; ++j){
                         buf[j] = (*stateListing)[j].toDouble();
                     }
