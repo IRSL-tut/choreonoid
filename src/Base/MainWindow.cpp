@@ -15,6 +15,9 @@
 #include <QApplication>
 #include <QScreen>
 #include <QMenuBar>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QOpenGLWidget>
+#endif
 #include <iostream>
 #include <sys/stat.h>
 #include "gettext.h"
@@ -163,6 +166,29 @@ MainWindow::Impl::Impl(MainWindow* self, const std::string& appName, ExtensionMa
     shouldMaximizeAfterActivation = false;
     
     centralWidget = new QWidget(self);
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    /**
+       Qt6 creates the native window of a top-level widget with the raster surface type
+       unless a render-to-texture widget such as QOpenGLWidget exists in the widget tree
+       at that time. Since the views (including the scene views using QOpenGLWidget) are
+       mounted into the main window later in the first resize event, the native window of
+       the main window is first created as a raster window and then destroyed and
+       recreated by QWidget::setParent when a scene view is mounted. If the first resize
+       event is delivered synchronously during the native window creation, which happens
+       on some Windows environments, the recreation destroys the platform window that is
+       still being initialized and the application crashes (use-after-free in
+       QWindowsWindow::initialize). The following hidden QOpenGLWidget makes the native
+       window be created with the OpenGL surface type from the beginning so that the
+       recreation never happens. The widget is never shown and does not create an OpenGL
+       context. Note that the surface type is evaluated regardless of the visibility.
+    */
+    if(!AppUtil::isOffscreenMode()){
+        auto surfaceTypeHint = new QOpenGLWidget(centralWidget);
+        surfaceTypeHint->setObjectName("SurfaceTypeHint");
+        surfaceTypeHint->hide();
+    }
+#endif
     
     centralVBox = new QVBoxLayout(centralWidget);
     centralVBox->setSpacing(0);
