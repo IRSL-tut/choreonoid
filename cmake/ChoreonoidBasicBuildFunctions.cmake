@@ -101,6 +101,10 @@ function(choreonoid_add_library target)
       install(TARGETS ${target}
         RUNTIME DESTINATION ${CHOREONOID_BIN_SUBDIR} LIBRARY DESTINATION ${CHOREONOID_LIB_SUBDIR})
     endif()
+    if(MSVC)
+      # The PDB file exists only when the debug information is enabled for the build configuration
+      install(FILES $<TARGET_PDB_FILE:${target}> DESTINATION ${CHOREONOID_BIN_SUBDIR} OPTIONAL)
+    endif()
   endif()
 
 endfunction()
@@ -155,6 +159,9 @@ function(choreonoid_add_plugin target)
       RUNTIME DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}
       LIBRARY DESTINATION ${CHOREONOID_PLUGIN_SUBDIR})
   endif()
+  if(MSVC)
+    install(FILES $<TARGET_PDB_FILE:${target}> DESTINATION ${CHOREONOID_PLUGIN_SUBDIR} OPTIONAL)
+  endif()
 
 endfunction()
 
@@ -183,6 +190,9 @@ function(choreonoid_add_executable target)
   choreonoid_set_header_files(${ARGN})
 
   install(TARGETS ${target} RUNTIME DESTINATION ${CHOREONOID_BIN_SUBDIR})
+  if(MSVC)
+    install(FILES $<TARGET_PDB_FILE:${target}> DESTINATION ${CHOREONOID_BIN_SUBDIR} OPTIONAL)
+  endif()
 
 endfunction()
 

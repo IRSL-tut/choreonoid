@@ -52,6 +52,9 @@ function(choreonoid_add_body_handler)
   install(TARGETS ${target}
     RUNTIME DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}/bodyhandler
     LIBRARY DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}/bodyhandler)
+  if(MSVC)
+    install(FILES $<TARGET_PDB_FILE:${target}> DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}/bodyhandler OPTIONAL)
+  endif()
 endfunction()
 
 # Deprecated
@@ -79,6 +82,9 @@ function(choreonoid_add_body_customizer)
   install(TARGETS ${target}
     RUNTIME DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}/customizer
     LIBRARY DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}/customizer)
+  if(MSVC)
+    install(FILES $<TARGET_PDB_FILE:${target}> DESTINATION ${CHOREONOID_PLUGIN_SUBDIR}/customizer OPTIONAL)
+  endif()
 endfunction()
 
 # Deprecated

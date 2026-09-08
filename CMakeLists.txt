@@ -259,16 +259,18 @@ if(MSVC)
   endif()
 
   set(linker_release_options "")
+  set(static_linker_release_options "")
   option(ENABLE_MSVC_GLOBAL_OPTIMIZATION "Global optimization with compiler option /GL and linker option /LTCG" OFF)
   if(ENABLE_MSVC_GLOBAL_OPTIMIZATION)
     set(compiler_release_options "${compiler_release_options} /GL")
     set(linker_release_options "${linker_release_options} /LTCG")
+    set(static_linker_release_options "${static_linker_release_options} /LTCG")
   endif()
 
-  option(ENABLE_MSVC_DEBUG_INFO_FOR_RELEASE "Enable debug information for the relase build" OFF)
-  mark_as_advanced(ENABLE_MSVC_DEBUG_INFO_FOR_RELEASE)
+  option(ENABLE_MSVC_DEBUG_INFO_FOR_RELEASE "Enable debug information (PDB files) for the release build" OFF)
   if(ENABLE_MSVC_DEBUG_INFO_FOR_RELEASE)
     set(compiler_release_options "${compiler_release_options} /Zi")
+    # The following options are only for link.exe and are not given to lib.exe
     set(linker_release_options "${linker_release_options} /DEBUG /OPT:REF /OPT:ICF")
   endif()
 
@@ -290,7 +292,7 @@ set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${compiler_r
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 
-set(CMAKE_STATIC_LINKER_FLAGS_RELEASE "${CMAKE_STATIC_LINKER_FLAGS_RELEASE} ${linker_release_options}")
+set(CMAKE_STATIC_LINKER_FLAGS_RELEASE "${CMAKE_STATIC_LINKER_FLAGS_RELEASE} ${static_linker_release_options}")
 set(CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} ${linker_release_options}")
 set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} ${linker_release_options}")
 set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} ${linker_release_options}")
