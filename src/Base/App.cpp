@@ -101,6 +101,7 @@
 #ifdef Q_OS_WIN32
 #include <windows.h>
 #include <mbctype.h>
+#include "WindowsCrashDumpHandler.h"
 #endif
 
 #include "gettext.h"
@@ -400,6 +401,24 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
     instance_ = self;
     isDoingInitialization_ = true;
 
+#ifdef Q_OS_WIN32
+    /*
+      The crash dump handler is installed at the very beginning of the initialization so
+      that a crash in the following initialization process can also be captured. Note that
+      the crash reported by a user often occurs in this process, which includes the creation
+      of the main window by the window system.
+
+      The handler is only installed when the CNOID_CRASH_DUMP environment variable is set
+      to a value other than "0". The value "full" makes the dump file contain the whole
+      memory of the process.
+    */
+    if(auto value = getenv("CNOID_CRASH_DUMP")){
+        if(value[0] != '\0' && strcmp(value, "0") != 0){
+            WindowsCrashDumpHandler::install(appName, organization, strcmp(value, "full") == 0);
+        }
+    }
+#endif
+
     mout = MessageOut::master();
     mout->setPendingMode(true);
     
@@ -507,6 +526,12 @@ App::Impl::Impl(App* self, int& argc, char** argv, const std::string& appName, c
 #endif
     isHeadlessMode = noWindowRequested || !isWindowSystemAvailable;
     isOffscreenMode = isHeadlessMode && !isWindowSystemAvailable;
+#ifdef Q_OS_WIN32
+    if(isHeadlessMode){
+        // The process must not wait for a modal dialog to be closed when it crashes
+        WindowsCrashDumpHandler::setNotificationDialogEnabled(false);
+    }
+#endif
     if(isOffscreenMode){
         qputenv("QT_QPA_PLATFORM", "offscreen");
     }
@@ -626,6 +651,15 @@ void App::Impl::initialize()
     ext = new ExtensionManager("Base", false);
 
     setUTF8ToModuleTextDomain("Util");
+
+#ifdef Q_OS_WIN32
+    /*
+      The crash dump handler was installed before the text domain of this module was bound,
+      so the message of its notification dialog is composed again here to apply the
+      translation.
+    */
+    WindowsCrashDumpHandler::updateNotificationDialogMessage();
+#endif
 
     // The message output is deferred to here so that the message can be translated.
     // Note that the message is not lost because MessageOut is in the pending mode
@@ -896,6 +930,9 @@ int App::Impl::exec()
         }
         if(isNonInteractiveMode){
             enableMessageViewRedirectToStdOut();
+#ifdef Q_OS_WIN32
+            WindowsCrashDumpHandler::setNotificationDialogEnabled(false);
+#endif
         }
         if(!additionalPathVariables.empty()){
             auto fpvp = FilePathVariableProcessor::systemInstance();
