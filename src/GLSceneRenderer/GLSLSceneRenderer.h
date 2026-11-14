@@ -109,6 +109,11 @@ class CNOID_EXPORT GLSLSceneRenderer : public GLSceneRenderer
 
     class Impl;
 
+    //
+    void setUserProjectionMatrix(Matrix4 &set_);
+    void resetUserProjectionMatrix();
+    int getTextureId();
+    int defaultFBO();
 protected:
     virtual void doRender() override;
     virtual bool doPick(int x, int y) override;
