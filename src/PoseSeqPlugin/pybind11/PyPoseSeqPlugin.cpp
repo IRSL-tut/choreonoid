@@ -21,6 +21,39 @@ PYBIND11_MODULE(PoseSeqPlugin, m)
 
     py::module::import("cnoid.BodyPlugin");
 
+    m.def("createPoseSeqItem", [](Item *parent, const std::string &filename) {
+        PoseSeqItem *itm = nullptr;
+        auto bodyItem = parent->findOwnerItem<BodyItem>(true);
+        if(!bodyItem) {
+            throw std::runtime_error("PoseSeqItem must be loaded as a child of a BodyItem");
+        } else {
+            bodyItem->setSelected(true, true);
+
+            itm = new PoseSeqItem;
+            itm->clearEditHistory();
+            auto pseq = itm->poseSeq();
+            bool loaded = pseq->load(filename, bodyItem->body());
+            if(!loaded){
+                throw std::runtime_error(pseq->errorMessage());
+            } else {
+                const std::string& name = pseq->name();
+                if(!name.empty()){
+                    itm->setName(name);
+                } else {
+                    itm->setName(filename);
+                }
+                if(pseq->targetBodyName() != bodyItem->body()->name()){
+                    // warning
+                }
+                if (!parent->addChildItem(itm)) {
+                    throw std::runtime_error("add item failed");
+                }
+                itm->notifyUpdate();
+            }
+        }
+        return itm;
+    });
+
     py::class_<PoseSeqItem, PoseSeqItemPtr, Item>(m, "PoseSeqItem")
     .def_property_readonly("poseSeq", &PoseSeqItem::poseSeq)
     .def_property_readonly("targetBodyItem", &PoseSeqItem::targetBodyItem)
@@ -74,12 +107,15 @@ PYBIND11_MODULE(PoseSeqPlugin, m)
         return res;
     })
     ;
-
-    py::class_<PoseSeqInterpolator, PoseSeqInterpolatorPtr, PoseProvider>(m, "PoseSeqInterpolator")
+    //
+    py::class_<PoseSeqInterpolator, PoseSeqInterpolatorPtr>(m, "PoseSeqInterpolator")
+    .def("body", &PoseSeqInterpolator::body)
+    .def_property_readonly("beginningTime", &PoseSeqInterpolator::beginningTime)
+    .def_property_readonly("endingTime", &PoseSeqInterpolator::endingTime)
     .def("interpolate", (bool (PoseSeqInterpolator::*)(double))&PoseSeqInterpolator::interpolate)
     .def("seek", (bool (PoseSeqInterpolator::*)(double))&PoseSeqInterpolator::seek)
     .def_property_readonly("baseLinkIndex", &PoseSeqInterpolator::baseLinkIndex)
-    .def_property_readonly("baseLinkPosition", [](PoseSeqInterpolator &self)  -> Isometry3::MatrixType& {
+    .def_property_readonly("baseLinkPosition", [](PoseSeqInterpolator &self)  {
         Isometry3 res;
         self.getBaseLinkPosition(res);
         return res.matrix();
@@ -91,5 +127,6 @@ PYBIND11_MODULE(PoseSeqPlugin, m)
         self.getJointDisplacements(res);
         return res;
     })
+    .def("update", &PoseSeqInterpolator::update)
     ;
 }
